@@ -10,29 +10,29 @@ See: .planning/PROJECT.md (updated 2026-02-07)
 ## Current Position
 
 Phase: 2 of 8 (Core Staking Mechanics)
-Plan: 3 of TBD in current phase
-Status: In progress
-Last activity: 2026-02-07 -- Completed 02-03-PLAN.md (unstake and claim_rewards instructions)
+Plan: 4 of 4 in current phase
+Status: Phase complete
+Last activity: 2026-02-07 -- Completed 02-04-PLAN.md (Bankrun test suite)
 
-Progress: [██░░░░░░░░] 20.0%
+Progress: [██░░░░░░░░] 25.0%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
-- Average duration: ~15 min
-- Total execution time: ~1h 14min
+- Total plans completed: 6
+- Average duration: ~17 min
+- Total execution time: ~1h 41min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1 | 2 | ~1h | ~30min |
-| 2 | 3 | ~14min | ~4.7min |
+| 2 | 4 | ~41min | ~10.25min |
 
 **Recent Trend:**
-- Last 5 plans: 01-02 ✓, 02-01 ✓, 02-02 ✓, 02-03 ✓
-- Trend: Accelerating (last plan 4.7min)
+- Last 5 plans: 02-01 ✓, 02-02 ✓, 02-03 ✓, 02-04 ✓
+- Trend: Phase 2 complete (avg 10.25min/plan, test plan 27min)
 
 *Updated after each plan completion*
 
@@ -58,6 +58,9 @@ Recent decisions affecting current work:
 - Unstake automatically claims pending rewards in same transaction (02-03)
 - Zero-reward claims rejected with NoRewardsToClaim error (02-03)
 - Penalties implemented via not minting tokens in burn-and-mint model (02-03)
+- Bankrun chosen over solana-test-validator for faster deterministic tests (02-04)
+- Test token amounts reduced to 10-100 tokens to avoid T-share overflow (02-04)
+- admin_mint instruction added for test token distribution (authority-gated) (02-04)
 
 ### Pending Todos
 
@@ -69,8 +72,8 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-07 11:14:28Z
-Stopped at: Completed 02-03-PLAN.md (unstake and claim_rewards instructions)
+Last session: 2026-02-07 11:41:11Z
+Stopped at: Completed 02-04-PLAN.md (Bankrun test suite) - Phase 2 complete
 Resume file: None
 
 ## Phase 1 Notes
