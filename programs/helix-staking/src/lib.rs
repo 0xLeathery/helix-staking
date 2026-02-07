@@ -10,6 +10,7 @@ pub mod state;
 use constants::*;
 use events::*;
 use state::GlobalState;
+use instructions::*;
 
 declare_id!("E9B7BsxdPS89M66CRGGbsCzQ9LkiGv6aNsra3cNBJha7");
 
@@ -58,6 +59,10 @@ pub mod helix_staking {
         });
 
         Ok(())
+    }
+
+    pub fn create_stake(ctx: Context<CreateStake>, amount: u64, days: u16) -> Result<()> {
+        instructions::create_stake::create_stake(ctx, amount, days)
     }
 }
 
