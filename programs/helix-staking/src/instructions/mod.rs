@@ -24,3 +24,6 @@ pub use withdraw_vested::*;
 
 pub mod trigger_big_pay_day;
 pub use trigger_big_pay_day::*;
+
+pub mod free_claim;
+pub use free_claim::*;
