@@ -129,6 +129,8 @@ pub fn calculate_t_shares(
 /// Calculate early unstake penalty
 /// Returns penalty amount in base token units
 /// Minimum 50% penalty, scales linearly with time not served
+/// Formula: penalty = staked_amount * penalty_bps / BPS_SCALER (rounded up)
+/// Frontend TypeScript: (BigInt(staked) * BigInt(penaltyBps) + BigInt(BPS_SCALER - 1)) / BigInt(BPS_SCALER)
 pub fn calculate_early_penalty(
     staked_amount: u64,
     start_slot: u64,
@@ -167,19 +169,19 @@ pub fn calculate_early_penalty(
         penalty_bps
     };
 
-    // Return penalty amount
-    let penalty_amount = staked_amount
-        .checked_mul(final_penalty_bps)
-        .ok_or(HelixError::Overflow)?
-        .checked_div(BPS_SCALER)
-        .ok_or(HelixError::Overflow)?;
+    // Return penalty amount (ROUNDED UP to favor protocol)
+    let penalty_amount = mul_div_up(staked_amount, final_penalty_bps, BPS_SCALER)?;
 
     Ok(penalty_amount)
 }
 
 /// Calculate late unstake penalty
 /// Returns penalty amount in base token units
-/// 0% within grace period, linear to 100% over 350 days
+/// 0% within grace period, linear to 100% at exactly day 365 (351 penalty days)
+/// Formula: penalty_bps = penalty_days * BPS_SCALER / LATE_PENALTY_WINDOW_DAYS
+/// This gives exactly 10,000 bps (100%) when penalty_days = 351
+/// Formula: penalty = staked_amount * penalty_bps / BPS_SCALER (rounded up)
+/// Frontend TypeScript: penaltyBps = (BigInt(penaltyDays) * 10000n) / 351n
 pub fn calculate_late_penalty(
     staked_amount: u64,
     end_slot: u64,
@@ -208,24 +210,18 @@ pub fn calculate_late_penalty(
         .checked_sub(GRACE_PERIOD_DAYS)
         .ok_or(HelixError::Underflow)?;
 
-    // penalty_bps = penalty_days * LATE_PENALTY_BPS_PER_DAY
-    let penalty_bps = penalty_days
-        .checked_mul(LATE_PENALTY_BPS_PER_DAY)
-        .ok_or(HelixError::Overflow)?;
+    // penalty_bps = penalty_days * BPS_SCALER / LATE_PENALTY_WINDOW_DAYS
+    let penalty_bps = mul_div(penalty_days, BPS_SCALER, LATE_PENALTY_WINDOW_DAYS)?;
 
     // Cap at 100% (BPS_SCALER)
-    let capped_penalty_bps = if penalty_bps > BPS_SCALER {
+    let capped_bps = if penalty_bps > BPS_SCALER {
         BPS_SCALER
     } else {
         penalty_bps
     };
 
-    // Return penalty amount
-    let penalty_amount = staked_amount
-        .checked_mul(capped_penalty_bps)
-        .ok_or(HelixError::Overflow)?
-        .checked_div(BPS_SCALER)
-        .ok_or(HelixError::Overflow)?;
+    // Return penalty amount (ROUNDED UP to favor protocol)
+    let penalty_amount = mul_div_up(staked_amount, capped_bps, BPS_SCALER)?;
 
     Ok(penalty_amount)
 }
