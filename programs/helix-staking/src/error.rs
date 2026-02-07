@@ -22,4 +22,6 @@ pub enum HelixError {
     InvalidMerkleProof,
     #[msg("Tokens already claimed")]
     AlreadyClaimed,
+    #[msg("Failed to calculate mint account space")]
+    InvalidMintSpace,
 }
