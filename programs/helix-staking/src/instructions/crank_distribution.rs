@@ -67,6 +67,7 @@ pub fn crank_distribution(ctx: Context<CrankDistribution>) -> Result<()> {
         emit!(InflationDistributed {
             slot: clock.slot,
             day: current_day,
+            days_elapsed,
             amount: 0,
             new_share_rate: global_state.share_rate,
             total_shares: 0,
@@ -109,6 +110,7 @@ pub fn crank_distribution(ctx: Context<CrankDistribution>) -> Result<()> {
     emit!(InflationDistributed {
         slot: clock.slot,
         day: current_day,
+        days_elapsed,
         amount: daily_inflation_total,
         new_share_rate: global_state.share_rate,
         total_shares: global_state.total_shares,
