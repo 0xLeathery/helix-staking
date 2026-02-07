@@ -9,3 +9,6 @@ pub use crank_distribution::*;
 
 pub mod unstake;
 pub use unstake::*;
+
+pub mod claim_rewards;
+pub use claim_rewards::*;

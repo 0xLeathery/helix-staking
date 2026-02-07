@@ -72,6 +72,10 @@ pub mod helix_staking {
     pub fn unstake(ctx: Context<Unstake>) -> Result<()> {
         instructions::unstake::unstake(ctx)
     }
+
+    pub fn claim_rewards(ctx: Context<ClaimRewards>) -> Result<()> {
+        instructions::claim_rewards::claim_rewards(ctx)
+    }
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
