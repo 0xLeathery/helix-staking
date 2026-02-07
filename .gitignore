@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+target/
+dist/
+
+# Anchor
+.anchor/
+
+# IDE
+.idea/
+.vscode/
+
+# Solana
+test-ledger/
+
+# Environment
+.env
+.env.local
+
+# System files
+.DS_Store
+*.log
+
+# Lock files (optional - comment out if you want to track)
+# package-lock.json
+
+# Claude mem context files
+**/CLAUDE.md
