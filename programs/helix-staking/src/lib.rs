@@ -68,6 +68,10 @@ pub mod helix_staking {
     pub fn crank_distribution(ctx: Context<CrankDistribution>) -> Result<()> {
         instructions::crank_distribution::crank_distribution(ctx)
     }
+
+    pub fn unstake(ctx: Context<Unstake>) -> Result<()> {
+        instructions::unstake::unstake(ctx)
+    }
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
