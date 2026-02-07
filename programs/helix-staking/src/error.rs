@@ -42,4 +42,26 @@ pub enum HelixError {
     DivisionByZero,
     #[msg("Admin mint cap exceeded")]
     AdminMintCapExceeded,
+    #[msg("Claim period not yet started")]
+    ClaimPeriodNotStarted,
+    #[msg("Claim period already started")]
+    ClaimPeriodAlreadyStarted,
+    #[msg("Big Pay Day already triggered")]
+    BigPayDayAlreadyTriggered,
+    #[msg("Big Pay Day not yet available")]
+    BigPayDayNotAvailable,
+    #[msg("Invalid Ed25519 signature")]
+    InvalidSignature,
+    #[msg("Missing Ed25519 verification instruction")]
+    MissingEd25519Instruction,
+    #[msg("No vested tokens available")]
+    NoVestedTokens,
+    #[msg("Insufficient vested balance")]
+    InsufficientVestedBalance,
+    #[msg("No eligible stakers for Big Pay Day")]
+    NoEligibleStakers,
+    #[msg("Stake not eligible for Big Pay Day")]
+    StakeNotBpdEligible,
+    #[msg("Snapshot balance below minimum")]
+    SnapshotBalanceTooLow,
 }
