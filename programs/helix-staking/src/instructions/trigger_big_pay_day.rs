@@ -70,11 +70,16 @@ pub fn trigger_big_pay_day<'info>(
     // Only stakes created DURING claim period are eligible
 
     let mut total_eligible_share_days: u128 = 0;
-    let mut eligible_stakes: Vec<(usize, u64)> = Vec::new(); // (index, share_days)
+    let mut eligible_stakes: Vec<(usize, u128)> = Vec::new(); // (index, share_days)
 
     for (i, account_info) in ctx.remaining_accounts.iter().enumerate() {
         if i >= MAX_STAKES_PER_BPD {
             break;
+        }
+
+        // === SECURITY: Validate account ownership ===
+        if account_info.owner != &crate::id() {
+            continue;
         }
 
         // Skip if account data is too small
@@ -89,6 +94,20 @@ pub fn trigger_big_pay_day<'info>(
             Err(_) => continue, // Skip invalid accounts
         };
         drop(data); // Release borrow before potential mutation
+
+        // === SECURITY: Validate PDA derivation ===
+        let expected_pda = Pubkey::create_program_address(
+            &[
+                STAKE_SEED,
+                stake.user.as_ref(),
+                &stake.stake_id.to_le_bytes(),
+                &[stake.bump],
+            ],
+            &crate::id(),
+        );
+        if expected_pda.is_err() || account_info.key() != expected_pda.unwrap() {
+            continue;
+        }
 
         // Check eligibility:
         // 1. Must be active
@@ -126,7 +145,7 @@ pub fn trigger_big_pay_day<'info>(
             .checked_add(share_days)
             .ok_or(HelixError::Overflow)?;
 
-        eligible_stakes.push((i, share_days as u64));
+        eligible_stakes.push((i, share_days));
     }
 
     // If no eligible stakers, keep tokens in pool for future distribution
@@ -159,7 +178,8 @@ pub fn trigger_big_pay_day<'info>(
         let account_info = &ctx.remaining_accounts[*idx];
 
         // Calculate this stake's BPD bonus
-        let bonus = ((*share_days as u128)
+        // *share_days is already u128, no cast needed
+        let bonus = ((*share_days)
             .checked_mul(helix_per_share_day)
             .ok_or(HelixError::Overflow)?
             .checked_div(PRECISION as u128)
@@ -202,8 +222,8 @@ pub fn trigger_big_pay_day<'info>(
         timestamp: clock.unix_timestamp,
         claim_period_id: claim_config.claim_period_id,
         total_unclaimed: unclaimed_amount,
-        total_eligible_share_days: total_eligible_share_days as u64,
-        helix_per_share_day: helix_per_share_day as u64,
+        total_eligible_share_days: total_eligible_share_days.min(u64::MAX as u128) as u64,
+        helix_per_share_day: helix_per_share_day.min(u64::MAX as u128) as u64,
         eligible_stakers: eligible_stakes.len() as u32,
     });
 
