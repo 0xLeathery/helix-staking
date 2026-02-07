@@ -48,7 +48,18 @@ pub struct RewardsClaimed {
 pub struct InflationDistributed {
     pub slot: u64,
     pub day: u64,
+    pub days_elapsed: u64,  // Number of days covered in this distribution
     pub amount: u64,
     pub new_share_rate: u64,
     pub total_shares: u64,
+}
+
+/// Emitted when authority mints tokens via admin_mint instruction.
+/// Frontend note: Monitor for transparency. Production should use multisig authority.
+#[event]
+pub struct AdminMinted {
+    pub slot: u64,
+    pub authority: Pubkey,
+    pub recipient: Pubkey,  // Token account address
+    pub amount: u64,
 }

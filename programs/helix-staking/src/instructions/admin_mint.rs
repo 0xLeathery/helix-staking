@@ -4,6 +4,7 @@ use anchor_spl::token_2022;
 
 use crate::constants::*;
 use crate::error::HelixError;
+use crate::events::AdminMinted;
 use crate::state::GlobalState;
 
 #[derive(Accounts)]
@@ -12,6 +13,7 @@ pub struct AdminMint<'info> {
     pub authority: Signer<'info>,
 
     #[account(
+        mut,
         seeds = [GLOBAL_STATE_SEED],
         bump = global_state.bump,
         constraint = global_state.authority == authority.key() @ HelixError::Unauthorized,
@@ -42,7 +44,16 @@ pub struct AdminMint<'info> {
 }
 
 pub fn admin_mint(ctx: Context<AdminMint>, amount: u64) -> Result<()> {
-    let global_state = &ctx.accounts.global_state;
+    let global_state = &mut ctx.accounts.global_state;
+
+    // Enforce mint cap
+    let new_total = global_state.total_admin_minted
+        .checked_add(amount)
+        .ok_or(error!(HelixError::Overflow))?;
+    require!(
+        new_total <= global_state.max_admin_mint,
+        HelixError::AdminMintCapExceeded
+    );
 
     // Create PDA signer seeds
     let mint_authority_seeds = &[
@@ -64,6 +75,17 @@ pub fn admin_mint(ctx: Context<AdminMint>, amount: u64) -> Result<()> {
         ),
         amount,
     )?;
+
+    // Update admin mint counter
+    global_state.total_admin_minted = new_total;
+
+    // Emit event for indexer
+    emit!(AdminMinted {
+        slot: Clock::get()?.slot,
+        authority: ctx.accounts.authority.key(),
+        recipient: ctx.accounts.recipient_token_account.key(),
+        amount,
+    });
 
     Ok(())
 }

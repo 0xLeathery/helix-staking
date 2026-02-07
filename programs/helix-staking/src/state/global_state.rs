@@ -47,8 +47,14 @@ pub struct GlobalState {
     /// Current distribution day number
     pub current_day: u64,
 
+    // === Admin Mint Tracking ===
+    /// Total tokens minted via admin_mint
+    pub total_admin_minted: u64,
+    /// Maximum allowed admin mints (set at initialize)
+    pub max_admin_mint: u64,
+
     // === Reserved for future expansion ===
-    pub reserved: [u64; 8],
+    pub reserved: [u64; 6],
 }
 
 impl GlobalState {
@@ -71,5 +77,7 @@ impl GlobalState {
         + 8    // total_tokens_unstaked
         + 8    // total_shares
         + 8    // current_day
-        + 64;  // reserved (8 * u64)
+        + 8    // total_admin_minted
+        + 8    // max_admin_mint
+        + 48;  // reserved (6 * u64)
 }
