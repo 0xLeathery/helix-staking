@@ -6,7 +6,7 @@ seeds = true
 skip-lint = false
 
 [programs.localnet]
-helix_staking = "11111111111111111111111111111111"
+helix_staking = "E9B7BsxdPS89M66CRGGbsCzQ9LkiGv6aNsra3cNBJha7"
 
 [registry]
 url = "https://api.apr.dev"

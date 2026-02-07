@@ -2,6 +2,11 @@
 members = ["programs/*"]
 resolver = "2"
 
+# Patch blake3 to version compatible with Rust 1.84 (Solana platform-tools)
+# 1.8.2 is the last version before edition2024 was added in 1.8.3
+[patch.crates-io]
+blake3 = { git = "https://github.com/BLAKE3-team/BLAKE3", tag = "1.8.2" }
+
 [profile.release]
 overflow-checks = true
 lto = "fat"
