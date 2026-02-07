@@ -10,29 +10,29 @@ See: .planning/PROJECT.md (updated 2026-02-07)
 ## Current Position
 
 Phase: 2 of 8 (Core Staking Mechanics)
-Plan: 2 of TBD in current phase
+Plan: 3 of TBD in current phase
 Status: In progress
-Last activity: 2026-02-07 -- Completed 02-02-PLAN.md (create_stake and crank_distribution instructions)
+Last activity: 2026-02-07 -- Completed 02-03-PLAN.md (unstake and claim_rewards instructions)
 
-Progress: [█░░░░░░░░░] 16.7%
+Progress: [██░░░░░░░░] 20.0%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
-- Average duration: ~17 min
-- Total execution time: ~1h 9min
+- Total plans completed: 5
+- Average duration: ~15 min
+- Total execution time: ~1h 14min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1 | 2 | ~1h | ~30min |
-| 2 | 2 | ~9min | ~4.5min |
+| 2 | 3 | ~14min | ~4.7min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 ✓, 01-02 ✓, 02-01 ✓, 02-02 ✓
-- Trend: Accelerating (last plan 3.3min)
+- Last 5 plans: 01-02 ✓, 02-01 ✓, 02-02 ✓, 02-03 ✓
+- Trend: Accelerating (last plan 4.7min)
 
 *Updated after each plan completion*
 
@@ -55,6 +55,9 @@ Recent decisions affecting current work:
 - Lazy distribution via share_rate: crank updates share_rate but does NOT mint tokens (02-02)
 - Permissionless crank: anyone can trigger daily distribution (02-02)
 - StakeAccount PDA seeds include total_stakes_created for multiple stakes per user (02-02)
+- Unstake automatically claims pending rewards in same transaction (02-03)
+- Zero-reward claims rejected with NoRewardsToClaim error (02-03)
+- Penalties implemented via not minting tokens in burn-and-mint model (02-03)
 
 ### Pending Todos
 
@@ -66,8 +69,8 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-07 11:06:42Z
-Stopped at: Completed 02-02-PLAN.md (create_stake and crank_distribution instructions)
+Last session: 2026-02-07 11:14:28Z
+Stopped at: Completed 02-03-PLAN.md (unstake and claim_rewards instructions)
 Resume file: None
 
 ## Phase 1 Notes
