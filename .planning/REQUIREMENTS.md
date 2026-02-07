@@ -13,13 +13,13 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Staking Mechanics
 
-- [ ] **STAKE-01**: Anchor program handles complete staking lifecycle (stake, unstake, claim rewards)
-- [ ] **STAKE-02**: T-share bonus curves: Longer Pays Better (0-2x over 3641 days) and Bigger Pays Better (0-1x up to 150M threshold)
-- [ ] **STAKE-03**: Early unstake penalty proportional to time not served (minimum 50%)
-- [ ] **STAKE-04**: Late unstake penalty: 14-day grace period, linear to 100% over 350 days, total loss after 365
-- [ ] **STAKE-05**: Daily inflation (3.69% annual) minted and distributed proportionally to T-share holders
-- [ ] **STAKE-06**: Permissionless daily distribution crank anyone can call
-- [ ] **STAKE-07**: Share rate increases over time (future stakes cost more per T-share)
+- [x] **STAKE-01**: Anchor program handles complete staking lifecycle (stake, unstake, claim rewards)
+- [x] **STAKE-02**: T-share bonus curves: Longer Pays Better (0-2x over 3641 days) and Bigger Pays Better (0-1x up to 150M threshold)
+- [x] **STAKE-03**: Early unstake penalty proportional to time not served (minimum 50%)
+- [x] **STAKE-04**: Late unstake penalty: 14-day grace period, linear to 100% over 350 days, total loss after 365
+- [x] **STAKE-05**: Daily inflation (3.69% annual) minted and distributed proportionally to T-share holders
+- [x] **STAKE-06**: Permissionless daily distribution crank anyone can call
+- [x] **STAKE-07**: Share rate increases over time (future stakes cost more per T-share)
 
 ### Free Claim and Big Pay Day
 

@@ -13,7 +13,7 @@ HELIX is a HEX-style staking protocol on Solana delivering the complete stake-lo
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation and Token Infrastructure** - Anchor scaffold, Token-2022 mint, GlobalState, dev environment
-- [ ] **Phase 2: Core Staking Mechanics** - Stake/unstake lifecycle, T-share math, penalties, inflation, share rate
+- [x] **Phase 2: Core Staking Mechanics** - Stake/unstake lifecycle, T-share math, penalties, inflation, share rate
 - [ ] **Phase 3: Free Claim and Big Pay Day** - Merkle-based token claim, unclaimed token distribution to stakers
 - [ ] **Phase 4: Staking Dashboard** - Next.js app with wallet connection, stake management, penalty calculator
 - [ ] **Phase 5: Light Indexer Service** - Event polling, Postgres storage, read-only REST API for historical data
@@ -51,10 +51,10 @@ Plans:
 **Plans**: 4 plans in 4 waves
 
 Plans:
-- [ ] 02-01-PLAN.md -- StakeAccount PDA, math module (bonus curves, penalties, reward helpers), expanded constants/errors/events
-- [ ] 02-02-PLAN.md -- create_stake + crank_distribution instructions
-- [ ] 02-03-PLAN.md -- unstake + claim_rewards instructions
-- [ ] 02-04-PLAN.md -- Bankrun test suite for all staking operations (20+ tests)
+- [x] 02-01-PLAN.md -- StakeAccount PDA, math module (bonus curves, penalties, reward helpers), expanded constants/errors/events
+- [x] 02-02-PLAN.md -- create_stake + crank_distribution instructions
+- [x] 02-03-PLAN.md -- unstake + claim_rewards instructions
+- [x] 02-04-PLAN.md -- Bankrun test suite for all staking operations (35 tests)
 
 ### Phase 3: Free Claim and Big Pay Day
 **Goal**: SOL holders can claim free HELIX tokens proportional to their snapshot balance, and unclaimed tokens are distributed to active stakers on Big Pay Day
@@ -155,7 +155,7 @@ Note: Phase 5 (Indexer) can overlap with Phase 4 (Dashboard) development since i
 | Phase | Plans Complete | Status | Completed |
 |-------|---------------|--------|-----------|
 | 1. Foundation and Token Infrastructure | 2/2 | Complete | 2026-02-07 |
-| 2. Core Staking Mechanics | 0/TBD | Not started | - |
+| 2. Core Staking Mechanics | 4/4 | Complete | 2026-02-07 |
 | 3. Free Claim and Big Pay Day | 0/TBD | Not started | - |
 | 4. Staking Dashboard | 0/TBD | Not started | - |
 | 5. Light Indexer Service | 0/TBD | Not started | - |
