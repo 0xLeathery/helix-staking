@@ -82,6 +82,22 @@ pub mod helix_staking {
     pub fn admin_mint(ctx: Context<AdminMint>, amount: u64) -> Result<()> {
         instructions::admin_mint::admin_mint(ctx, amount)
     }
+
+    pub fn initialize_claim_period(
+        ctx: Context<InitializeClaimPeriod>,
+        merkle_root: [u8; 32],
+        total_claimable: u64,
+        total_eligible: u32,
+        claim_period_id: u32,
+    ) -> Result<()> {
+        instructions::initialize_claim_period::initialize_claim_period(
+            ctx,
+            merkle_root,
+            total_claimable,
+            total_eligible,
+            claim_period_id,
+        )
+    }
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]

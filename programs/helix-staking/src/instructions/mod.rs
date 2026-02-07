@@ -15,3 +15,6 @@ pub use claim_rewards::*;
 
 pub mod admin_mint;
 pub use admin_mint::*;
+
+pub mod initialize_claim_period;
+pub use initialize_claim_period::*;
