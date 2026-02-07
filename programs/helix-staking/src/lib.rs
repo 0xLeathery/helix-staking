@@ -43,7 +43,9 @@ pub mod helix_staking {
         global_state.total_tokens_unstaked = 0;
         global_state.total_shares = 0;
         global_state.current_day = 0;
-        global_state.reserved = [0; 8];
+        global_state.total_admin_minted = 0;
+        global_state.max_admin_mint = params.max_admin_mint;
+        global_state.reserved = [0; 6];
 
         // Emit initialization event with slot (indexer-expert requirement)
         emit!(ProtocolInitialized {
@@ -89,6 +91,7 @@ pub struct InitializeParams {
     pub starting_share_rate: u64,
     pub slots_per_day: u64,
     pub claim_period_days: u8,
+    pub max_admin_mint: u64,
 }
 
 #[derive(Accounts)]
