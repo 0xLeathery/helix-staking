@@ -1,4 +1,4 @@
-# SolHEX
+# HELIX
 
 ## What This Is
 
@@ -46,7 +46,7 @@ Users can stake tokens for a chosen duration, earn T-shares proportional to thei
 
 ## Context
 
-- **HEX reference**: HEX on Ethereum is the original CD-style staking protocol. SolHEX follows the same economic model (free claim, T-shares, BPB/LPB bonuses, penalties, Big Pay Day, inflation) but built natively on Solana.
+- **HEX reference**: HEX on Ethereum is the original CD-style staking protocol. HELIX follows the same economic model (free claim, T-shares, BPB/LPB bonuses, penalties, Big Pay Day, inflation) but built natively on Solana.
 - **Token economics**: Tokens are created through the free claim (SOL snapshot) and ongoing inflation (3.69%/year to stakers). No pre-mine, no team allocation beyond what's claimable. Trading happens on Jupiter/Raydium after launch.
 - **Architecture**: Anchor program is the source of truth for all staking logic. Frontend reads state directly from Solana RPC for user-specific data. Light indexer polls events and stores historical snapshots for analytics and leaderboards. No heavy backend — staking is fully client-to-chain.
 - **Solo build**: Single developer, Claude builds everything. Architecture should prioritize simplicity and maintainability.
