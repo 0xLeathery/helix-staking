@@ -5,7 +5,7 @@ use crate::constants::*;
 use crate::error::HelixError;
 use crate::events::StakeEnded;
 use crate::state::{GlobalState, StakeAccount};
-use crate::instructions::math::{calculate_early_penalty, calculate_late_penalty, calculate_pending_rewards};
+use crate::instructions::math::{calculate_early_penalty, calculate_late_penalty, calculate_pending_rewards, mul_div};
 
 #[derive(Accounts)]
 pub struct Unstake<'info> {
@@ -129,6 +129,17 @@ pub fn unstake(ctx: Context<Unstake>) -> Result<()> {
     global_state.total_tokens_staked = global_state.total_tokens_staked
         .checked_sub(staked_amount)
         .ok_or(HelixError::Underflow)?;
+
+    // Redistribute penalty to remaining stakers via share_rate increase
+    // This happens AFTER removing unstaker's shares so they don't benefit from their own penalty
+    // Formula: share_rate_increase = (penalty_amount * PRECISION) / remaining_total_shares
+    // Frontend note: This increases rewards for all remaining stakers proportionally
+    if penalty > 0 && global_state.total_shares > 0 {
+        let penalty_share_increase = mul_div(penalty, PRECISION, global_state.total_shares)?;
+        global_state.share_rate = global_state.share_rate
+            .checked_add(penalty_share_increase)
+            .ok_or(HelixError::Overflow)?;
+    }
 
     // Mint tokens to user if amount > 0
     if total_mint_amount > 0 {
