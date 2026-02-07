@@ -31,3 +31,27 @@ pub const BPS_SCALER: u64 = 10_000;
 pub const GRACE_PERIOD_DAYS: u64 = 14;
 /// Late penalty window in days (365 - 14 grace = 351 days to reach 100%)
 pub const LATE_PENALTY_WINDOW_DAYS: u64 = 351;
+
+// Claim period constants
+pub const CLAIM_CONFIG_SEED: &[u8] = b"claim_config";
+pub const CLAIM_STATUS_SEED: &[u8] = b"claim_status";
+
+// Vesting parameters (from CONTEXT.md)
+pub const VESTING_DAYS: u64 = 30;              // 30-day graduated release
+pub const IMMEDIATE_RELEASE_BPS: u64 = 1000;   // 10% available immediately
+pub const VESTED_RELEASE_BPS: u64 = 9000;      // 90% vests over 30 days
+pub const CLAIM_PERIOD_DAYS: u64 = 180;        // 6-month claim window
+
+// Speed bonus tiers (from CONTEXT.md)
+pub const SPEED_BONUS_WEEK1_BPS: u64 = 2000;   // +20% for days 1-7
+pub const SPEED_BONUS_WEEK2_4_BPS: u64 = 1000; // +10% for days 8-28
+pub const SPEED_BONUS_WEEK1_END: u64 = 7;      // Day 7 is last day of week 1
+pub const SPEED_BONUS_WEEK4_END: u64 = 28;     // Day 28 is last day of bonus period
+
+// Claim ratio
+pub const HELIX_PER_SOL: u64 = 10_000;         // 10,000 HELIX per SOL in snapshot
+pub const MIN_SOL_BALANCE: u64 = 100_000_000;  // 0.1 SOL minimum (9 decimals)
+
+// Merkle tree
+pub const MAX_MERKLE_PROOF_LEN: usize = 20;    // Supports 1M+ claimants
+pub const MERKLE_ROOT_PREFIX_LEN: usize = 8;   // First 8 bytes of root for PDA seed
