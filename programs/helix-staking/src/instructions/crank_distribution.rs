@@ -5,7 +5,7 @@ use crate::constants::*;
 use crate::error::HelixError;
 use crate::events::InflationDistributed;
 use crate::state::GlobalState;
-use crate::instructions::math::get_current_day;
+use crate::instructions::math::{get_current_day, mul_div};
 
 #[derive(Accounts)]
 pub struct CrankDistribution<'info> {
@@ -88,19 +88,15 @@ pub fn crank_distribution(ctx: Context<CrankDistribution>) -> Result<()> {
         .checked_div(100_000_000)
         .ok_or(HelixError::Overflow)?;
 
-    // daily_inflation = annual_inflation / 365 * days_elapsed
-    let daily_inflation_total = annual_inflation
-        .checked_div(365)
-        .ok_or(HelixError::Overflow)?
-        .checked_mul(days_elapsed)
-        .ok_or(HelixError::Overflow)?;
+    // daily_inflation = annual_inflation * days_elapsed / 365
+    // CRITICAL: Multiply before divide to preserve precision
+    // Formula: daily_inflation = annual_inflation * days_elapsed / 365
+    // Frontend TypeScript: (BigInt(annualInflation) * BigInt(daysElapsed)) / 365n
+    let daily_inflation_total = mul_div(annual_inflation, days_elapsed, 365)?;
 
     // Update share_rate: share_rate += daily_inflation * PRECISION / total_shares
-    let share_rate_increase = daily_inflation_total
-        .checked_mul(PRECISION)
-        .ok_or(HelixError::Overflow)?
-        .checked_div(global_state.total_shares)
-        .ok_or(HelixError::Overflow)?;
+    // Formula: share_rate_increase = (daily_inflation * PRECISION) / total_shares
+    let share_rate_increase = mul_div(daily_inflation_total, PRECISION, global_state.total_shares)?;
 
     global_state.share_rate = global_state.share_rate
         .checked_add(share_rate_increase)

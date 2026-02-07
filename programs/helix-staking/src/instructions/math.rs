@@ -226,29 +226,23 @@ pub fn calculate_late_penalty(
     Ok(penalty_amount)
 }
 
-/// Calculate pending rewards using lazy distribution formula
-/// Returns reward amount in base token units
+/// Calculate pending rewards for a stake.
+/// Formula: pending = (t_shares * current_share_rate) - reward_debt
+/// No PRECISION division needed - reward_debt is stored at the same scale.
+/// Frontend TypeScript: BigInt(tShares) * BigInt(currentShareRate) - BigInt(rewardDebt)
 pub fn calculate_pending_rewards(
     t_shares: u64,
     current_share_rate: u64,
     reward_debt: u64,
 ) -> Result<u64> {
-    // current_value = t_shares * current_share_rate / PRECISION
-    let current_value = t_shares
-        .checked_mul(current_share_rate)
-        .ok_or(HelixError::Overflow)?
-        .checked_div(PRECISION)
-        .ok_or(HelixError::Overflow)?;
+    let current_value = (t_shares as u128)
+        .checked_mul(current_share_rate as u128)
+        .ok_or(error!(HelixError::Overflow))?;
 
-    // debt_value = reward_debt / PRECISION
-    let debt_value = reward_debt
-        .checked_div(PRECISION)
-        .ok_or(HelixError::Overflow)?;
+    // Saturating sub handles case where reward_debt > current_value (shouldn't happen but defensive)
+    let pending_128 = current_value.saturating_sub(reward_debt as u128);
 
-    // Return current_value - debt_value (saturating to 0 if negative)
-    let pending = current_value.saturating_sub(debt_value);
-
-    Ok(pending)
+    u64::try_from(pending_128).map_err(|_| error!(HelixError::Overflow))
 }
 
 /// Get current day from init_slot
