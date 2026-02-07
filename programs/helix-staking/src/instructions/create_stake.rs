@@ -99,6 +99,11 @@ pub fn create_stake(ctx: Context<CreateStake>, amount: u64, days: u16) -> Result
     stake_account.is_active = true;
     stake_account.bump = ctx.bumps.stake_account;
 
+    // BPD fields - will be updated when claim period is active (Phase 3)
+    stake_account.bpd_bonus_pending = 0;
+    stake_account.bpd_eligible = false;  // Default: not eligible
+    stake_account.claim_period_start_slot = 0;  // Default: no claim period
+
     // Update GlobalState counters
     global_state.total_stakes_created = global_state.total_stakes_created
         .checked_add(1)
