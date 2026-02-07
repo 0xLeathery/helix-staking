@@ -4,6 +4,7 @@ use anchor_spl::token_interface::{Mint, Token2022};
 pub mod constants;
 pub mod error;
 pub mod events;
+pub mod instructions;
 pub mod state;
 
 use constants::*;
