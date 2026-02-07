@@ -29,7 +29,5 @@ pub const BPB_THRESHOLD: u64 = 150_000_000_00_000_000; // 150M tokens (8 decimal
 pub const MIN_PENALTY_BPS: u64 = 5000;     // 50% minimum early unstake penalty
 pub const BPS_SCALER: u64 = 10_000;
 pub const GRACE_PERIOD_DAYS: u64 = 14;
-pub const LATE_PENALTY_BPS_PER_DAY: u64 = 29; // ~1% per ~3.5 days → 100% at 350 days past grace
-// Total late days to 100% = GRACE_PERIOD_DAYS + (BPS_SCALER / LATE_PENALTY_BPS_PER_DAY) ≈ 14 + 345 ≈ 359
-// Per roadmap: "linear to 100% over 350 days, total loss after 365"
-// So 365 - 14 = 351 penalty days → BPS_SCALER / 351 ≈ 28.5, round up to 29
+/// Late penalty window in days (365 - 14 grace = 351 days to reach 100%)
+pub const LATE_PENALTY_WINDOW_DAYS: u64 = 351;

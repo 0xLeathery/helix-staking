@@ -38,4 +38,8 @@ pub enum HelixError {
     NoActiveShares,
     #[msg("No rewards to claim")]
     NoRewardsToClaim,
+    #[msg("Division by zero")]
+    DivisionByZero,
+    #[msg("Admin mint cap exceeded")]
+    AdminMintCapExceeded,
 }
