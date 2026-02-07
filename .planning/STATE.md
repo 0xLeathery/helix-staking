@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-07)
 ## Current Position
 
 Phase: 3 of 8 (Free Claim and Big Pay Day)
-Plan: 5 of 6 in current phase
-Status: In progress
-Last activity: 2026-02-07 -- Completed 03-03-PLAN.md (Free Claim Instruction)
+Plan: 6 of 6 in current phase
+Status: Phase complete
+Last activity: 2026-02-08 -- Completed 03-06-PLAN.md (Bankrun Test Suite)
 
-Progress: [█████░░░░░] 50%
+Progress: [██████████] 100% (Phase 3 complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 12
-- Average duration: ~10 min
-- Total execution time: ~1h 58min
+- Total plans completed: 13
+- Average duration: ~9.5 min
+- Total execution time: ~2h 6min
 
 **By Phase:**
 
@@ -30,11 +30,11 @@ Progress: [█████░░░░░] 50%
 | 1 | 2 | ~1h | ~30min |
 | 2 | 4 | ~41min | ~10.25min |
 | 2.1 | 1 | ~6min | ~6min |
-| 3 | 5 | ~11min | ~2.2min |
+| 3 | 6 | ~19min | ~3.2min |
 
 **Recent Trend:**
-- Last 5 plans: 03-02 ✓, 03-05 ✓, 03-04 ✓, 03-03 ✓
-- Trend: Phase 3 accelerating (avg 2.2min/plan)
+- Last 5 plans: 03-05 ✓, 03-04 ✓, 03-03 ✓, 03-06 ✓
+- Trend: Phase 3 complete (avg 3.2min/plan)
 
 *Updated after each plan completion*
 
@@ -87,6 +87,9 @@ Recent decisions affecting current work:
 - solana-nostd-keccak v0.1 for Merkle proof verification (03-03)
 - Ed25519 introspection for MEV prevention on free_claim (03-03)
 - Speed bonus: +20% week 1, +10% weeks 2-4, 0% after (03-03)
+- @noble/hashes and @noble/curves for Merkle tree and Ed25519 in tests (03-06)
+- Merkle tree sorts leaves deterministically for reproducible proofs (03-06)
+- Ed25519 instruction data manually constructed to match Solana format (03-06)
 
 ### Pending Todos
 
@@ -102,9 +105,10 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-07T22:49:00Z
-Stopped at: Completed 03-03-PLAN.md (Free Claim Instruction) - Phase 3 in progress
+Last session: 2026-02-08T22:59:00Z
+Stopped at: Completed 03-06-PLAN.md (Bankrun Test Suite) - Phase 3 COMPLETE
 Resume file: None
+Next: Phase 4 - Frontend Integration
 
 ## Phase 1 Notes
 
