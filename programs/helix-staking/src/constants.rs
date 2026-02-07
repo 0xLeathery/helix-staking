@@ -1,8 +1,8 @@
 // Token constants
 pub const TOKEN_DECIMALS: u8 = 8;
-pub const TOKEN_NAME: &str = "Helix Staking Token";
-pub const TOKEN_SYMBOL: &str = "HELIX";
-pub const TOKEN_URI: &str = "https://helix.example/metadata.json";
+pub const TOKEN_NAME: &str = "HLX";
+pub const TOKEN_SYMBOL: &str = "HLX";
+pub const TOKEN_URI: &str = "";
 
 // Protocol constants (from tokenomics-expert)
 pub const DEFAULT_ANNUAL_INFLATION_BP: u64 = 3_690_000; // 3.69% in basis points
