@@ -5,7 +5,7 @@ use anchor_spl::token_2022;
 use crate::constants::*;
 use crate::error::HelixError;
 use crate::events::StakeCreated;
-use crate::state::{GlobalState, StakeAccount};
+use crate::state::{GlobalState, StakeAccount, ClaimConfig};
 use crate::instructions::math::calculate_t_shares;
 
 #[derive(Accounts)]
@@ -51,7 +51,11 @@ pub struct CreateStake<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn create_stake(ctx: Context<CreateStake>, amount: u64, days: u16) -> Result<()> {
+pub fn create_stake<'info>(
+    ctx: Context<'_, '_, 'info, 'info, CreateStake<'info>>,
+    amount: u64,
+    days: u16,
+) -> Result<()> {
     let global_state = &mut ctx.accounts.global_state;
     let stake_account = &mut ctx.accounts.stake_account;
 
@@ -99,10 +103,39 @@ pub fn create_stake(ctx: Context<CreateStake>, amount: u64, days: u16) -> Result
     stake_account.is_active = true;
     stake_account.bump = ctx.bumps.stake_account;
 
-    // BPD fields - will be updated when claim period is active (Phase 3)
+    // BPD fields - check if claim period is active
     stake_account.bpd_bonus_pending = 0;
-    stake_account.bpd_eligible = false;  // Default: not eligible
-    stake_account.claim_period_start_slot = 0;  // Default: no claim period
+
+    // Check if ClaimConfig was passed in remaining_accounts and period is active
+    let (bpd_eligible, claim_period_start_slot) = if !ctx.remaining_accounts.is_empty() {
+        let claim_config_info = &ctx.remaining_accounts[0];
+
+        // Verify it's the correct ClaimConfig PDA
+        let (expected_pda, _) = Pubkey::find_program_address(
+            &[CLAIM_CONFIG_SEED],
+            ctx.program_id,
+        );
+
+        if claim_config_info.key() == expected_pda {
+            // Try to deserialize and check if active
+            if let Ok(claim_config) = Account::<ClaimConfig>::try_from(claim_config_info) {
+                if claim_config.claim_period_started && clock.slot <= claim_config.end_slot {
+                    (true, claim_config.start_slot)
+                } else {
+                    (false, 0)
+                }
+            } else {
+                (false, 0)
+            }
+        } else {
+            (false, 0)
+        }
+    } else {
+        (false, 0)
+    };
+
+    stake_account.bpd_eligible = bpd_eligible;
+    stake_account.claim_period_start_slot = claim_period_start_slot;
 
     // Update GlobalState counters
     global_state.total_stakes_created = global_state.total_stakes_created
