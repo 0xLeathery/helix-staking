@@ -2,6 +2,36 @@ use anchor_lang::prelude::*;
 use crate::constants::*;
 use crate::error::HelixError;
 
+/// Multiply then divide using u128 intermediates to avoid overflow.
+/// Formula: (a * b) / c with u128 precision.
+/// Used for: penalty calculations, inflation calculations, share rate updates, reward calculations.
+/// Frontend TypeScript equivalent: (BigInt(a) * BigInt(b)) / BigInt(c)
+pub fn mul_div(a: u64, b: u64, c: u64) -> Result<u64> {
+    require!(c > 0, HelixError::DivisionByZero);
+    let result = (a as u128)
+        .checked_mul(b as u128)
+        .ok_or(error!(HelixError::Overflow))?
+        .checked_div(c as u128)
+        .ok_or(error!(HelixError::Overflow))?;
+    u64::try_from(result).map_err(|_| error!(HelixError::Overflow))
+}
+
+/// Multiply then divide with round-up for protocol-favorable calculations.
+/// Formula: ((a * b) + (c - 1)) / c
+/// Used for: penalty amounts (should round UP to favor protocol).
+pub fn mul_div_up(a: u64, b: u64, c: u64) -> Result<u64> {
+    require!(c > 0, HelixError::DivisionByZero);
+    let numerator = (a as u128)
+        .checked_mul(b as u128)
+        .ok_or(error!(HelixError::Overflow))?
+        .checked_add((c - 1) as u128)
+        .ok_or(error!(HelixError::Overflow))?;
+    let result = numerator
+        .checked_div(c as u128)
+        .ok_or(error!(HelixError::Overflow))?;
+    u64::try_from(result).map_err(|_| error!(HelixError::Overflow))
+}
+
 /// Calculate Longer Pays Better (LPB) bonus multiplier
 /// Returns bonus scaled by PRECISION (e.g., PRECISION = 1x bonus = 2x final)
 /// 1 day = 0 bonus, LPB_MAX_DAYS (3641) = 2x bonus
@@ -36,29 +66,24 @@ pub fn calculate_lpb_bonus(stake_days: u64) -> Result<u64> {
 }
 
 /// Calculate Bigger Pays Better (BPB) bonus multiplier
-/// Returns bonus scaled by PRECISION (e.g., PRECISION/10 = 0.1x = 10% bonus)
-/// Small amounts = 0 bonus, 150M+ tokens = 10% bonus
+/// Returns bonus scaled by PRECISION (e.g., PRECISION = 1x = 100% bonus)
+/// Small amounts = 0 bonus, 150M+ tokens = 100% bonus
 pub fn calculate_bpb_bonus(staked_amount: u64) -> Result<u64> {
     if staked_amount == 0 {
         return Ok(0);
     }
 
-    // Cap at BPB_THRESHOLD for bonus calculation - return exact 10% at threshold
-    if staked_amount >= BPB_THRESHOLD {
-        return Ok(PRECISION / 10);
-    }
-
-    // Formula: amount * PRECISION / (10 * BPB_THRESHOLD)
-    // Rewrite to avoid overflow: (amount / 10) * PRECISION / BPB_THRESHOLD
+    // Cap at BPB_THRESHOLD for bonus calculation - return exact 100% at threshold
+    // STAKE-02 requirement: BPB caps at 100%, not 10%
     let amount_div_10 = staked_amount / 10;
 
-    let numerator = amount_div_10
-        .checked_mul(PRECISION)
-        .ok_or(HelixError::Overflow)?;
+    if amount_div_10 >= BPB_THRESHOLD {
+        return Ok(PRECISION);  // 100% max BPB bonus per STAKE-02 requirement
+    }
 
-    let bonus = numerator
-        .checked_div(BPB_THRESHOLD)
-        .ok_or(HelixError::Overflow)?;
+    // Formula: (amount / 10) * PRECISION / BPB_THRESHOLD
+    // Frontend TypeScript: (BigInt(amount / 10n) * BigInt(PRECISION)) / BigInt(BPB_THRESHOLD)
+    let bonus = mul_div(amount_div_10, PRECISION, BPB_THRESHOLD)?;
 
     Ok(bonus)
 }
