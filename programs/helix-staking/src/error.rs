@@ -24,4 +24,18 @@ pub enum HelixError {
     AlreadyClaimed,
     #[msg("Failed to calculate mint account space")]
     InvalidMintSpace,
+    #[msg("Invalid stake duration (must be 1-5555 days)")]
+    InvalidStakeDuration,
+    #[msg("Stake is not active")]
+    StakeNotActive,
+    #[msg("Stake is already closed")]
+    StakeAlreadyClosed,
+    #[msg("Unauthorized stake access")]
+    UnauthorizedStakeAccess,
+    #[msg("Distribution already completed for current day")]
+    AlreadyDistributedToday,
+    #[msg("No active shares for distribution")]
+    NoActiveShares,
+    #[msg("No rewards to claim")]
+    NoRewardsToClaim,
 }

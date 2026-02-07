@@ -15,3 +15,21 @@ pub const DEFAULT_CLAIM_PERIOD_DAYS: u8 = 180;          // 6-month claim period
 pub const GLOBAL_STATE_SEED: &[u8] = b"global_state";
 pub const MINT_AUTHORITY_SEED: &[u8] = b"mint_authority";
 pub const MINT_SEED: &[u8] = b"helix_mint";
+
+// Staking constants
+pub const STAKE_SEED: &[u8] = b"stake";
+pub const PRECISION: u64 = 1_000_000_000; // 1e9 fixed-point scaling
+
+// Bonus curve parameters (from HEX deep dive)
+pub const MAX_STAKE_DAYS: u64 = 5555;     // Maximum stake duration
+pub const LPB_MAX_DAYS: u64 = 3641;       // 10 years for full 2x LPB bonus
+pub const BPB_THRESHOLD: u64 = 150_000_000_00_000_000; // 150M tokens (8 decimals)
+
+// Penalty parameters
+pub const MIN_PENALTY_BPS: u64 = 5000;     // 50% minimum early unstake penalty
+pub const BPS_SCALER: u64 = 10_000;
+pub const GRACE_PERIOD_DAYS: u64 = 14;
+pub const LATE_PENALTY_BPS_PER_DAY: u64 = 29; // ~1% per ~3.5 days → 100% at 350 days past grace
+// Total late days to 100% = GRACE_PERIOD_DAYS + (BPS_SCALER / LATE_PENALTY_BPS_PER_DAY) ≈ 14 + 345 ≈ 359
+// Per roadmap: "linear to 100% over 350 days, total loss after 365"
+// So 365 - 14 = 351 penalty days → BPS_SCALER / 351 ≈ 28.5, round up to 29
