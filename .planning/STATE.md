@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-07)
 ## Current Position
 
 Phase: 3 of 8 (Free Claim and Big Pay Day)
-Plan: 1 of 6 in current phase
+Plan: 2 of 6 in current phase
 Status: In progress
-Last activity: 2026-02-07 -- Completed 03-01-PLAN.md (Claim Foundations)
+Last activity: 2026-02-07 -- Completed 03-02-PLAN.md (Extend StakeAccount for BPD)
 
-Progress: [███░░░░░░░] 30.8%
+Progress: [███░░░░░░░] 34.6%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8
-- Average duration: ~13 min
-- Total execution time: ~1h 49min
+- Total plans completed: 9
+- Average duration: ~12 min
+- Total execution time: ~1h 52min
 
 **By Phase:**
 
@@ -30,11 +30,11 @@ Progress: [███░░░░░░░] 30.8%
 | 1 | 2 | ~1h | ~30min |
 | 2 | 4 | ~41min | ~10.25min |
 | 2.1 | 1 | ~6min | ~6min |
-| 3 | 1 | ~2min | ~2min |
+| 3 | 2 | ~5min | ~2.5min |
 
 **Recent Trend:**
-- Last 5 plans: 02-03 ✓, 02-04 ✓, 02.1-01 ✓, 03-01 ✓
-- Trend: Phase 3 started (2min for foundations)
+- Last 5 plans: 02-04 ✓, 02.1-01 ✓, 03-01 ✓, 03-02 ✓
+- Trend: Phase 3 accelerating (avg 2.5min/plan)
 
 *Updated after each plan completion*
 
@@ -73,6 +73,10 @@ Recent decisions affecting current work:
 - ClaimStatus tracks withdrawn_amount for double-withdrawal prevention (03-01)
 - Speed bonus tiers incentivize early claims: +20% week 1, +10% weeks 2-4 (03-01)
 - 30-day linear vesting with 10% immediate release (03-01)
+- StakeAccount expanded from 92 to 109 bytes with lazy migration on claim_rewards (03-02)
+- BPD bonus added to total reward payout (not separate claim instruction) (03-02)
+- realloc::zero = true ensures new fields default to 0/false (safe for migration) (03-02)
+- bpd_eligible defaults to false until claim period integration in plan 03-05 (03-02)
 
 ### Pending Todos
 
@@ -88,8 +92,8 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-07 22:40:34Z
-Stopped at: Completed 03-01-PLAN.md (Claim Foundations) - Phase 3 in progress
+Last session: 2026-02-07 22:41:53Z
+Stopped at: Completed 03-02-PLAN.md (Extend StakeAccount for BPD) - Phase 3 in progress
 Resume file: None
 
 ## Phase 1 Notes
