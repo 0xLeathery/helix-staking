@@ -108,6 +108,14 @@ pub mod helix_staking {
     ) -> Result<()> {
         instructions::trigger_big_pay_day::trigger_big_pay_day(ctx)
     }
+
+    pub fn free_claim(
+        ctx: Context<FreeClaim>,
+        snapshot_balance: u64,
+        proof: Vec<[u8; 32]>,
+    ) -> Result<()> {
+        instructions::free_claim::free_claim(ctx, snapshot_balance, proof)
+    }
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
