@@ -16,6 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Core Staking Mechanics** - Stake/unstake lifecycle, T-share math, penalties, inflation, share rate
 - [x] **Phase 2.1: Critical Math Fixes** - Expert board fixes: precision bugs, BPB bonus, admin_mint security (INSERTED)
 - [ ] **Phase 3: Free Claim and Big Pay Day** - Merkle-based token claim, unclaimed token distribution to stakers
+- [ ] **Phase 3.2: BPD Security Critical Fixes** - Fix CRITICAL BPD rate calculation and duplicate prevention (INSERTED)
 - [ ] **Phase 4: Staking Dashboard** - Next.js app with wallet connection, stake management, penalty calculator
 - [ ] **Phase 5: Light Indexer Service** - Event polling, Postgres storage, read-only REST API for historical data
 - [ ] **Phase 6: Analytics and Jupiter Integration** - Rich charts, supply breakdown, APY estimator, swap widget
@@ -88,6 +89,26 @@ Plans:
 Plans:
 - [ ] 03-01: TBD
 - [ ] 03-02: TBD
+
+### Phase 3.2: BPD Security Critical Fixes (INSERTED)
+**Goal**: Fix CRITICAL security vulnerabilities in Big Pay Day distribution preventing unfair rate calculation per-batch and duplicate bonus exploitation
+**Depends on**: Phase 3
+**Requirements**: Security audit findings (CRIT-1, CRIT-2)
+**Success Criteria** (what must be TRUE):
+  1. BPD rate (helix_per_share_day) is calculated once globally across ALL eligible stakes, not per-batch
+  2. Each stake can receive BPD exactly once per claim period (duplicate prevention via bpd_claim_period_id)
+  3. Same stake cannot appear multiple times in remaining_accounts within a single transaction
+  4. All existing Phase 3 tests continue to pass
+**Plans**: 2 plans in 2 waves
+
+Plans:
+- [ ] 03.2-01-PLAN.md -- State expansion (StakeAccount + ClaimConfig) + finalize_bpd_calculation instruction + error codes
+- [ ] 03.2-02-PLAN.md -- Modify trigger_big_pay_day for pre-calculated rate + duplicate prevention + security tests
+
+**Details:**
+Fixes from security audit `.planning/phases/03-free-claim-and-big-pay-day/03-SECURITY-AUDIT.md`:
+- CRIT-1: BPD rate calculated per-batch instead of globally (first batch drains pool)
+- CRIT-2: Same stake can receive BPD multiple times (drain entire unclaimed pool)
 
 ### Phase 4: Staking Dashboard
 **Goal**: Users can connect a Solana wallet and perform all staking operations through a web interface, reading state directly from the chain
@@ -177,6 +198,7 @@ Note: Phase 5 (Indexer) can overlap with Phase 4 (Dashboard) development since i
 | 2. Core Staking Mechanics | 4/4 | Complete | 2026-02-07 |
 | 2.1. Critical Math Fixes | 1/1 | Complete | 2026-02-07 |
 | 3. Free Claim and Big Pay Day | 0/TBD | Not started | - |
+| 3.2. BPD Security Critical Fixes | 0/TBD | Not started | - |
 | 4. Staking Dashboard | 0/TBD | Not started | - |
 | 5. Light Indexer Service | 0/TBD | Not started | - |
 | 6. Analytics and Jupiter Integration | 0/TBD | Not started | - |
