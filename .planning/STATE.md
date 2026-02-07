@@ -10,28 +10,29 @@ See: .planning/PROJECT.md (updated 2026-02-07)
 ## Current Position
 
 Phase: 2 of 8 (Core Staking Mechanics)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-02-07 -- Phase 1 complete (2/2 plans executed, verified)
+Plan: 1 of TBD in current phase
+Status: In progress
+Last activity: 2026-02-07 -- Completed 02-01-PLAN.md (Types and Math)
 
 Progress: [█░░░░░░░░░] 12.5%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2
-- Average duration: ~30 min
-- Total execution time: ~1 hour
+- Total plans completed: 3
+- Average duration: ~22 min
+- Total execution time: ~1h 6min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1 | 2 | ~1h | ~30min |
+| 2 | 1 | ~6min | ~6min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 ✓, 01-02 ✓
-- Trend: Stable
+- Last 5 plans: 01-01 ✓, 01-02 ✓, 02-01 ✓
+- Trend: Accelerating (last plan 5.6min)
 
 *Updated after each plan completion*
 
@@ -46,6 +47,10 @@ Recent decisions affecting current work:
 - Separate PDA per stake (not Vec in UserProfile) -- avoids account size limits
 - Slot-based day counting over unix_timestamp -- deterministic time logic
 - Merkle proofs stored as static JSON on CDN, root stored on-chain
+- Fixed-point arithmetic with PRECISION = 1e9 for all bonus/reward calculations (02-01)
+- LPB bonus caps at exactly 2x at threshold to avoid integer division rounding (02-01)
+- BPB bonus formula rewritten to prevent overflow: (amount / 10) * PRECISION / threshold (02-01)
+- Early penalty minimum of 50% applies when calculated penalty < 50% (02-01)
 
 ### Pending Todos
 
@@ -57,8 +62,8 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-07
-Stopped at: Phase 1 complete, ready for Phase 2 planning
+Last session: 2026-02-07 21:40:04Z
+Stopped at: Completed 02-01-PLAN.md (Types and Math foundation)
 Resume file: None
 
 ## Phase 1 Notes
