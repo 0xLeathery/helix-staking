@@ -32,11 +32,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Token-2022 mint exists with PDA mint authority, metadata extension, and 8 decimals
   3. GlobalState PDA is initialized with protocol parameters (inflation rate, claim period config, share rate)
   4. Bankrun test suite runs with time manipulation (clock mocking) and confirms account creation
-**Plans**: TBD
+**Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
+- [ ] 01-01-PLAN.md -- Anchor scaffold, constants/errors/events, GlobalState PDA, Token-2022 mint with metadata extension
+- [ ] 01-02-PLAN.md -- Bankrun test suite: initialization tests, clock mocking, double-init rejection
 
 ### Phase 2: Core Staking Mechanics
 **Goal**: Users can stake tokens for a chosen duration, earn T-shares with bonus curves, receive inflation rewards, and unstake with correct penalty enforcement -- the complete on-chain staking lifecycle
@@ -153,7 +153,7 @@ Note: Phase 5 (Indexer) can overlap with Phase 4 (Dashboard) development since i
 
 | Phase | Plans Complete | Status | Completed |
 |-------|---------------|--------|-----------|
-| 1. Foundation and Token Infrastructure | 0/TBD | Not started | - |
+| 1. Foundation and Token Infrastructure | 0/2 | Planned | - |
 | 2. Core Staking Mechanics | 0/TBD | Not started | - |
 | 3. Free Claim and Big Pay Day | 0/TBD | Not started | - |
 | 4. Staking Dashboard | 0/TBD | Not started | - |
