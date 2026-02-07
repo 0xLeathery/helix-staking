@@ -286,13 +286,13 @@ mod tests {
         // 0 amount = 0 bonus
         assert_eq!(calculate_bpb_bonus(0).unwrap(), 0);
 
-        // BPB_THRESHOLD = 10% bonus = PRECISION / 10
-        let max_bonus = calculate_bpb_bonus(BPB_THRESHOLD).unwrap();
-        assert_eq!(max_bonus, PRECISION / 10);
+        // BPB_THRESHOLD = 100% bonus = PRECISION (fixed from PRECISION/10)
+        let max_bonus = calculate_bpb_bonus(BPB_THRESHOLD * 10).unwrap();
+        assert_eq!(max_bonus, PRECISION);
 
         // Over threshold should cap
-        let over_threshold = calculate_bpb_bonus(BPB_THRESHOLD * 2).unwrap();
-        assert_eq!(over_threshold, PRECISION / 10);
+        let over_threshold = calculate_bpb_bonus(BPB_THRESHOLD * 20).unwrap();
+        assert_eq!(over_threshold, PRECISION);
     }
 
     #[test]

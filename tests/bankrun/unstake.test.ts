@@ -1010,5 +1010,104 @@ describe("Unstake", () => {
         globalStateBefore.totalTokensStaked.sub(stakeAmount).toString()
       );
     });
+
+    it("redistributes penalty to remaining stakers via share_rate increase", async () => {
+      const { context, provider, program, payer } = await setupTest();
+
+      const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
+
+      const userATA = getAssociatedTokenAddressSync(
+        mint,
+        payer.publicKey,
+        false,
+        TOKEN_2022_PROGRAM_ID
+      );
+
+      await program.provider.sendAndConfirm(
+        (() => {
+          const tx = new (require("@solana/web3.js").Transaction)();
+          tx.add(
+            require("@solana/spl-token").createAssociatedTokenAccountInstruction(
+              payer.publicKey,
+              userATA,
+              payer.publicKey,
+              mint,
+              TOKEN_2022_PROGRAM_ID
+            )
+          );
+          return tx;
+        })(),
+        [payer]
+      );
+
+      // Create two stakes: A (large) and B (small)
+      const stakeAmountA = new BN("5000000000"); // 50 tokens
+      const stakeAmountB = DEFAULT_MIN_STAKE_AMOUNT; // 0.1 tokens
+
+      await mintTokensToUser(program, payer, globalState, mint, mintAuthority, userATA, stakeAmountA.add(stakeAmountB));
+
+      // Create stake A
+      const stakeDays = 10;
+      const [stakePDA_A] = findStakePDA(program.programId, payer.publicKey, 0);
+
+      await program.methods
+        .createStake(stakeAmountA, stakeDays)
+        .accounts({
+          user: payer.publicKey,
+          globalState: globalState,
+          stakeAccount: stakePDA_A,
+          userTokenAccount: userATA,
+          mint: mint,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .signers([payer])
+        .rpc();
+
+      // Create stake B
+      const [stakePDA_B] = findStakePDA(program.programId, payer.publicKey, 1);
+
+      await program.methods
+        .createStake(stakeAmountB, stakeDays)
+        .accounts({
+          user: payer.publicKey,
+          globalState: globalState,
+          stakeAccount: stakePDA_B,
+          userTokenAccount: userATA,
+          mint: mint,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .signers([payer])
+        .rpc();
+
+      // Get initial share_rate
+      const globalStateBefore = await program.account.globalState.fetch(globalState);
+      const shareRateBefore = globalStateBefore.shareRate;
+
+      // Unstake A early (immediate = 100% penalty, but minimum 50% enforced)
+      await program.methods
+        .unstake()
+        .accounts({
+          user: payer.publicKey,
+          globalState: globalState,
+          stakeAccount: stakePDA_A,
+          userTokenAccount: userATA,
+          mint: mint,
+          mintAuthority: mintAuthority,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .signers([payer])
+        .rpc();
+
+      // Check: share_rate should have increased due to penalty redistribution
+      const globalStateAfter = await program.account.globalState.fetch(globalState);
+      const shareRateAfter = globalStateAfter.shareRate;
+
+      // share_rate should increase (penalty redistributed to stake B)
+      expect(shareRateAfter.gt(shareRateBefore)).to.equal(true);
+
+      // The increase should be: (penalty * PRECISION) / remaining_total_shares
+      // penalty = 50% of stakeAmountA = 2500000000
+      // Verify stake B now has more rewards due to share_rate bump
+    });
   });
 });

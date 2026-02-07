@@ -226,7 +226,8 @@ describe("CreateStake", () => {
     // Base shares = (amount * PRECISION) / share_rate
     const baseShares = stakeAmount.mul(new BN(1_000_000_000)).div(DEFAULT_STARTING_SHARE_RATE);
 
-    // BPB adds ~10% bonus at threshold
+    // BPB adds up to 100% bonus at threshold (15B tokens)
+    // With 100 tokens, bonus is tiny but still > 0
     expect(stakeAccount.tShares.gt(baseShares)).to.equal(true);
   });
 
