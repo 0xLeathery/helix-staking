@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-07)
 
 **Core value:** Users can stake tokens for a chosen duration, earn T-shares proportional to their commitment, and receive daily inflation rewards -- the complete stake-lock-earn lifecycle must work trustlessly on-chain.
-**Current focus:** Phase 2.1 - Critical Math Fixes
+**Current focus:** Phase 3 - Free Claim and Big Pay Day
 
 ## Current Position
 
-Phase: 2.1 of 8 (Critical Math Fixes - INSERTED)
-Plan: 1 of 1 in current phase
-Status: Phase complete
-Last activity: 2026-02-07 -- Completed 02.1-01-PLAN.md (Critical Math Fixes)
+Phase: 3 of 8 (Free Claim and Big Pay Day)
+Plan: 1 of 6 in current phase
+Status: In progress
+Last activity: 2026-02-07 -- Completed 03-01-PLAN.md (Claim Foundations)
 
-Progress: [███░░░░░░░] 28.6%
+Progress: [███░░░░░░░] 30.8%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7
-- Average duration: ~15 min
-- Total execution time: ~1h 47min
+- Total plans completed: 8
+- Average duration: ~13 min
+- Total execution time: ~1h 49min
 
 **By Phase:**
 
@@ -30,10 +30,11 @@ Progress: [███░░░░░░░] 28.6%
 | 1 | 2 | ~1h | ~30min |
 | 2 | 4 | ~41min | ~10.25min |
 | 2.1 | 1 | ~6min | ~6min |
+| 3 | 1 | ~2min | ~2min |
 
 **Recent Trend:**
-- Last 5 plans: 02-02 ✓, 02-03 ✓, 02-04 ✓, 02.1-01 ✓
-- Trend: Phase 2.1 complete (6min for critical fixes)
+- Last 5 plans: 02-03 ✓, 02-04 ✓, 02.1-01 ✓, 03-01 ✓
+- Trend: Phase 3 started (2min for foundations)
 
 *Updated after each plan completion*
 
@@ -68,6 +69,10 @@ Recent decisions affecting current work:
 - Penalties redistributed to remaining stakers via share_rate increase (02.1-01)
 - Admin mint cap stored in reserved fields to avoid reallocation (02.1-01)
 - days_elapsed added to InflationDistributed for indexer gap detection (02.1-01)
+- 8-byte merkle root prefix in ClaimStatus seeds for multi-period isolation (03-01)
+- ClaimStatus tracks withdrawn_amount for double-withdrawal prevention (03-01)
+- Speed bonus tiers incentivize early claims: +20% week 1, +10% weeks 2-4 (03-01)
+- 30-day linear vesting with 10% immediate release (03-01)
 
 ### Pending Todos
 
@@ -83,8 +88,8 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-07 12:10:00Z
-Stopped at: Completed 02.1-01-PLAN.md (Critical Math Fixes) - Phase 2.1 complete
+Last session: 2026-02-07 22:40:34Z
+Stopped at: Completed 03-01-PLAN.md (Claim Foundations) - Phase 3 in progress
 Resume file: None
 
 ## Phase 1 Notes
