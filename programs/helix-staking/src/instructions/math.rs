@@ -82,19 +82,21 @@ pub fn calculate_t_shares(
         .checked_add(bpb_bonus)
         .ok_or(HelixError::Overflow)?;
 
-    // effective_amount = staked_amount * total_multiplier / PRECISION
-    let effective_amount = staked_amount
-        .checked_mul(total_multiplier)
+    // t_shares = staked_amount * total_multiplier / share_rate
+    // Use u128 to avoid overflow with large amounts
+    let amount_u128 = staked_amount as u128;
+    let multiplier_u128 = total_multiplier as u128;
+    let share_rate_u128 = share_rate as u128;
+
+    let t_shares_u128 = amount_u128
+        .checked_mul(multiplier_u128)
         .ok_or(HelixError::Overflow)?
-        .checked_div(PRECISION)
+        .checked_div(share_rate_u128)
         .ok_or(HelixError::Overflow)?;
 
-    // t_shares = effective_amount * PRECISION / share_rate
-    let t_shares = effective_amount
-        .checked_mul(PRECISION)
-        .ok_or(HelixError::Overflow)?
-        .checked_div(share_rate)
-        .ok_or(HelixError::Overflow)?;
+    // Convert back to u64, checking for overflow
+    let t_shares = u64::try_from(t_shares_u128)
+        .map_err(|_| HelixError::Overflow)?;
 
     Ok(t_shares)
 }

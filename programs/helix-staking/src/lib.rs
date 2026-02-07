@@ -76,6 +76,10 @@ pub mod helix_staking {
     pub fn claim_rewards(ctx: Context<ClaimRewards>) -> Result<()> {
         instructions::claim_rewards::claim_rewards(ctx)
     }
+
+    pub fn admin_mint(ctx: Context<AdminMint>, amount: u64) -> Result<()> {
+        instructions::admin_mint::admin_mint(ctx, amount)
+    }
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]

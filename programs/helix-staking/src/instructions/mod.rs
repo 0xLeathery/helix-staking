@@ -12,3 +12,6 @@ pub use unstake::*;
 
 pub mod claim_rewards;
 pub use claim_rewards::*;
+
+pub mod admin_mint;
+pub use admin_mint::*;
