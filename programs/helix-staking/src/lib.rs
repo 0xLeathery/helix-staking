@@ -64,6 +64,10 @@ pub mod helix_staking {
     pub fn create_stake(ctx: Context<CreateStake>, amount: u64, days: u16) -> Result<()> {
         instructions::create_stake::create_stake(ctx, amount, days)
     }
+
+    pub fn crank_distribution(ctx: Context<CrankDistribution>) -> Result<()> {
+        instructions::crank_distribution::crank_distribution(ctx)
+    }
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
