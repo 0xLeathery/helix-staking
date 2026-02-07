@@ -63,7 +63,11 @@ pub mod helix_staking {
         Ok(())
     }
 
-    pub fn create_stake(ctx: Context<CreateStake>, amount: u64, days: u16) -> Result<()> {
+    pub fn create_stake<'info>(
+        ctx: Context<'_, '_, 'info, 'info, CreateStake<'info>>,
+        amount: u64,
+        days: u16,
+    ) -> Result<()> {
         instructions::create_stake::create_stake(ctx, amount, days)
     }
 
