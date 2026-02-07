@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-07)
 ## Current Position
 
 Phase: 3 of 8 (Free Claim and Big Pay Day)
-Plan: 2 of 6 in current phase
+Plan: 5 of 6 in current phase
 Status: In progress
-Last activity: 2026-02-07 -- Completed 03-02-PLAN.md (Extend StakeAccount for BPD)
+Last activity: 2026-02-07 -- Completed 03-05-PLAN.md (Initialize Claim Period Admin Instruction)
 
-Progress: [███░░░░░░░] 34.6%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9
-- Average duration: ~12 min
-- Total execution time: ~1h 52min
+- Total plans completed: 10
+- Average duration: ~11 min
+- Total execution time: ~1h 53min
 
 **By Phase:**
 
@@ -30,11 +30,11 @@ Progress: [███░░░░░░░] 34.6%
 | 1 | 2 | ~1h | ~30min |
 | 2 | 4 | ~41min | ~10.25min |
 | 2.1 | 1 | ~6min | ~6min |
-| 3 | 2 | ~5min | ~2.5min |
+| 3 | 3 | ~6min | ~2min |
 
 **Recent Trend:**
-- Last 5 plans: 02-04 ✓, 02.1-01 ✓, 03-01 ✓, 03-02 ✓
-- Trend: Phase 3 accelerating (avg 2.5min/plan)
+- Last 5 plans: 02.1-01 ✓, 03-01 ✓, 03-02 ✓, 03-05 ✓
+- Trend: Phase 3 accelerating (avg 2min/plan)
 
 *Updated after each plan completion*
 
@@ -77,6 +77,9 @@ Recent decisions affecting current work:
 - BPD bonus added to total reward payout (not separate claim instruction) (03-02)
 - realloc::zero = true ensures new fields default to 0/false (safe for migration) (03-02)
 - bpd_eligible defaults to false until claim period integration in plan 03-05 (03-02)
+- ClaimConfig uses init constraint ensuring singleton PDA (can only be created once) (03-05)
+- claim_period_started = true immediately after init (merkle_root immutable) (03-05)
+- Authority stored in ClaimConfig matches caller for future reference (03-05)
 
 ### Pending Todos
 
@@ -92,8 +95,8 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-07 22:41:53Z
-Stopped at: Completed 03-02-PLAN.md (Extend StakeAccount for BPD) - Phase 3 in progress
+Last session: 2026-02-07T22:47:17Z
+Stopped at: Completed 03-05-PLAN.md (Initialize Claim Period Admin Instruction) - Phase 3 in progress
 Resume file: None
 
 ## Phase 1 Notes
