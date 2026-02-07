@@ -65,6 +65,7 @@ export function getDefaultInitializeParams() {
     startingShareRate: DEFAULT_STARTING_SHARE_RATE,
     slotsPerDay: DEFAULT_SLOTS_PER_DAY,
     claimPeriodDays: DEFAULT_CLAIM_PERIOD_DAYS,
+    maxAdminMint: new BN("1000000000000000000"), // 10B tokens max for tests
   };
 }
 
