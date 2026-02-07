@@ -98,6 +98,16 @@ pub mod helix_staking {
             claim_period_id,
         )
     }
+
+    pub fn withdraw_vested(ctx: Context<WithdrawVested>) -> Result<()> {
+        instructions::withdraw_vested::withdraw_vested(ctx)
+    }
+
+    pub fn trigger_big_pay_day<'info>(
+        ctx: Context<'_, '_, 'info, 'info, TriggerBigPayDay<'info>>,
+    ) -> Result<()> {
+        instructions::trigger_big_pay_day::trigger_big_pay_day(ctx)
+    }
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
