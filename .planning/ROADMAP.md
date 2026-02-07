@@ -12,7 +12,7 @@ HELIX is a HEX-style staking protocol on Solana delivering the complete stake-lo
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation and Token Infrastructure** - Anchor scaffold, Token-2022 mint, GlobalState, dev environment
+- [x] **Phase 1: Foundation and Token Infrastructure** - Anchor scaffold, Token-2022 mint, GlobalState, dev environment
 - [ ] **Phase 2: Core Staking Mechanics** - Stake/unstake lifecycle, T-share math, penalties, inflation, share rate
 - [ ] **Phase 3: Free Claim and Big Pay Day** - Merkle-based token claim, unclaimed token distribution to stakers
 - [ ] **Phase 4: Staking Dashboard** - Next.js app with wallet connection, stake management, penalty calculator
@@ -35,8 +35,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 01-01-PLAN.md -- Anchor scaffold, constants/errors/events, GlobalState PDA, Token-2022 mint with metadata extension
-- [ ] 01-02-PLAN.md -- Bankrun test suite: initialization tests, clock mocking, double-init rejection
+- [x] 01-01-PLAN.md -- Anchor scaffold, constants/errors/events, GlobalState PDA, Token-2022 mint with metadata extension
+- [x] 01-02-PLAN.md -- Bankrun test suite: initialization tests, clock mocking, double-init rejection
 
 ### Phase 2: Core Staking Mechanics
 **Goal**: Users can stake tokens for a chosen duration, earn T-shares with bonus curves, receive inflation rewards, and unstake with correct penalty enforcement -- the complete on-chain staking lifecycle
@@ -153,7 +153,7 @@ Note: Phase 5 (Indexer) can overlap with Phase 4 (Dashboard) development since i
 
 | Phase | Plans Complete | Status | Completed |
 |-------|---------------|--------|-----------|
-| 1. Foundation and Token Infrastructure | 0/2 | Planned | - |
+| 1. Foundation and Token Infrastructure | 2/2 | Complete | 2026-02-07 |
 | 2. Core Staking Mechanics | 0/TBD | Not started | - |
 | 3. Free Claim and Big Pay Day | 0/TBD | Not started | - |
 | 4. Staking Dashboard | 0/TBD | Not started | - |

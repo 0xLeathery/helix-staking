@@ -80,7 +80,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TOKEN-01 | Phase 1: Foundation and Token Infrastructure | Pending |
+| TOKEN-01 | Phase 1: Foundation and Token Infrastructure | Complete* |
 | STAKE-01 | Phase 2: Core Staking Mechanics | Pending |
 | STAKE-02 | Phase 2: Core Staking Mechanics | Pending |
 | STAKE-03 | Phase 2: Core Staking Mechanics | Pending |
@@ -105,4 +105,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-07*
-*Last updated: 2026-02-07 after roadmap creation*
+*Last updated: 2026-02-07 after Phase 1 completion*
+
+**Notes:**
+- TOKEN-01*: Token-2022 mint with PDA authority and 8 decimals complete. Inline metadata extension deferred due to Bankrun compatibility; can be added via Metaplex before mainnet.
