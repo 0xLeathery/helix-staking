@@ -22,9 +22,19 @@ pub struct StakeAccount {
     pub is_active: bool,
     /// PDA bump seed
     pub bump: u8,
+    /// Big Pay Day bonus pending (set by trigger_big_pay_day, claimed via claim_rewards)
+    pub bpd_bonus_pending: u64,
+    /// True if stake was created during a claim period (eligible for BPD)
+    pub bpd_eligible: bool,
+    /// Slot when claim period started (for T-share-days calculation)
+    /// Set when stake is created during an active claim period, 0 otherwise
+    pub claim_period_start_slot: u64,
 }
 
 impl StakeAccount {
+    /// Old account size (for migration detection)
+    pub const OLD_LEN: usize = 92;
+
     pub const LEN: usize = 8    // discriminator
         + 32   // user (Pubkey)
         + 8    // stake_id
@@ -35,5 +45,9 @@ impl StakeAccount {
         + 2    // stake_days
         + 8    // reward_debt
         + 1    // is_active
-        + 1;   // bump
+        + 1    // bump
+        + 8    // bpd_bonus_pending (NEW)
+        + 1    // bpd_eligible (NEW)
+        + 8;   // claim_period_start_slot (NEW)
+    // Total: 109 bytes
 }
