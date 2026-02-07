@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use anchor_lang::system_program::{self, Transfer};
 use anchor_spl::token_2022::{self, MintTo, Token2022};
 use anchor_spl::token_interface::{Mint, TokenAccount};
 use crate::constants::*;
@@ -25,6 +26,9 @@ pub struct ClaimRewards<'info> {
         bump = stake_account.bump,
         constraint = stake_account.user == user.key() @ HelixError::UnauthorizedStakeAccess,
         constraint = stake_account.is_active @ HelixError::StakeNotActive,
+        realloc = StakeAccount::LEN,
+        realloc::payer = user,
+        realloc::zero = true,
     )]
     pub stake_account: Account<'info, StakeAccount>,
 
@@ -51,6 +55,7 @@ pub struct ClaimRewards<'info> {
     pub mint_authority: UncheckedAccount<'info>,
 
     pub token_program: Program<'info, Token2022>,
+    pub system_program: Program<'info, System>,
 }
 
 pub fn claim_rewards(ctx: Context<ClaimRewards>) -> Result<()> {
@@ -70,14 +75,25 @@ pub fn claim_rewards(ctx: Context<ClaimRewards>) -> Result<()> {
         stake.reward_debt,
     )?;
 
-    // Require non-zero rewards
-    require!(pending_rewards > 0, HelixError::NoRewardsToClaim);
+    // Include BPD bonus if pending
+    let bpd_bonus = stake.bpd_bonus_pending;
+    let total_rewards = pending_rewards
+        .checked_add(bpd_bonus)
+        .ok_or(HelixError::Overflow)?;
+
+    // Require non-zero total rewards
+    require!(total_rewards > 0, HelixError::NoRewardsToClaim);
 
     // CRITICAL: Update reward_debt BEFORE CPI (prevents double-claim)
     let stake_mut = &mut ctx.accounts.stake_account;
     stake_mut.reward_debt = t_shares
         .checked_mul(global_state.share_rate)
         .ok_or(HelixError::Overflow)?;
+
+    // Clear BPD bonus after claiming
+    if bpd_bonus > 0 {
+        stake_mut.bpd_bonus_pending = 0;
+    }
 
     // Update GlobalState
     global_state.total_claims_created = global_state.total_claims_created
@@ -100,14 +116,14 @@ pub fn claim_rewards(ctx: Context<ClaimRewards>) -> Result<()> {
         signer_seeds,
     );
 
-    token_2022::mint_to(cpi_ctx, pending_rewards)?;
+    token_2022::mint_to(cpi_ctx, total_rewards)?;
 
     // Emit event
     emit!(RewardsClaimed {
         slot: clock.slot,
         user,
         stake_id,
-        amount: pending_rewards,
+        amount: total_rewards,  // Includes BPD bonus
     });
 
     Ok(())
