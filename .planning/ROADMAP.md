@@ -14,6 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation and Token Infrastructure** - Anchor scaffold, Token-2022 mint, GlobalState, dev environment
 - [x] **Phase 2: Core Staking Mechanics** - Stake/unstake lifecycle, T-share math, penalties, inflation, share rate
+- [x] **Phase 2.1: Critical Math Fixes** - Expert board fixes: precision bugs, BPB bonus, admin_mint security (INSERTED)
 - [ ] **Phase 3: Free Claim and Big Pay Day** - Merkle-based token claim, unclaimed token distribution to stakers
 - [ ] **Phase 4: Staking Dashboard** - Next.js app with wallet connection, stake management, penalty calculator
 - [ ] **Phase 5: Light Indexer Service** - Event polling, Postgres storage, read-only REST API for historical data
@@ -55,6 +56,24 @@ Plans:
 - [x] 02-02-PLAN.md -- create_stake + crank_distribution instructions
 - [x] 02-03-PLAN.md -- unstake + claim_rewards instructions
 - [x] 02-04-PLAN.md -- Bankrun test suite for all staking operations (35 tests)
+
+### Phase 2.1: Critical Math Fixes (INSERTED)
+**Goal**: Fix all critical precision, overflow, and security issues identified by the expert board before proceeding to Phase 3
+**Depends on**: Phase 2
+**Requirements**: STAKE-02, STAKE-05 (corrections to existing implementation)
+**Success Criteria** (what must be TRUE):
+  1. BPB bonus returns correct 0-100% range (not capped at 10%)
+  2. All reward/inflation calculations use u128 intermediates to prevent overflow
+  3. Division happens AFTER multiplication in all financial math (precision preservation)
+  4. `admin_mint` emits `AdminMinted` event with cap enforcement
+  5. `calculate_pending_rewards` uses single-division pattern (subtract raw, divide once)
+  6. Penalties round UP (protocol-favorable) and redistribute to stakers
+  7. Late penalty hits exactly 100% at day 365
+  8. All 35+ tests pass after fixes
+**Plans**: 1 plan in 1 wave
+
+Plans:
+- [x] 02.1-01-PLAN.md -- Math fixes: mul_div helper, BPB cap, penalty rounding, late timing, reward precision, penalty redistribution, admin_mint event/cap
 
 ### Phase 3: Free Claim and Big Pay Day
 **Goal**: SOL holders can claim free HELIX tokens proportional to their snapshot balance, and unclaimed tokens are distributed to active stakers on Big Pay Day
@@ -156,6 +175,7 @@ Note: Phase 5 (Indexer) can overlap with Phase 4 (Dashboard) development since i
 |-------|---------------|--------|-----------|
 | 1. Foundation and Token Infrastructure | 2/2 | Complete | 2026-02-07 |
 | 2. Core Staking Mechanics | 4/4 | Complete | 2026-02-07 |
+| 2.1. Critical Math Fixes | 1/1 | Complete | 2026-02-07 |
 | 3. Free Claim and Big Pay Day | 0/TBD | Not started | - |
 | 4. Staking Dashboard | 0/TBD | Not started | - |
 | 5. Light Indexer Service | 0/TBD | Not started | - |
