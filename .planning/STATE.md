@@ -12,16 +12,16 @@ See: .planning/PROJECT.md (updated 2026-02-07)
 Phase: 3 of 8 (Free Claim and Big Pay Day)
 Plan: 5 of 6 in current phase
 Status: In progress
-Last activity: 2026-02-07 -- Completed 03-04-PLAN.md (Withdraw Vested and Big Pay Day)
+Last activity: 2026-02-07 -- Completed 03-03-PLAN.md (Free Claim Instruction)
 
 Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11
-- Average duration: ~11 min
-- Total execution time: ~1h 55min
+- Total plans completed: 12
+- Average duration: ~10 min
+- Total execution time: ~1h 58min
 
 **By Phase:**
 
@@ -30,11 +30,11 @@ Progress: [█████░░░░░] 50%
 | 1 | 2 | ~1h | ~30min |
 | 2 | 4 | ~41min | ~10.25min |
 | 2.1 | 1 | ~6min | ~6min |
-| 3 | 4 | ~8min | ~2min |
+| 3 | 5 | ~11min | ~2.2min |
 
 **Recent Trend:**
-- Last 5 plans: 03-01 ✓, 03-02 ✓, 03-05 ✓, 03-04 ✓
-- Trend: Phase 3 accelerating (avg 2min/plan)
+- Last 5 plans: 03-02 ✓, 03-05 ✓, 03-04 ✓, 03-03 ✓
+- Trend: Phase 3 accelerating (avg 2.2min/plan)
 
 *Updated after each plan completion*
 
@@ -84,6 +84,9 @@ Recent decisions affecting current work:
 - T-share-days weighting for BPD: t_shares * days_staked_during_claim_period (03-04)
 - Only stakes created DURING claim period eligible for BPD (03-04)
 - MAX_STAKES_PER_BPD = 20 for compute limit safety (03-04)
+- solana-nostd-keccak v0.1 for Merkle proof verification (03-03)
+- Ed25519 introspection for MEV prevention on free_claim (03-03)
+- Speed bonus: +20% week 1, +10% weeks 2-4, 0% after (03-03)
 
 ### Pending Todos
 
@@ -99,8 +102,8 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-07T22:48:00Z
-Stopped at: Completed 03-04-PLAN.md (Withdraw Vested and Big Pay Day) - Phase 3 in progress
+Last session: 2026-02-07T22:49:00Z
+Stopped at: Completed 03-03-PLAN.md (Free Claim Instruction) - Phase 3 in progress
 Resume file: None
 
 ## Phase 1 Notes
