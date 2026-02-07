@@ -76,12 +76,13 @@ pub fn crank_distribution(ctx: Context<CrankDistribution>) -> Result<()> {
     }
 
     // Calculate daily inflation amount
-    // Get total supply from mint account
-    let total_supply = ctx.accounts.mint.supply;
+    // Use total_tokens_staked instead of mint.supply because we burn tokens on stake
+    // In burn-and-mint model, supply doesn't reflect locked value
+    let total_staked = global_state.total_tokens_staked;
 
-    // annual_inflation = supply * annual_inflation_bp / 100_000_000
+    // annual_inflation = staked * annual_inflation_bp / 100_000_000
     // (basis points with 2 extra decimals of precision: 3.69% = 3_690_000 bp)
-    let annual_inflation = total_supply
+    let annual_inflation = total_staked
         .checked_mul(global_state.annual_inflation_bp)
         .ok_or(HelixError::Overflow)?
         .checked_div(100_000_000)
