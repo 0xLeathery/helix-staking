@@ -21,6 +21,10 @@ pub struct FreeClaim<'info> {
 
     /// The snapshot wallet that signed the claim message
     /// CHECK: Verified via Ed25519 signature introspection
+    /// Must equal claimer - delegation not supported (see MEDIUM-3 security fix)
+    #[account(
+        constraint = snapshot_wallet.key() == claimer.key() @ HelixError::Unauthorized
+    )]
     pub snapshot_wallet: UncheckedAccount<'info>,
 
     #[account(
