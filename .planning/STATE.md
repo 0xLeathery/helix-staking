@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-07)
 
 **Core value:** Users can stake tokens for a chosen duration, earn T-shares proportional to their commitment, and receive daily inflation rewards -- the complete stake-lock-earn lifecycle must work trustlessly on-chain.
-**Current focus:** Phase 2 - Core Staking Mechanics
+**Current focus:** Phase 2.1 - Critical Math Fixes
 
 ## Current Position
 
-Phase: 2 of 8 (Core Staking Mechanics)
-Plan: 4 of 4 in current phase
+Phase: 2.1 of 8 (Critical Math Fixes - INSERTED)
+Plan: 1 of 1 in current phase
 Status: Phase complete
-Last activity: 2026-02-07 -- Completed 02-04-PLAN.md (Bankrun test suite)
+Last activity: 2026-02-07 -- Completed 02.1-01-PLAN.md (Critical Math Fixes)
 
-Progress: [██░░░░░░░░] 25.0%
+Progress: [███░░░░░░░] 28.6%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6
-- Average duration: ~17 min
-- Total execution time: ~1h 41min
+- Total plans completed: 7
+- Average duration: ~15 min
+- Total execution time: ~1h 47min
 
 **By Phase:**
 
@@ -29,10 +29,11 @@ Progress: [██░░░░░░░░] 25.0%
 |-------|-------|-------|----------|
 | 1 | 2 | ~1h | ~30min |
 | 2 | 4 | ~41min | ~10.25min |
+| 2.1 | 1 | ~6min | ~6min |
 
 **Recent Trend:**
-- Last 5 plans: 02-01 ✓, 02-02 ✓, 02-03 ✓, 02-04 ✓
-- Trend: Phase 2 complete (avg 10.25min/plan, test plan 27min)
+- Last 5 plans: 02-02 ✓, 02-03 ✓, 02-04 ✓, 02.1-01 ✓
+- Trend: Phase 2.1 complete (6min for critical fixes)
 
 *Updated after each plan completion*
 
@@ -61,6 +62,12 @@ Recent decisions affecting current work:
 - Bankrun chosen over solana-test-validator for faster deterministic tests (02-04)
 - Test token amounts reduced to 10-100 tokens to avoid T-share overflow (02-04)
 - admin_mint instruction added for test token distribution (authority-gated) (02-04)
+- mul_div helpers use inline u128 casts instead of separate SafeMath module (02.1-01)
+- Penalties round UP to favor protocol using mul_div_up helper (02.1-01)
+- Late penalty formula uses LATE_PENALTY_WINDOW_DAYS for exact 100% at day 365 (02.1-01)
+- Penalties redistributed to remaining stakers via share_rate increase (02.1-01)
+- Admin mint cap stored in reserved fields to avoid reallocation (02.1-01)
+- days_elapsed added to InflationDistributed for indexer gap detection (02.1-01)
 
 ### Pending Todos
 
@@ -70,10 +77,14 @@ None yet.
 
 None yet.
 
+### Roadmap Evolution
+
+- Phase 2.1 inserted after Phase 2: Critical Math Fixes (URGENT) - Expert board identified 5 critical issues requiring fixes before Phase 3
+
 ## Session Continuity
 
-Last session: 2026-02-07 11:41:11Z
-Stopped at: Completed 02-04-PLAN.md (Bankrun test suite) - Phase 2 complete
+Last session: 2026-02-07 12:10:00Z
+Stopped at: Completed 02.1-01-PLAN.md (Critical Math Fixes) - Phase 2.1 complete
 Resume file: None
 
 ## Phase 1 Notes
