@@ -10,29 +10,29 @@ See: .planning/PROJECT.md (updated 2026-02-07)
 ## Current Position
 
 Phase: 2 of 8 (Core Staking Mechanics)
-Plan: 1 of TBD in current phase
+Plan: 2 of TBD in current phase
 Status: In progress
-Last activity: 2026-02-07 -- Completed 02-01-PLAN.md (Types and Math)
+Last activity: 2026-02-07 -- Completed 02-02-PLAN.md (create_stake and crank_distribution instructions)
 
-Progress: [█░░░░░░░░░] 12.5%
+Progress: [█░░░░░░░░░] 16.7%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
-- Average duration: ~22 min
-- Total execution time: ~1h 6min
+- Total plans completed: 4
+- Average duration: ~17 min
+- Total execution time: ~1h 9min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1 | 2 | ~1h | ~30min |
-| 2 | 1 | ~6min | ~6min |
+| 2 | 2 | ~9min | ~4.5min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 ✓, 01-02 ✓, 02-01 ✓
-- Trend: Accelerating (last plan 5.6min)
+- Last 5 plans: 01-01 ✓, 01-02 ✓, 02-01 ✓, 02-02 ✓
+- Trend: Accelerating (last plan 3.3min)
 
 *Updated after each plan completion*
 
@@ -51,6 +51,10 @@ Recent decisions affecting current work:
 - LPB bonus caps at exactly 2x at threshold to avoid integer division rounding (02-01)
 - BPB bonus formula rewritten to prevent overflow: (amount / 10) * PRECISION / threshold (02-01)
 - Early penalty minimum of 50% applies when calculated penalty < 50% (02-01)
+- Burn-and-mint token model: tokens burned on stake creation, minted on unstake/claim (02-02)
+- Lazy distribution via share_rate: crank updates share_rate but does NOT mint tokens (02-02)
+- Permissionless crank: anyone can trigger daily distribution (02-02)
+- StakeAccount PDA seeds include total_stakes_created for multiple stakes per user (02-02)
 
 ### Pending Todos
 
@@ -62,8 +66,8 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-07 21:40:04Z
-Stopped at: Completed 02-01-PLAN.md (Types and Math foundation)
+Last session: 2026-02-07 11:06:42Z
+Stopped at: Completed 02-02-PLAN.md (create_stake and crank_distribution instructions)
 Resume file: None
 
 ## Phase 1 Notes
