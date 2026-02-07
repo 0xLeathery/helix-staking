@@ -1,7 +1,10 @@
 import { PublicKey } from "@solana/web3.js";
-import { BN, Program } from "@coral-xyz/anchor";
+import * as anchor from "@coral-xyz/anchor";
 import { startAnchor, BanksClient, ProgramTestContext, Clock } from "solana-bankrun";
 import { BankrunProvider } from "anchor-bankrun";
+import BN from "bn.js";
+
+const { Program } = anchor;
 
 // Mirror PDA seeds from constants.rs
 export const GLOBAL_STATE_SEED = Buffer.from("global_state");

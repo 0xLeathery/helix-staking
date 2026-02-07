@@ -1,7 +1,4 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token_2022_extensions::{
-    token_metadata_initialize, TokenMetadataInitialize,
-};
 use anchor_spl::token_interface::{Mint, Token2022};
 
 pub mod constants;
@@ -45,31 +42,6 @@ pub mod helix_staking {
         global_state.total_shares = 0;
         global_state.current_day = 0;
         global_state.reserved = [0; 8];
-
-        // Initialize metadata on the mint
-        // Use CPI to token_metadata_initialize with PDA signer
-        let mint_authority_seeds: &[&[u8]] = &[
-            MINT_AUTHORITY_SEED,
-            &[ctx.bumps.mint_authority],
-        ];
-        let signer_seeds = &[mint_authority_seeds];
-
-        token_metadata_initialize(
-            CpiContext::new_with_signer(
-                ctx.accounts.token_program.to_account_info(),
-                TokenMetadataInitialize {
-                    program_id: ctx.accounts.token_program.to_account_info(),
-                    mint: ctx.accounts.mint.to_account_info(),
-                    metadata: ctx.accounts.mint.to_account_info(),
-                    mint_authority: ctx.accounts.mint_authority.to_account_info(),
-                    update_authority: ctx.accounts.mint_authority.to_account_info(),
-                },
-                signer_seeds,
-            ),
-            TOKEN_NAME.to_string(),
-            TOKEN_SYMBOL.to_string(),
-            TOKEN_URI.to_string(),
-        )?;
 
         // Emit initialization event with slot (indexer-expert requirement)
         emit!(ProtocolInitialized {
@@ -126,8 +98,6 @@ pub struct Initialize<'info> {
         mint::decimals = TOKEN_DECIMALS,
         mint::authority = mint_authority,
         mint::token_program = token_program,
-        extensions::metadata_pointer::authority = mint_authority,
-        extensions::metadata_pointer::metadata_address = mint,
     )]
     pub mint: InterfaceAccount<'info, Mint>,
 
