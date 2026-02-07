@@ -63,3 +63,63 @@ pub struct AdminMinted {
     pub recipient: Pubkey,  // Token account address
     pub amount: u64,
 }
+
+#[event]
+pub struct ClaimPeriodStarted {
+    pub slot: u64,
+    pub timestamp: i64,
+    pub claim_period_id: u32,
+    pub merkle_root: [u8; 32],
+    pub total_claimable: u64,
+    pub total_eligible: u32,
+    pub claim_deadline_slot: u64,
+}
+
+#[event]
+pub struct TokensClaimed {
+    pub slot: u64,
+    pub timestamp: i64,
+    pub claimer: Pubkey,
+    pub snapshot_wallet: Pubkey,
+    pub claim_period_id: u32,
+    pub snapshot_balance: u64,
+    pub base_amount: u64,
+    pub bonus_bps: u16,           // 2000 = +20%, 1000 = +10%, 0 = base
+    pub days_elapsed: u16,
+    pub total_amount: u64,        // base + bonus
+    pub immediate_amount: u64,    // 10% available now
+    pub vesting_amount: u64,      // 90% vesting
+    pub vesting_end_slot: u64,
+}
+
+#[event]
+pub struct VestedTokensWithdrawn {
+    pub slot: u64,
+    pub timestamp: i64,
+    pub claimer: Pubkey,
+    pub amount: u64,
+    pub total_vested: u64,
+    pub total_withdrawn: u64,
+    pub remaining: u64,
+}
+
+#[event]
+pub struct ClaimPeriodEnded {
+    pub slot: u64,
+    pub timestamp: i64,
+    pub claim_period_id: u32,
+    pub total_claimed: u64,
+    pub claims_count: u32,
+    pub unclaimed_amount: u64,
+}
+
+#[event]
+pub struct BigPayDayDistributed {
+    pub slot: u64,
+    pub timestamp: i64,
+    pub claim_period_id: u32,
+    pub total_unclaimed: u64,
+    pub total_eligible_share_days: u64,
+    pub helix_per_share_day: u64,
+    pub eligible_stakers: u32,
+}
