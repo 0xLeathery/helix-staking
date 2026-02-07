@@ -12,16 +12,16 @@ See: .planning/PROJECT.md (updated 2026-02-07)
 Phase: 3 of 8 (Free Claim and Big Pay Day)
 Plan: 5 of 6 in current phase
 Status: In progress
-Last activity: 2026-02-07 -- Completed 03-05-PLAN.md (Initialize Claim Period Admin Instruction)
+Last activity: 2026-02-07 -- Completed 03-04-PLAN.md (Withdraw Vested and Big Pay Day)
 
 Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10
+- Total plans completed: 11
 - Average duration: ~11 min
-- Total execution time: ~1h 53min
+- Total execution time: ~1h 55min
 
 **By Phase:**
 
@@ -30,10 +30,10 @@ Progress: [█████░░░░░] 50%
 | 1 | 2 | ~1h | ~30min |
 | 2 | 4 | ~41min | ~10.25min |
 | 2.1 | 1 | ~6min | ~6min |
-| 3 | 3 | ~6min | ~2min |
+| 3 | 4 | ~8min | ~2min |
 
 **Recent Trend:**
-- Last 5 plans: 02.1-01 ✓, 03-01 ✓, 03-02 ✓, 03-05 ✓
+- Last 5 plans: 03-01 ✓, 03-02 ✓, 03-05 ✓, 03-04 ✓
 - Trend: Phase 3 accelerating (avg 2min/plan)
 
 *Updated after each plan completion*
@@ -80,6 +80,10 @@ Recent decisions affecting current work:
 - ClaimConfig uses init constraint ensuring singleton PDA (can only be created once) (03-05)
 - claim_period_started = true immediately after init (merkle_root immutable) (03-05)
 - Authority stored in ClaimConfig matches caller for future reference (03-05)
+- Linear 30-day vesting: 10% immediate + 90% over 30 days (03-04)
+- T-share-days weighting for BPD: t_shares * days_staked_during_claim_period (03-04)
+- Only stakes created DURING claim period eligible for BPD (03-04)
+- MAX_STAKES_PER_BPD = 20 for compute limit safety (03-04)
 
 ### Pending Todos
 
@@ -95,8 +99,8 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-07T22:47:17Z
-Stopped at: Completed 03-05-PLAN.md (Initialize Claim Period Admin Instruction) - Phase 3 in progress
+Last session: 2026-02-07T22:48:00Z
+Stopped at: Completed 03-04-PLAN.md (Withdraw Vested and Big Pay Day) - Phase 3 in progress
 Resume file: None
 
 ## Phase 1 Notes
