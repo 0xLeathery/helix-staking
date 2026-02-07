@@ -48,12 +48,13 @@ Plans:
   3. User who unstakes after the 14-day grace period loses tokens on a linear decay (100% loss after 365 days late)
   4. Permissionless crank distributes daily inflation (3.69% annual) proportionally to all active T-share holders
   5. Share rate increases after each distribution day, making future stakes cost more per T-share
-**Plans**: TBD
+**Plans**: 4 plans in 4 waves
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
-- [ ] 02-03: TBD
+- [ ] 02-01-PLAN.md -- StakeAccount PDA, math module (bonus curves, penalties, reward helpers), expanded constants/errors/events
+- [ ] 02-02-PLAN.md -- create_stake + crank_distribution instructions
+- [ ] 02-03-PLAN.md -- unstake + claim_rewards instructions
+- [ ] 02-04-PLAN.md -- Bankrun test suite for all staking operations (20+ tests)
 
 ### Phase 3: Free Claim and Big Pay Day
 **Goal**: SOL holders can claim free HELIX tokens proportional to their snapshot balance, and unclaimed tokens are distributed to active stakers on Big Pay Day
