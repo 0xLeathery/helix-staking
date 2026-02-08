@@ -223,12 +223,14 @@ Plans:
   3. Security audit (self-review or third-party) has been completed with all critical findings addressed
   4. Mainnet program is deployed with upgrade authority under a multisig (Squads Protocol)
   5. Indexer, frontend, and program are all running on mainnet and the full user flow works end-to-end
-**Plans**: TBD
+**Plans**: 5 plans in 4 waves
 
 Plans:
-- [ ] 08-01: TBD
-- [ ] 08-02: TBD
-- [ ] 08-03: TBD
+- [ ] 08-01-PLAN.md -- Migrate test runner from ts-mocha to vitest (fix ESM blocker), run all 94 tests
+- [ ] 08-02-PLAN.md -- Fix CRIT-1 (zero-bonus deadlock), HIGH-1 (abort_bpd), HIGH-2 (premature seal), MED-1 (zero-amount window)
+- [ ] 08-03-PLAN.md -- Security fix tests (10+ new tests) + 7-agent security audit
+- [ ] 08-04-PLAN.md -- Devnet deployment + automated validation script
+- [ ] 08-05-PLAN.md -- Mainnet deployment + Squads multisig + frontend/indexer config
 
 ## Progress
 
@@ -249,4 +251,4 @@ Note: Phase 5 (Indexer) can overlap with Phase 4 (Dashboard) development since i
 | 5. Light Indexer Service | 3/3 | Complete | 2026-02-08 |
 | 6. Analytics and Jupiter Integration | 3/3 | Complete | 2026-02-08 |
 | 7. Leaderboard and Marketing Site | 3/3 | Complete | 2026-02-08 |
-| 8. Testing, Audit, and Mainnet Launch | 0/TBD | Not started | - |
+| 8. Testing, Audit, and Mainnet Launch | 0/5 | Not started | - |
