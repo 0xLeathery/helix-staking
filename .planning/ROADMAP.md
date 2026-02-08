@@ -18,7 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 3: Free Claim and Big Pay Day** - Merkle-based token claim, unclaimed token distribution to stakers
 - [x] **Phase 3.2: BPD Security Critical Fixes** - Fix CRITICAL BPD rate calculation and duplicate prevention (INSERTED)
 - [ ] **Phase 3.3: Post-Audit Security Hardening** - Fix permissionless finalize rate manipulation, crank overflow, arithmetic safety (INSERTED)
-- [ ] **Phase 4: Staking Dashboard** - Next.js app with wallet connection, stake management, penalty calculator
+- [x] **Phase 4: Staking Dashboard** - Next.js app with wallet connection, stake management, penalty calculator
 - [ ] **Phase 5: Light Indexer Service** - Event polling, Postgres storage, read-only REST API for historical data
 - [ ] **Phase 6: Analytics and Jupiter Integration** - Rich charts, supply breakdown, APY estimator, swap widget
 - [ ] **Phase 7: Leaderboard and Marketing Site** - Whale tracker, leaderboard pages, marketing/landing site, economics explainer
@@ -161,7 +161,7 @@ Plans:
 - [x] 04-02-PLAN.md -- Dashboard page + stake viewing + global stats + React Query hooks + math module + format utils
 - [x] 04-03-PLAN.md -- Create stake wizard (3-step: Amount -> Duration -> Confirm) with bonus preview and T-share calculation
 - [x] 04-04-PLAN.md -- Unstake + penalty calculator + reward claiming + BPD window blocking
-- [ ] 04-05-PLAN.md -- Free claim + vesting + BPD status + permissionless crank + mobile/a11y polish
+- [x] 04-05-PLAN.md -- Free claim + vesting + BPD status + permissionless crank + mobile/a11y polish
 
 ### Phase 5: Light Indexer Service
 **Goal**: A background service continuously indexes on-chain program events into Postgres and serves historical data through a read-only REST API

@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-07)
 ## Current Position
 
 Phase: 4 of 8 (Staking Dashboard)
-Plan: 4 of 5 in current phase
-Status: In progress
-Last activity: 2026-02-08 -- Completed 04-04-PLAN.md (Penalty Calculator and Unstake)
+Plan: 5 of 5 in current phase
+Status: Complete
+Last activity: 2026-02-08 -- Completed 04-05-PLAN.md (Free Claim, BPD Status, Mobile Polish)
 
-Progress: [████████░░] 80% (4 of 5 plans complete)
+Progress: [██████████] 100% (5 of 5 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 23
-- Average duration: ~8.1 min
-- Total execution time: ~3h 19min
+- Total plans completed: 24
+- Average duration: ~8.3 min
+- Total execution time: ~3h 34min
 
 **By Phase:**
 
@@ -33,11 +33,11 @@ Progress: [████████░░] 80% (4 of 5 plans complete)
 | 3 | 6 | ~19min | ~3.2min |
 | 3.2 | 2 | ~19min | ~9.5min |
 | 3.3 | 4 | ~19min | ~4.75min |
-| 4 | 4/5 | ~43min | ~10.75min |
+| 4 | 5/5 | ~58min | ~11.6min |
 
 **Recent Trend:**
-- Last 5 plans: 03.3-04 ✓, 04-01 ✓, 04-02 ✓, 04-03 ✓, 04-04 ✓
-- Trend: Phase 4 progressing - penalty calculator and unstake flow completed in 18min
+- Last 5 plans: 04-01 ✓, 04-02 ✓, 04-03 ✓, 04-04 ✓, 04-05 ✓
+- Trend: Phase 4 complete - all dashboard features implemented in 58min (avg 11.6min/plan)
 
 *Updated after each plan completion*
 
@@ -132,6 +132,15 @@ Recent decisions affecting current work:
 - useStakes uses memcmp filter at offset 8 (after Anchor discriminator) for user pubkey (04-02)
 - useTokenBalance uses Token-2022 program ID for ATA derivation (04-02)
 - Dashboard layout uses wallet gate pattern with responsive sidebar/hamburger (04-02)
+- Ed25519 verify instruction manually constructed for free_claim MEV protection (04-05)
+- Merkle proof data loaded from static CDN (NEXT_PUBLIC_MERKLE_DATA_URL env var) (04-05)
+- Speed bonus tiers: +20% week 1, +10% weeks 2-4, 0% after (04-05)
+- Vesting calculation: 10% immediate + 90% linear over 30 days from claim_slot (04-05)
+- BPD phase detection from ClaimConfig: bpdCalculationComplete, bpdStakesFinalized, bpdStakesDistributed (04-05)
+- Crank already-distributed check: globalState.currentDay >= calculated current day (04-05)
+- useToast wraps sonner with variant: destructive->error, default->success (04-05)
+- Button touch targets 44-48px minimum for WCAG 2.1 AA mobile accessibility (04-05)
+- Skip-to-content link for keyboard navigation (sr-only, focus:not-sr-only) (04-05)
 
 ### Pending Todos
 
@@ -153,10 +162,10 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-08T06:33:00Z
-Stopped at: Completed 04-04-PLAN.md (Penalty Calculator and Unstake)
-Resume file: .planning/phases/04-staking-dashboard/04-05-PLAN.md
-Next: Phase 4 Plan 5 - Final dashboard integration and polish
+Last session: 2026-02-08T06:45:00Z
+Stopped at: Completed 04-05-PLAN.md (Free Claim, BPD Status, Mobile Polish)
+Resume file: None - Phase 4 complete
+Next: Phase 5 - Backend Integration (API server, indexer, or data pipeline)
 
 ## Phase 1 Notes
 
