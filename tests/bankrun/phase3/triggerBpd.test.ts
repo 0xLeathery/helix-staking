@@ -29,7 +29,7 @@ describe("TriggerBigPayDay", () => {
     stakePDAs: any[],
   ) {
     const remainingAccounts = stakePDAs.map(pubkey => ({
-      pubkey, isSigner: false, isWritable: false,
+      pubkey, isSigner: false, isWritable: true,
     }));
     await program.methods
       .finalizeBpdCalculation()
@@ -39,6 +39,23 @@ describe("TriggerBigPayDay", () => {
         claimConfig: claimConfigPDA,
       })
       .remainingAccounts(remainingAccounts)
+      .signers([payer])
+      .rpc();
+  }
+
+  async function sealBpdFinalize(
+    program: any,
+    payer: any,
+    globalState: any,
+    claimConfigPDA: any,
+  ) {
+    await program.methods
+      .sealBpdFinalize()
+      .accounts({
+        authority: payer.publicKey,
+        globalState,
+        claimConfig: claimConfigPDA,
+      })
       .signers([payer])
       .rpc();
   }
@@ -129,6 +146,9 @@ describe("TriggerBigPayDay", () => {
     // Finalize BPD calculation
     await finalizeBpd(program, payer, setup.globalState, setup.claimConfigPDA, [setup.stakePDA]);
 
+    // Seal BPD finalize
+    await sealBpdFinalize(program, payer, setup.globalState, setup.claimConfigPDA);
+
     // Trigger BPD
     await program.methods
       .triggerBigPayDay()
@@ -172,6 +192,9 @@ describe("TriggerBigPayDay", () => {
 
     // Finalize with payer first
     await finalizeBpd(program, payer, setup.globalState, setup.claimConfigPDA, [setup.stakePDA]);
+
+    // Seal BPD finalize
+    await sealBpdFinalize(program, payer, setup.globalState, setup.claimConfigPDA);
 
     // Random caller should be able to trigger BPD
     await program.methods
@@ -258,6 +281,9 @@ describe("TriggerBigPayDay", () => {
 
     // Finalize BPD calculation
     await finalizeBpd(program, payer, globalState, claimConfigPDA, [stakePDA_A, stakePDA_B]);
+
+    // Seal BPD finalize
+    await sealBpdFinalize(program, payer, globalState, claimConfigPDA);
 
     // Trigger BPD with both stakes
     await program.methods
@@ -350,6 +376,9 @@ describe("TriggerBigPayDay", () => {
     // Finalize BPD calculation
     await finalizeBpd(program, payer, globalState, claimConfigPDA, [stakePDA_before, stakePDA_during]);
 
+    // Seal BPD finalize
+    await sealBpdFinalize(program, payer, globalState, claimConfigPDA);
+
     // Trigger BPD with both stakes
     await program.methods
       .triggerBigPayDay()
@@ -422,6 +451,9 @@ describe("TriggerBigPayDay", () => {
 
     // Finalize BPD calculation
     await finalizeBpd(program, payer, globalState, claimConfigPDA, [stakePDA]);
+
+    // Seal BPD finalize
+    await sealBpdFinalize(program, payer, globalState, claimConfigPDA);
 
     // Trigger BPD
     await program.methods
@@ -591,34 +623,22 @@ describe("TriggerBigPayDay", () => {
     // Advance past claim period
     await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
-    // Try to finalize with no eligible stakes - finalize won't mark complete
+    // Try to finalize with no eligible stakes - finalize will process but won't count anything
     await finalizeBpd(program, payer, globalState, claimConfigPDA, [stakePDA]);
 
-    // Check that finalize didn't mark complete (no eligible stakers)
+    // Try to seal - should fail with NoEligibleStakers since nothing was finalized
+    try {
+      await sealBpdFinalize(program, payer, globalState, claimConfigPDA);
+      expect.fail("Expected NoEligibleStakers error");
+    } catch (error: any) {
+      expect(error.toString()).to.include("NoEligibleStakers");
+    }
+
+    // Check that seal didn't mark complete (no eligible stakers)
     let claimConfig = await program.account.claimConfig.fetch(claimConfigPDA);
     expect(claimConfig.bpdCalculationComplete).to.equal(false);
 
-    // Trigger should fail with BpdCalculationNotComplete since finalize didn't complete
-    try {
-      await program.methods
-        .triggerBigPayDay()
-        .accounts({
-          caller: payer.publicKey,
-          globalState,
-          claimConfig: claimConfigPDA,
-        })
-        .remainingAccounts([
-          { pubkey: stakePDA, isSigner: false, isWritable: true },
-        ])
-        .signers([payer])
-        .rpc();
-
-      expect.fail("Expected BpdCalculationNotComplete error");
-    } catch (error: any) {
-      expect(error.toString()).to.include("BpdCalculationNotComplete");
-    }
-
-    // Verify: stake should still have 0 BPD bonus (not eligible and trigger failed)
+    // Verify: stake should still have 0 BPD bonus (not eligible)
     const stake = await program.account.stakeAccount.fetch(stakePDA);
     expect(stake.bpdBonusPending.toString()).to.equal("0");
   });
@@ -632,6 +652,9 @@ describe("TriggerBigPayDay", () => {
 
     // Finalize BPD calculation
     await finalizeBpd(program, payer, setup.globalState, setup.claimConfigPDA, [setup.stakePDA]);
+
+    // Seal BPD finalize
+    await sealBpdFinalize(program, payer, setup.globalState, setup.claimConfigPDA);
 
     // First trigger - stake should receive BPD
     await program.methods
@@ -651,6 +674,7 @@ describe("TriggerBigPayDay", () => {
     const firstBonus = stakeAfterFirst.bpdBonusPending;
     expect(new BN(firstBonus.toString()).gtn(0)).to.equal(true);
     expect(stakeAfterFirst.bpdClaimPeriodId).to.equal(1);
+    expect(stakeAfterFirst.bpdFinalizePeriodId).to.equal(1);
 
     // Verify ClaimConfig shows complete
     const claimConfig = await program.account.claimConfig.fetch(setup.claimConfigPDA);
@@ -666,6 +690,9 @@ describe("TriggerBigPayDay", () => {
 
     // Finalize BPD calculation
     await finalizeBpd(program, payer, setup.globalState, setup.claimConfigPDA, [setup.stakePDA]);
+
+    // Seal BPD finalize
+    await sealBpdFinalize(program, payer, setup.globalState, setup.claimConfigPDA);
 
     // Trigger with same stake multiple times in remaining_accounts
     // Note: Solana may reject duplicate writable accounts, but test the duplicate prevention logic
@@ -688,6 +715,7 @@ describe("TriggerBigPayDay", () => {
     // Verify bonus is for ONE calculation, not multiple
     expect(bonus.gtn(0)).to.equal(true);
     expect(stakeAfter.bpdClaimPeriodId).to.equal(1);
+    expect(stakeAfter.bpdFinalizePeriodId).to.equal(1);
   });
 
   it("rejects double finalize", async () => {
@@ -700,7 +728,10 @@ describe("TriggerBigPayDay", () => {
     // First finalize succeeds
     await finalizeBpd(program, payer, setup.globalState, setup.claimConfigPDA, [setup.stakePDA]);
 
-    // Second finalize should fail
+    // Seal BPD finalize
+    await sealBpdFinalize(program, payer, setup.globalState, setup.claimConfigPDA);
+
+    // Second finalize should fail (after seal)
     try {
       await finalizeBpd(program, payer, setup.globalState, setup.claimConfigPDA, [setup.stakePDA]);
       expect.fail("Expected BpdCalculationAlreadyComplete error");
@@ -793,6 +824,9 @@ describe("TriggerBigPayDay", () => {
 
     // Finalize with ALL 3 stakes
     await finalizeBpd(program, payer, globalState, claimConfigPDA, [stakePDA_A, stakePDA_B, stakePDA_C]);
+
+    // Seal BPD finalize
+    await sealBpdFinalize(program, payer, globalState, claimConfigPDA);
 
     // Trigger batch 1 with only stake A
     await program.methods
