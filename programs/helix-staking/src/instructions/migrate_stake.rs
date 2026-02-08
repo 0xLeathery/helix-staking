@@ -1,0 +1,30 @@
+use anchor_lang::prelude::*;
+
+use crate::constants::*;
+use crate::state::StakeAccount;
+
+#[derive(Accounts)]
+pub struct MigrateStake<'info> {
+    #[account(mut)]
+    pub payer: Signer<'info>,
+
+    #[account(
+        mut,
+        seeds = [
+            STAKE_SEED,
+            stake_account.user.as_ref(),
+            &stake_account.stake_id.to_le_bytes()
+        ],
+        bump = stake_account.bump,
+        realloc = StakeAccount::LEN,
+        realloc::payer = payer,
+        realloc::zero = true,
+    )]
+    pub stake_account: Account<'info, StakeAccount>,
+
+    pub system_program: Program<'info, System>,
+}
+
+pub fn migrate_stake(_ctx: Context<MigrateStake>) -> Result<()> {
+    Ok(())
+}
