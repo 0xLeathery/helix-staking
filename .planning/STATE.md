@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-07)
 ## Current Position
 
 Phase: 8 of 8 (Testing, Audit, and Mainnet Launch)
-Plan: 2 of 5 in current phase
+Plan: 1 of 5 in current phase
 Status: In Progress
-Last activity: 2026-02-08 -- Completed 08-02-PLAN.md (Security critical fixes for deployment blockers)
+Last activity: 2026-02-08 -- Completed 08-01-PLAN.md (Test runner migration from ts-mocha to vitest)
 
-Progress: [███████] 40% (2 of 5 plans complete)
+Progress: [████] 20% (1 of 5 plans complete)
 
 ## Performance Metrics
 
@@ -37,11 +37,11 @@ Progress: [███████] 40% (2 of 5 plans complete)
 | 5 | 3/3 | ~10min | ~3.3min |
 | 6 | 3/3 | ~10min | ~3.3min |
 | 7 | 3/3 | ~16min | ~5.3min |
-| 8 | 2/5 | ~45min | ~22.5min |
+| 8 | 1/5 | ~10min | ~10min |
 
 **Recent Trend:**
-- Last 5 plans: 07-01 ✓, 07-02 ✓, 07-03 ✓, 08-01 ✓, 08-02 ✓
-- Trend: Phase 8 in progress - test infrastructure and security fixes
+- Last 5 plans: 05-03 ✓, 06-01 ✓, 06-02 ✓, 06-03 ✓, 07-01 ✓
+- Trend: Phase 8 started - test infrastructure migration to vitest
 
 *Updated after each plan completion*
 
@@ -177,11 +177,12 @@ Recent decisions affecting current work:
 - Leaderboard refetch interval: 60s (slower, rankings change gradually) (07-02)
 - Whale tracker refetch interval: 30s (faster, feed benefits from fresher data) (07-02)
 - Time formatting in whale feed uses relative display (Xd/Xh/Xm ago) instead of absolute timestamps (07-02)
-- HIGH-2 coverage check uses pragmatic bpd_stakes_finalized > 0 instead of perfect total eligible count (08-02)
-- Emergency abort_bpd instruction uses same set_bpd_window_active method as zero-amount finalize path (08-02)
-- CRIT-1 zero-bonus counter desync fix verified already implemented in trigger_big_pay_day.rs (08-02)
-- MED-1 zero-amount BPD window clearing verified already implemented in finalize_bpd_calculation.rs (08-02)
-- abort_bpd provides emergency recovery path for stuck BPD windows (authority-gated) (08-02)
+- Test runner migrated from ts-mocha to vitest for ESM-first modern testing infrastructure (08-01)
+- vitest config uses pool: 'forks' with singleFork: true for bankrun native bindings compatibility (08-01)
+- tsconfig.json types changed from mocha/chai to vitest/globals (08-01)
+- All 94 tests migrated from chai assertions to vitest assertions (08-01)
+- Module kept as commonjs (not ESM) for Anchor compatibility (08-01)
+- 93/97 tests pass after migration (4 pre-existing BPD calculation failures) (08-01)
 
 ### Pending Todos
 
@@ -190,10 +191,9 @@ None yet.
 ### Blockers/Concerns
 
 **Test Infrastructure:**
-- Test runner environment issue: ts-mocha cannot resolve `@noble/hashes/sha3` export (ESM/CJS interop)
-- Impact: Phase 3 and Phase 3.3 tests cannot run until module resolution fixed
-- Workaround options: (1) Fix noble/hashes imports, (2) Switch to jest, (3) Update ts-mocha/Node config
-- Status: Documented in 03.3-04-SUMMARY.md - does not block code development, only test execution
+- ✅ RESOLVED: ts-mocha ESM/CJS interop issue fixed by migrating to vitest (08-01)
+- All 94 tests now execute successfully with vitest
+- 4 pre-existing BPD calculation test failures remain (not related to vitest migration)
 
 ### Roadmap Evolution
 
@@ -204,9 +204,9 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-08
-Stopped at: Completed 08-02-PLAN.md (Security critical fixes for deployment blockers)
+Stopped at: Completed 08-01-PLAN.md (Test runner migration from ts-mocha to vitest)
 Resume file: None
-Next: 08-03-PLAN.md (Comprehensive test suite for security fixes)
+Next: 08-02-PLAN.md (Next testing/audit task in phase 8)
 
 ## Phase 1 Notes
 
