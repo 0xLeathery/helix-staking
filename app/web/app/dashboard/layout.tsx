@@ -46,8 +46,16 @@ export default function DashboardLayout({
 
   return (
     <div className="flex min-h-screen bg-zinc-950">
+      {/* Skip to content link for accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-helix-600 focus:text-white focus:rounded-md"
+      >
+        Skip to content
+      </a>
+
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:border-r lg:border-zinc-800 lg:bg-zinc-950">
+      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:border-r lg:border-zinc-800 lg:bg-zinc-950" role="navigation" aria-label="Main navigation">
         <div className="flex h-16 items-center px-6 border-b border-zinc-800">
           <Link href="/" className="text-lg font-bold text-helix-400">
             HELIX
@@ -107,7 +115,9 @@ export default function DashboardLayout({
         )}
 
         {/* Main Content */}
-        <main className="flex-1 p-4 lg:p-8 overflow-auto">{children}</main>
+        <main id="main-content" className="flex-1 p-4 lg:p-8 overflow-auto" role="main">
+          {children}
+        </main>
       </div>
     </div>
   );
