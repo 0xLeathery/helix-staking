@@ -58,6 +58,9 @@ pub fn unstake(ctx: Context<Unstake>) -> Result<()> {
     let global_state = &mut ctx.accounts.global_state;
     let stake = &ctx.accounts.stake_account;
 
+    // HIGH-2: Block unstake during BPD window
+    require!(!global_state.is_bpd_window_active(), HelixError::UnstakeBlockedDuringBpd);
+
     // Save values we'll need later (before mutating stake)
     let stake_user = stake.user;
     let stake_id = stake.stake_id;
@@ -66,6 +69,7 @@ pub fn unstake(ctx: Context<Unstake>) -> Result<()> {
     let start_slot = stake.start_slot;
     let end_slot = stake.end_slot;
     let reward_debt = stake.reward_debt;
+    let bpd_bonus = stake.bpd_bonus_pending;
 
     // Calculate pending rewards
     let pending_rewards = calculate_pending_rewards(
@@ -104,14 +108,19 @@ pub fn unstake(ctx: Context<Unstake>) -> Result<()> {
         .checked_sub(penalty)
         .ok_or(HelixError::Underflow)?;
 
-    // Total amount to mint to user (return + rewards)
+    // LOW-2: Total amount to mint to user (return + rewards + bpd_bonus)
     let total_mint_amount = return_amount
         .checked_add(pending_rewards)
+        .ok_or(HelixError::Overflow)?
+        .checked_add(bpd_bonus)
         .ok_or(HelixError::Overflow)?;
 
     // CRITICAL: Mark inactive BEFORE CPI (reentrancy prevention)
     let stake_mut = &mut ctx.accounts.stake_account;
     stake_mut.is_active = false;
+
+    // LOW-2: Clear BPD bonus after including in payout
+    stake_mut.bpd_bonus_pending = 0;
 
     // Update GlobalState
     global_state.total_unstakes_created = global_state.total_unstakes_created
@@ -170,7 +179,7 @@ pub fn unstake(ctx: Context<Unstake>) -> Result<()> {
         return_amount,
         penalty_amount: penalty,
         penalty_type,
-        rewards_claimed: pending_rewards,
+        rewards_claimed: pending_rewards.checked_add(bpd_bonus).unwrap_or(pending_rewards),
     });
 
     Ok(())
