@@ -159,8 +159,8 @@ Fixes from post-Phase-3.2 security audit (7-agent team, 2026-02-08):
 Plans:
 - [x] 04-01-PLAN.md -- Scaffold Next.js 14 + providers + wallet connection + CSP headers + RPC proxy + shadcn/ui primitives + Solana constants/IDL/PDAs
 - [x] 04-02-PLAN.md -- Dashboard page + stake viewing + global stats + React Query hooks + math module + format utils
-- [ ] 04-03-PLAN.md -- Create stake wizard (3-step: Amount -> Duration -> Confirm) with bonus preview and T-share calculation
-- [ ] 04-04-PLAN.md -- Unstake + penalty calculator + reward claiming + BPD window blocking
+- [x] 04-03-PLAN.md -- Create stake wizard (3-step: Amount -> Duration -> Confirm) with bonus preview and T-share calculation
+- [x] 04-04-PLAN.md -- Unstake + penalty calculator + reward claiming + BPD window blocking
 - [ ] 04-05-PLAN.md -- Free claim + vesting + BPD status + permissionless crank + mobile/a11y polish
 
 ### Phase 5: Light Indexer Service
