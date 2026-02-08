@@ -14,6 +14,7 @@ pub struct FinalizeBpdCalculation<'info> {
     pub caller: Signer<'info>,
 
     #[account(
+        mut,
         seeds = [GLOBAL_STATE_SEED],
         bump = global_state.bump,
     )]
@@ -37,7 +38,7 @@ pub fn finalize_bpd_calculation<'info>(
 ) -> Result<()> {
     let clock = Clock::get()?;
     let claim_config = &mut ctx.accounts.claim_config;
-    let global_state = &ctx.accounts.global_state;
+    let global_state = &mut ctx.accounts.global_state;
 
     // === Verify claim period has ended ===
     require!(
@@ -47,7 +48,8 @@ pub fn finalize_bpd_calculation<'info>(
 
     // === Determine if this is first batch ===
     let is_first_batch = claim_config.bpd_remaining_unclaimed == 0
-        && claim_config.bpd_total_share_days == 0;
+        && claim_config.bpd_total_share_days == 0
+        && claim_config.bpd_snapshot_slot == 0;
 
     // === Calculate unclaimed amount on first batch ===
     let unclaimed_amount = if is_first_batch {
@@ -57,6 +59,13 @@ pub fn finalize_bpd_calculation<'info>(
 
         // Store for pagination
         claim_config.bpd_remaining_unclaimed = amount;
+
+        // Capture snapshot slot for consistent days_staked calculation across all batches
+        claim_config.bpd_snapshot_slot = clock.slot;
+
+        // HIGH-2: Set BPD window active (blocks unstake during distribution)
+        global_state.set_bpd_window_active(true);
+
         amount
     } else {
         claim_config.bpd_remaining_unclaimed
@@ -68,6 +77,9 @@ pub fn finalize_bpd_calculation<'info>(
         claim_config.bpd_helix_per_share_day = 0;
         return Ok(());
     }
+
+    // === Store snapshot slot for consistent days_staked calculation ===
+    let snapshot_slot = claim_config.bpd_snapshot_slot;
 
     // === Accumulate share-days from this batch ===
     let mut batch_share_days: u128 = 0;
@@ -82,18 +94,23 @@ pub fn finalize_bpd_calculation<'info>(
             continue;
         }
 
-        // Skip if account data is too small
+        // Skip un-migrated stakes (< 117 bytes)
         let data = account_info.try_borrow_data()?;
         if data.len() < StakeAccount::LEN {
             continue;
         }
 
         // Use proper Anchor deserialization
-        let stake = match StakeAccount::try_deserialize(&mut &data[..]) {
+        let mut stake = match StakeAccount::try_deserialize(&mut &data[..]) {
             Ok(s) => s,
             Err(_) => continue,
         };
         drop(data);
+
+        // CRIT-NEW-1: Skip stakes already counted this period (duplicate prevention)
+        if stake.bpd_finalize_period_id == claim_config.claim_period_id {
+            continue;
+        }
 
         // === SECURITY: Validate PDA derivation ===
         let expected_pda = Pubkey::create_program_address(
@@ -122,8 +139,8 @@ pub fn finalize_bpd_calculation<'info>(
             continue;
         }
 
-        // Calculate days staked during claim period
-        let stake_end = std::cmp::min(clock.slot, stake.end_slot);
+        // Calculate days staked during claim period using snapshot slot
+        let stake_end = std::cmp::min(snapshot_slot, stake.end_slot);
         let days_staked = stake_end
             .saturating_sub(stake.start_slot)
             .checked_div(global_state.slots_per_day)
@@ -141,6 +158,17 @@ pub fn finalize_bpd_calculation<'info>(
         batch_share_days = batch_share_days
             .checked_add(share_days)
             .ok_or(HelixError::Overflow)?;
+
+        // CRIT-NEW-1: Mark stake as finalized for this period
+        stake.bpd_finalize_period_id = claim_config.claim_period_id;
+
+        // Write updated stake back to account
+        stake.try_serialize(&mut &mut account_info.try_borrow_mut_data()?[..])?;
+
+        // Increment finalized counter
+        claim_config.bpd_stakes_finalized = claim_config.bpd_stakes_finalized
+            .checked_add(1)
+            .ok_or(HelixError::Overflow)?;
     }
 
     // === Accumulate to global total ===
@@ -148,28 +176,8 @@ pub fn finalize_bpd_calculation<'info>(
         .checked_add(batch_share_days)
         .ok_or(HelixError::Overflow)?;
 
-    // === Check if this is the last batch ===
-    let is_last_batch = ctx.remaining_accounts.len() < MAX_STAKES_PER_FINALIZE;
-
-    if is_last_batch {
-        if claim_config.bpd_total_share_days > 0 {
-            // Calculate global BPD rate
-            let helix_per_share_day = (unclaimed_amount as u128)
-                .checked_mul(PRECISION as u128)
-                .ok_or(HelixError::Overflow)?
-                .checked_div(claim_config.bpd_total_share_days)
-                .ok_or(HelixError::DivisionByZero)?;
-
-            claim_config.bpd_helix_per_share_day = helix_per_share_day;
-            claim_config.bpd_calculation_complete = true;
-        } else {
-            // No eligible stakes found at all - reset pagination state
-            // Keep pool pending for future distribution
-            claim_config.bpd_remaining_unclaimed = 0;
-            claim_config.bpd_total_share_days = 0;
-            // DO NOT set calculation_complete
-        }
-    }
+    // Note: Rate calculation and completion is now done by seal_bpd_finalize (authority-gated)
+    // This prevents first-batch-drains-pool attack (CRIT-NEW-1)
 
     Ok(())
 }
