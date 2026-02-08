@@ -1,5 +1,5 @@
-import { describe, it } from "mocha";
-import { expect } from "chai";
+import { describe, it, expect } from "vitest";
+
 import { Keypair, SystemProgram, Transaction, SYSVAR_INSTRUCTIONS_PUBKEY } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync, createAssociatedTokenAccountInstruction } from "@solana/spl-token";
 import BN from "bn.js";
@@ -138,15 +138,15 @@ describe("FreeClaim", () => {
 
     // Verify ClaimStatus created
     const claimStatus = await program.account.claimStatus.fetch(claimStatusPDA);
-    expect(claimStatus.isClaimed).to.equal(true);
-    expect(claimStatus.claimedAmount.toString()).to.equal(totalAmount.toString());
-    expect(claimStatus.bonusBps).to.equal(SPEED_BONUS_WEEK1_BPS); // Day 0 = week 1 bonus
-    expect(claimStatus.withdrawnAmount.toString()).to.equal(immediateAmount.toString());
+    expect(claimStatus.isClaimed).toBe(true);
+    expect(claimStatus.claimedAmount.toString()).toBe(totalAmount.toString());
+    expect(claimStatus.bonusBps).toBe(SPEED_BONUS_WEEK1_BPS); // Day 0 = week 1 bonus
+    expect(claimStatus.withdrawnAmount.toString()).toBe(immediateAmount.toString());
 
     // Verify tokens were minted (immediate portion only)
     const accountInfo = await context.banksClient.getAccount(claimerATA);
     const tokenBalance = Buffer.from(accountInfo!.data).readBigUInt64LE(64);
-    expect(tokenBalance.toString()).to.equal(immediateAmount.toString());
+    expect(tokenBalance.toString()).toBe(immediateAmount.toString());
   });
 
   it("applies +20% speed bonus in week 1", async () => {
@@ -165,7 +165,7 @@ describe("FreeClaim", () => {
 
     const proof = getMerkleProof(tree, snapshotWallet.publicKey);
     const { bonusBps, totalAmount } = calculateSpeedBonus(snapshotBalance, 3);
-    expect(bonusBps).to.equal(SPEED_BONUS_WEEK1_BPS); // +20%
+    expect(bonusBps).toBe(SPEED_BONUS_WEEK1_BPS); // +20%
 
     // Fund and setup claimer
     const claimerATA = getAssociatedTokenAddressSync(mint, snapshotWallet.publicKey, false, TOKEN_2022_PROGRAM_ID);
@@ -196,8 +196,8 @@ describe("FreeClaim", () => {
     await program.provider.sendAndConfirm(claimTx, [snapshotWallet]);
 
     const claimStatus = await program.account.claimStatus.fetch(claimStatusPDA);
-    expect(claimStatus.bonusBps).to.equal(SPEED_BONUS_WEEK1_BPS);
-    expect(claimStatus.claimedAmount.toString()).to.equal(totalAmount.toString());
+    expect(claimStatus.bonusBps).toBe(SPEED_BONUS_WEEK1_BPS);
+    expect(claimStatus.claimedAmount.toString()).toBe(totalAmount.toString());
   });
 
   it("applies +10% speed bonus in weeks 2-4", async () => {
@@ -216,7 +216,7 @@ describe("FreeClaim", () => {
 
     const proof = getMerkleProof(tree, snapshotWallet.publicKey);
     const { bonusBps, totalAmount } = calculateSpeedBonus(snapshotBalance, 15);
-    expect(bonusBps).to.equal(SPEED_BONUS_WEEK2_4_BPS); // +10%
+    expect(bonusBps).toBe(SPEED_BONUS_WEEK2_4_BPS); // +10%
 
     // Setup claimer
     const claimerATA = getAssociatedTokenAddressSync(mint, snapshotWallet.publicKey, false, TOKEN_2022_PROGRAM_ID);
@@ -246,7 +246,7 @@ describe("FreeClaim", () => {
     await program.provider.sendAndConfirm(claimTx, [snapshotWallet]);
 
     const claimStatus = await program.account.claimStatus.fetch(claimStatusPDA);
-    expect(claimStatus.bonusBps).to.equal(SPEED_BONUS_WEEK2_4_BPS);
+    expect(claimStatus.bonusBps).toBe(SPEED_BONUS_WEEK2_4_BPS);
   });
 
   it("applies no bonus after day 28", async () => {
@@ -265,8 +265,8 @@ describe("FreeClaim", () => {
 
     const proof = getMerkleProof(tree, snapshotWallet.publicKey);
     const { bonusBps, baseAmount, totalAmount } = calculateSpeedBonus(snapshotBalance, 50);
-    expect(bonusBps).to.equal(0); // No bonus
-    expect(totalAmount.toString()).to.equal(baseAmount.toString()); // Total = base
+    expect(bonusBps).toBe(0); // No bonus
+    expect(totalAmount.toString()).toBe(baseAmount.toString()); // Total = base
 
     // Setup claimer
     const claimerATA = getAssociatedTokenAddressSync(mint, snapshotWallet.publicKey, false, TOKEN_2022_PROGRAM_ID);
@@ -296,8 +296,8 @@ describe("FreeClaim", () => {
     await program.provider.sendAndConfirm(claimTx, [snapshotWallet]);
 
     const claimStatus = await program.account.claimStatus.fetch(claimStatusPDA);
-    expect(claimStatus.bonusBps).to.equal(0);
-    expect(claimStatus.claimedAmount.toString()).to.equal(baseAmount.toString());
+    expect(claimStatus.bonusBps).toBe(0);
+    expect(claimStatus.claimedAmount.toString()).toBe(baseAmount.toString());
   });
 
   it("splits tokens 10% immediate / 90% vesting", async () => {
@@ -345,11 +345,11 @@ describe("FreeClaim", () => {
 
     const claimStatus = await program.account.claimStatus.fetch(claimStatusPDA);
     // withdrawn_amount starts at immediate portion
-    expect(claimStatus.withdrawnAmount.toString()).to.equal(immediateAmount.toString());
+    expect(claimStatus.withdrawnAmount.toString()).toBe(immediateAmount.toString());
     // claimedAmount = total (immediate + vesting)
-    expect(claimStatus.claimedAmount.toString()).to.equal(totalAmount.toString());
+    expect(claimStatus.claimedAmount.toString()).toBe(totalAmount.toString());
     // Verify 10/90 split
-    expect(immediateAmount.muln(9).toString()).to.equal(vestingAmount.toString());
+    expect(immediateAmount.muln(9).toString()).toBe(vestingAmount.toString());
   });
 
   it("rejects invalid merkle proof", async () => {
@@ -395,7 +395,7 @@ describe("FreeClaim", () => {
 
     try {
       await program.provider.sendAndConfirm(claimTx, [snapshotWallet]);
-      expect.fail("Expected InvalidMerkleProof error");
+      throw new Error("Expected InvalidMerkleProof error");
     } catch (error: any) {
       expect(error.toString()).to.include("InvalidMerkleProof");
     }
@@ -439,7 +439,7 @@ describe("FreeClaim", () => {
 
     try {
       await program.provider.sendAndConfirm(claimTx, [snapshotWallet]);
-      expect.fail("Expected MissingEd25519Instruction error");
+      throw new Error("Expected MissingEd25519Instruction error");
     } catch (error: any) {
       expect(error.toString()).to.include("MissingEd25519Instruction");
     }
@@ -487,7 +487,7 @@ describe("FreeClaim", () => {
 
     try {
       await program.provider.sendAndConfirm(claimTx, [wrongSigner]);
-      expect.fail("Expected InvalidSignature error");
+      throw new Error("Expected InvalidSignature error");
     } catch (error: any) {
       expect(error.toString()).to.include("InvalidSignature");
     }
@@ -548,7 +548,7 @@ describe("FreeClaim", () => {
 
     try {
       await program.provider.sendAndConfirm(claimTx2, [snapshotWallet]);
-      expect.fail("Expected error for double claim");
+      throw new Error("Expected error for double claim");
     } catch (error: any) {
       // Account already exists - Anchor throws constraint error
       expect(error.toString().toLowerCase()).to.satisfy((msg: string) =>
@@ -603,7 +603,7 @@ describe("FreeClaim", () => {
 
     try {
       await program.provider.sendAndConfirm(claimTx, [snapshotWallet]);
-      expect.fail("Expected ClaimPeriodEnded error");
+      throw new Error("Expected ClaimPeriodEnded error");
     } catch (error: any) {
       expect(error.toString()).to.include("ClaimPeriodEnded");
     }
@@ -651,7 +651,7 @@ describe("FreeClaim", () => {
 
     try {
       await program.provider.sendAndConfirm(claimTx, [snapshotWallet]);
-      expect.fail("Expected error for claim before period starts");
+      throw new Error("Expected error for claim before period starts");
     } catch (error: any) {
       // ClaimConfig doesn't exist, so should fail
       expect(error.toString().toLowerCase()).to.satisfy((msg: string) =>
@@ -703,7 +703,7 @@ describe("FreeClaim", () => {
 
     try {
       await program.provider.sendAndConfirm(claimTx, [snapshotWallet]);
-      expect.fail("Expected SnapshotBalanceTooLow error");
+      throw new Error("Expected SnapshotBalanceTooLow error");
     } catch (error: any) {
       expect(error.toString()).to.include("SnapshotBalanceTooLow");
     }
@@ -725,7 +725,7 @@ describe("FreeClaim", () => {
 
     const proof = getMerkleProof(tree, snapshotWallet.publicKey);
     const { bonusBps } = calculateSpeedBonus(snapshotBalance, 7);
-    expect(bonusBps).to.equal(SPEED_BONUS_WEEK1_BPS); // Still +20%
+    expect(bonusBps).toBe(SPEED_BONUS_WEEK1_BPS); // Still +20%
 
     // Setup claimer
     const claimerATA = getAssociatedTokenAddressSync(mint, snapshotWallet.publicKey, false, TOKEN_2022_PROGRAM_ID);
@@ -755,7 +755,7 @@ describe("FreeClaim", () => {
     await program.provider.sendAndConfirm(claimTx, [snapshotWallet]);
 
     const claimStatus = await program.account.claimStatus.fetch(claimStatusPDA);
-    expect(claimStatus.bonusBps).to.equal(SPEED_BONUS_WEEK1_BPS);
+    expect(claimStatus.bonusBps).toBe(SPEED_BONUS_WEEK1_BPS);
   });
 
   it("applies +10% bonus on day 28 (last day of bonus period)", async () => {
@@ -774,7 +774,7 @@ describe("FreeClaim", () => {
 
     const proof = getMerkleProof(tree, snapshotWallet.publicKey);
     const { bonusBps } = calculateSpeedBonus(snapshotBalance, 28);
-    expect(bonusBps).to.equal(SPEED_BONUS_WEEK2_4_BPS); // Still +10%
+    expect(bonusBps).toBe(SPEED_BONUS_WEEK2_4_BPS); // Still +10%
 
     // Setup claimer
     const claimerATA = getAssociatedTokenAddressSync(mint, snapshotWallet.publicKey, false, TOKEN_2022_PROGRAM_ID);
@@ -804,6 +804,6 @@ describe("FreeClaim", () => {
     await program.provider.sendAndConfirm(claimTx, [snapshotWallet]);
 
     const claimStatus = await program.account.claimStatus.fetch(claimStatusPDA);
-    expect(claimStatus.bonusBps).to.equal(SPEED_BONUS_WEEK2_4_BPS);
+    expect(claimStatus.bonusBps).toBe(SPEED_BONUS_WEEK2_4_BPS);
   });
 });

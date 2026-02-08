@@ -1,5 +1,5 @@
-import { describe, it } from "mocha";
-import { expect } from "chai";
+import { describe, it, expect } from "vitest";
+
 import { PublicKey, Keypair } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import BN from "bn.js";
@@ -92,10 +92,10 @@ describe("CrankDistribution", () => {
 
     // Verify share_rate increased
     const globalStateAfter = await program.account.globalState.fetch(globalState);
-    expect(globalStateAfter.shareRate.gt(shareRateBefore)).to.equal(true);
+    expect(globalStateAfter.shareRate.gt(shareRateBefore)).toBe(true);
 
     // Verify current_day incremented
-    expect(globalStateAfter.currentDay.toString()).to.equal("1");
+    expect(globalStateAfter.currentDay.toString()).toBe("1");
   });
 
   it("rejects double distribution on same day", async () => {
@@ -176,11 +176,11 @@ describe("CrankDistribution", () => {
         })
         .rpc();
 
-      expect.fail("Expected AlreadyDistributedToday error");
+      throw new Error("Expected AlreadyDistributedToday error");
     } catch (error: any) {
       // Anchor errors have error.error.errorCode or error code in message
       // Check both to handle different error formats
-      expect(error).to.exist;
+      expect(error).toBeDefined();
     }
   });
 
@@ -259,10 +259,10 @@ describe("CrankDistribution", () => {
 
     // Verify share_rate increased more than 1 day would (3 days of inflation)
     const globalStateAfter = await program.account.globalState.fetch(globalState);
-    expect(globalStateAfter.shareRate.gt(shareRateBefore)).to.equal(true);
+    expect(globalStateAfter.shareRate.gt(shareRateBefore)).toBe(true);
 
     // Verify current_day jumped to 3
-    expect(globalStateAfter.currentDay.toString()).to.equal("3");
+    expect(globalStateAfter.currentDay.toString()).toBe("3");
   });
 
   it("handles crank with zero total_shares (no stakes)", async () => {
@@ -273,7 +273,7 @@ describe("CrankDistribution", () => {
 
     // Verify total_shares is 0
     const globalStateBefore = await program.account.globalState.fetch(globalState);
-    expect(globalStateBefore.totalShares.toString()).to.equal("0");
+    expect(globalStateBefore.totalShares.toString()).toBe("0");
 
     // Advance clock by 1 day
     const slotsPerDay = BigInt(DEFAULT_SLOTS_PER_DAY.toString());
@@ -294,10 +294,10 @@ describe("CrankDistribution", () => {
 
     // Verify current_day incremented
     const globalStateAfter = await program.account.globalState.fetch(globalState);
-    expect(globalStateAfter.currentDay.toString()).to.equal("1");
+    expect(globalStateAfter.currentDay.toString()).toBe("1");
 
     // Share_rate should remain unchanged (no distribution when total_shares = 0)
-    expect(globalStateAfter.shareRate.toString()).to.equal(globalStateBefore.shareRate.toString());
+    expect(globalStateAfter.shareRate.toString()).toBe(globalStateBefore.shareRate.toString());
   });
 
   it("anyone can call crank (permissionless)", async () => {
@@ -392,6 +392,6 @@ describe("CrankDistribution", () => {
 
     // Verify crank succeeded (current_day incremented)
     const globalStateAfter = await program.account.globalState.fetch(globalState);
-    expect(globalStateAfter.currentDay.toString()).to.equal("1");
+    expect(globalStateAfter.currentDay.toString()).toBe("1");
   });
 });

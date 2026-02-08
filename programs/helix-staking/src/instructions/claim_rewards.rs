@@ -28,7 +28,7 @@ pub struct ClaimRewards<'info> {
         constraint = stake_account.is_active @ HelixError::StakeNotActive,
         realloc = StakeAccount::LEN,
         realloc::payer = user,
-        realloc::zero = true,
+        realloc::zero = false,
     )]
     pub stake_account: Account<'info, StakeAccount>,
 

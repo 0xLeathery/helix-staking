@@ -1,5 +1,5 @@
-import { describe, it } from "mocha";
-import { expect } from "chai";
+import { describe, it, expect } from "vitest";
+
 import { Keypair, SystemProgram, Transaction, SYSVAR_INSTRUCTIONS_PUBKEY } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync, createAssociatedTokenAccountInstruction } from "@solana/spl-token";
 import BN from "bn.js";
@@ -124,7 +124,7 @@ describe("WithdrawVested", () => {
 
     try {
       await program.provider.sendAndConfirm(withdrawTx, [setup.snapshotWallet]);
-      expect.fail("Expected NoVestedTokens error");
+      throw new Error("Expected NoVestedTokens error");
     } catch (error: any) {
       // At slot 0 after claim, only immediate portion is vested, which is already withdrawn
       expect(error.toString()).to.include("NoVestedTokens");
@@ -178,7 +178,7 @@ describe("WithdrawVested", () => {
 
     // withdrawn_amount should have increased by approximately expectedWithdrawable
     // Allow some tolerance for slot timing
-    expect(newWithdrawn.gt(setup.immediateAmount)).to.equal(true);
+    expect(newWithdrawn.gt(setup.immediateAmount)).toBe(true);
   });
 
   it("withdraws full amount after 30 days", async () => {
@@ -207,7 +207,7 @@ describe("WithdrawVested", () => {
 
     // Verify full amount withdrawn
     const claimStatusAfter = await program.account.claimStatus.fetch(setup.claimStatusPDA);
-    expect(claimStatusAfter.withdrawnAmount.toString()).to.equal(setup.totalAmount.toString());
+    expect(claimStatusAfter.withdrawnAmount.toString()).toBe(setup.totalAmount.toString());
   });
 
   it("tracks cumulative withdrawn_amount", async () => {
@@ -259,9 +259,9 @@ describe("WithdrawVested", () => {
     const withdrawn2 = new BN(statusAfter2.withdrawnAmount.toString());
 
     // Cumulative tracking: second should be >= first
-    expect(withdrawn2.gte(withdrawn1)).to.equal(true);
+    expect(withdrawn2.gte(withdrawn1)).toBe(true);
     // After 30 days, should have full amount
-    expect(withdrawn2.toString()).to.equal(setup.totalAmount.toString());
+    expect(withdrawn2.toString()).toBe(setup.totalAmount.toString());
   });
 
   it("prevents double-withdrawal of same tokens", async () => {
@@ -305,7 +305,7 @@ describe("WithdrawVested", () => {
 
     try {
       await program.provider.sendAndConfirm(withdrawTx2, [setup.snapshotWallet]);
-      expect.fail("Expected NoVestedTokens error");
+      throw new Error("Expected NoVestedTokens error");
     } catch (error: any) {
       expect(error.toString()).to.include("NoVestedTokens");
     }
@@ -356,9 +356,9 @@ describe("WithdrawVested", () => {
     const expectedDay20Approx = setup.immediateAmount.add(vestingPortion.muln(20).divn(30));
 
     // Allow small tolerance for rounding
-    expect(expectedDay10.sub(expectedDay10Approx).abs().ltn(100)).to.equal(true);
-    expect(expectedDay20.sub(expectedDay20Approx).abs().ltn(100)).to.equal(true);
-    expect(expectedDay30.toString()).to.equal(setup.totalAmount.toString());
+    expect(expectedDay10.sub(expectedDay10Approx).abs().ltn(100)).toBe(true);
+    expect(expectedDay20.sub(expectedDay20Approx).abs().ltn(100)).toBe(true);
+    expect(expectedDay30.toString()).toBe(setup.totalAmount.toString());
   });
 
   it("emits VestedTokensWithdrawn event", async () => {
@@ -393,11 +393,11 @@ describe("WithdrawVested", () => {
 
     // Verify state reflects event data
     const amountWithdrawn = withdrawnAfter.sub(withdrawnBefore);
-    expect(amountWithdrawn.gtn(0)).to.equal(true);
+    expect(amountWithdrawn.gtn(0)).toBe(true);
 
     // Remaining should be claimedAmount - withdrawnAmount
     const remaining = setup.totalAmount.sub(withdrawnAfter);
-    expect(remaining.gten(0)).to.equal(true);
+    expect(remaining.gten(0)).toBe(true);
   });
 
   it("rejects withdrawal before claim", async () => {
@@ -460,7 +460,7 @@ describe("WithdrawVested", () => {
 
     try {
       await program.provider.sendAndConfirm(withdrawTx, [snapshotWallet]);
-      expect.fail("Expected error for withdrawal before claim");
+      throw new Error("Expected error for withdrawal before claim");
     } catch (error: any) {
       // ClaimStatus account doesn't exist
       expect(error.toString().toLowerCase()).to.satisfy((msg: string) =>

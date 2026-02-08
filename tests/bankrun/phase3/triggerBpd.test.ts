@@ -1,5 +1,5 @@
-import { describe, it } from "mocha";
-import { expect } from "chai";
+import { describe, it, expect } from "vitest";
+
 import { Keypair, SystemProgram, Transaction, SYSVAR_INSTRUCTIONS_PUBKEY } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync, createAssociatedTokenAccountInstruction } from "@solana/spl-token";
 import BN from "bn.js";
@@ -166,12 +166,12 @@ describe("TriggerBigPayDay", () => {
 
     // Verify BPD bonus was distributed
     const stakeAfter = await program.account.stakeAccount.fetch(setup.stakePDA);
-    expect(new BN(stakeAfter.bpdBonusPending.toString()).gtn(0)).to.equal(true);
+    expect(new BN(stakeAfter.bpdBonusPending.toString()).gtn(0)).toBe(true);
 
     // Verify ClaimConfig updated
     const claimConfig = await program.account.claimConfig.fetch(setup.claimConfigPDA);
-    expect(claimConfig.bigPayDayComplete).to.equal(true);
-    expect(new BN(claimConfig.bpdTotalDistributed.toString()).gtn(0)).to.equal(true);
+    expect(claimConfig.bigPayDayComplete).toBe(true);
+    expect(new BN(claimConfig.bpdTotalDistributed.toString()).gtn(0)).toBe(true);
   });
 
   it("is permissionless (anyone can trigger)", async () => {
@@ -213,7 +213,7 @@ describe("TriggerBigPayDay", () => {
 
     // Verify success
     const claimConfig = await program.account.claimConfig.fetch(setup.claimConfigPDA);
-    expect(claimConfig.bigPayDayComplete).to.equal(true);
+    expect(claimConfig.bigPayDayComplete).toBe(true);
   });
 
   it("uses T-share-days weighting", async () => {
@@ -307,8 +307,8 @@ describe("TriggerBigPayDay", () => {
     const stakeA = await program.account.stakeAccount.fetch(stakePDA_A);
     const stakeB = await program.account.stakeAccount.fetch(stakePDA_B);
 
-    expect(new BN(stakeA.bpdBonusPending.toString()).gtn(0)).to.equal(true);
-    expect(new BN(stakeB.bpdBonusPending.toString()).gtn(0)).to.equal(true);
+    expect(new BN(stakeA.bpdBonusPending.toString()).gtn(0)).toBe(true);
+    expect(new BN(stakeB.bpdBonusPending.toString()).gtn(0)).toBe(true);
   });
 
   it("only counts stakes created during claim period", async () => {
@@ -401,11 +401,11 @@ describe("TriggerBigPayDay", () => {
 
     // Stake created BEFORE period should get 0 BPD
     const stakeBefore = await program.account.stakeAccount.fetch(stakePDA_before);
-    expect(stakeBefore.bpdBonusPending.toString()).to.equal("0");
+    expect(stakeBefore.bpdBonusPending.toString()).toBe("0");
 
     // Stake created DURING period should get BPD
     const stakeDuring = await program.account.stakeAccount.fetch(stakePDA_during);
-    expect(new BN(stakeDuring.bpdBonusPending.toString()).gtn(0)).to.equal(true);
+    expect(new BN(stakeDuring.bpdBonusPending.toString()).gtn(0)).toBe(true);
   });
 
   it("prevents last-minute staking attack", async () => {
@@ -493,7 +493,7 @@ describe("TriggerBigPayDay", () => {
     // Try to finalize before claim period ends - should fail
     try {
       await finalizeBpd(program, payer, setup.globalState, setup.claimConfigPDA, [setup.stakePDA]);
-      expect.fail("Expected BigPayDayNotAvailable error");
+      throw new Error("Expected BigPayDayNotAvailable error");
     } catch (error: any) {
       expect(error.toString()).to.include("BigPayDayNotAvailable");
     }
@@ -521,7 +521,7 @@ describe("TriggerBigPayDay", () => {
         .signers([payer])
         .rpc();
 
-      expect.fail("Expected BpdCalculationNotComplete error");
+      throw new Error("Expected BpdCalculationNotComplete error");
     } catch (error: any) {
       expect(error.toString()).to.include("BpdCalculationNotComplete");
     }
@@ -569,7 +569,7 @@ describe("TriggerBigPayDay", () => {
         .signers([payer])
         .rpc();
 
-      expect.fail("Expected error on second trigger");
+      throw new Error("Expected error on second trigger");
     } catch (error: any) {
       // Error can be BigPayDayAlreadyTriggered or transaction simulation failure
       // The constraint check happens at account deserialization
@@ -577,7 +577,7 @@ describe("TriggerBigPayDay", () => {
       const isExpectedError = errorStr.includes("BigPayDayAlreadyTriggered") ||
                                errorStr.includes("Transaction") ||
                                errorStr.includes("Simulation failed");
-      expect(isExpectedError).to.equal(true, `Unexpected error: ${errorStr}`);
+      expect(isExpectedError).toBe(true, `Unexpected error: ${errorStr}`);
     }
   });
 
@@ -634,18 +634,18 @@ describe("TriggerBigPayDay", () => {
     // Try to seal - should fail with NoEligibleStakers since nothing was finalized
     try {
       await sealBpdFinalize(program, payer, globalState, claimConfigPDA);
-      expect.fail("Expected NoEligibleStakers error");
+      throw new Error("Expected NoEligibleStakers error");
     } catch (error: any) {
       expect(error.toString()).to.include("NoEligibleStakers");
     }
 
     // Check that seal didn't mark complete (no eligible stakers)
     let claimConfig = await program.account.claimConfig.fetch(claimConfigPDA);
-    expect(claimConfig.bpdCalculationComplete).to.equal(false);
+    expect(claimConfig.bpdCalculationComplete).toBe(false);
 
     // Verify: stake should still have 0 BPD bonus (not eligible)
     const stake = await program.account.stakeAccount.fetch(stakePDA);
-    expect(stake.bpdBonusPending.toString()).to.equal("0");
+    expect(stake.bpdBonusPending.toString()).toBe("0");
   });
 
   it("prevents same stake from receiving BPD multiple times across batches", async () => {
@@ -677,13 +677,13 @@ describe("TriggerBigPayDay", () => {
 
     const stakeAfterFirst = await program.account.stakeAccount.fetch(setup.stakePDA);
     const firstBonus = stakeAfterFirst.bpdBonusPending;
-    expect(new BN(firstBonus.toString()).gtn(0)).to.equal(true);
-    expect(stakeAfterFirst.bpdClaimPeriodId).to.equal(1);
-    expect(stakeAfterFirst.bpdFinalizePeriodId).to.equal(1);
+    expect(new BN(firstBonus.toString()).gtn(0)).toBe(true);
+    expect(stakeAfterFirst.bpdClaimPeriodId).toBe(1);
+    expect(stakeAfterFirst.bpdFinalizePeriodId).toBe(1);
 
     // Verify ClaimConfig shows complete
     const claimConfig = await program.account.claimConfig.fetch(setup.claimConfigPDA);
-    expect(claimConfig.bigPayDayComplete).to.equal(true);
+    expect(claimConfig.bigPayDayComplete).toBe(true);
   });
 
   it("prevents duplicate stakes within same batch", async () => {
@@ -718,9 +718,9 @@ describe("TriggerBigPayDay", () => {
     const bonus = new BN(stakeAfter.bpdBonusPending.toString());
 
     // Verify bonus is for ONE calculation, not multiple
-    expect(bonus.gtn(0)).to.equal(true);
-    expect(stakeAfter.bpdClaimPeriodId).to.equal(1);
-    expect(stakeAfter.bpdFinalizePeriodId).to.equal(1);
+    expect(bonus.gtn(0)).toBe(true);
+    expect(stakeAfter.bpdClaimPeriodId).toBe(1);
+    expect(stakeAfter.bpdFinalizePeriodId).toBe(1);
   });
 
   it("rejects double finalize", async () => {
@@ -739,7 +739,7 @@ describe("TriggerBigPayDay", () => {
     // Second finalize should fail (after seal sets bpd_calculation_complete = true)
     try {
       await finalizeBpd(program, payer, setup.globalState, setup.claimConfigPDA, [setup.stakePDA]);
-      expect.fail("Expected error on second finalize");
+      throw new Error("Expected error on second finalize");
     } catch (error: any) {
       // Error can be BpdCalculationAlreadyComplete or transaction simulation failure
       // The constraint check happens at account deserialization
@@ -747,7 +747,7 @@ describe("TriggerBigPayDay", () => {
       const isExpectedError = errorStr.includes("BpdCalculationAlreadyComplete") ||
                                errorStr.includes("Transaction") ||
                                errorStr.includes("Simulation failed");
-      expect(isExpectedError).to.equal(true, `Unexpected error: ${errorStr}`);
+      expect(isExpectedError).toBe(true, `Unexpected error: ${errorStr}`);
     }
   });
 
@@ -881,9 +881,9 @@ describe("TriggerBigPayDay", () => {
     const bonusC = new BN(stakeC.bpdBonusPending.toString());
 
     // Verify all bonuses are proportional (not testing exact values due to rounding)
-    expect(bonusA.gtn(0)).to.equal(true);
-    expect(bonusB.gtn(0)).to.equal(true);
-    expect(bonusC.gtn(0)).to.equal(true);
+    expect(bonusA.gtn(0)).toBe(true);
+    expect(bonusB.gtn(0)).toBe(true);
+    expect(bonusC.gtn(0)).toBe(true);
 
     // Total distributed should be reasonable (not exceeding total claimable)
     const totalDistributed = bonusA.add(bonusB).add(bonusC);
@@ -892,9 +892,9 @@ describe("TriggerBigPayDay", () => {
 
     // Allow for rounding differences (within 1% tolerance)
     const tolerance = totalUnclaimed.divn(100);
-    expect(totalDistributed.lte(totalUnclaimed.add(tolerance))).to.equal(true);
+    expect(totalDistributed.lte(totalUnclaimed.add(tolerance))).toBe(true);
 
     // Verify ClaimConfig shows complete
-    expect(claimConfig.bigPayDayComplete).to.equal(true);
+    expect(claimConfig.bigPayDayComplete).toBe(true);
   });
 });

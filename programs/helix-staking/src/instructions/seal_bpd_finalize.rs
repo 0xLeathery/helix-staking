@@ -39,11 +39,18 @@ pub fn seal_bpd_finalize(ctx: Context<SealBpdFinalize>) -> Result<()> {
         HelixError::BigPayDayNotAvailable
     );
 
-    // Verify at least some stakes were finalized
+    // HIGH-2: Verify finalization actually processed stakes
     require!(
-        claim_config.bpd_stakes_finalized > 0 && claim_config.bpd_total_share_days > 0,
-        HelixError::NoEligibleStakers
+        claim_config.bpd_stakes_finalized > 0,
+        HelixError::BpdFinalizationIncomplete
     );
+
+    // H-2 FIX: If no stakes were finalized, set rate to 0 so trigger can clear the window
+    if claim_config.bpd_total_share_days == 0 {
+        claim_config.bpd_helix_per_share_day = 0;
+        claim_config.bpd_calculation_complete = true;
+        return Ok(());
+    }
 
     // Calculate global BPD rate from accumulated share-days
     let unclaimed_amount = claim_config.bpd_remaining_unclaimed;

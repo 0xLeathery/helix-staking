@@ -182,6 +182,15 @@ pub fn trigger_big_pay_day<'info>(
         let bonus = u64::try_from(bonus_u128).map_err(|_| error!(HelixError::Overflow))?;
 
         if bonus == 0 {
+            claim_config.bpd_stakes_distributed = claim_config.bpd_stakes_distributed
+                .checked_add(1)
+                .ok_or(HelixError::Overflow)?;
+            // H-1 FIX: Mark zero-bonus stake as processed to prevent re-submission
+            let mut stake: StakeAccount = StakeAccount::try_deserialize(
+                &mut &account_info.try_borrow_data()?[..]
+            )?;
+            stake.bpd_claim_period_id = claim_config.claim_period_id;
+            stake.try_serialize(&mut &mut account_info.try_borrow_mut_data()?[..])?;
             continue;
         }
 

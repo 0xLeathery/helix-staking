@@ -1,5 +1,5 @@
-import { describe, it } from "mocha";
-import { expect } from "chai";
+import { describe, it, expect } from "vitest";
+
 import { Keypair, SystemProgram, Transaction, SYSVAR_INSTRUCTIONS_PUBKEY } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync, createAssociatedTokenAccountInstruction } from "@solana/spl-token";
 import BN from "bn.js";
@@ -80,10 +80,10 @@ describe("StakeAccount Migration", () => {
 
     // Verify stake account still works
     const stakeAccount = await program.account.stakeAccount.fetch(stakePDA);
-    expect(stakeAccount.isActive).to.equal(true);
+    expect(stakeAccount.isActive).toBe(true);
     // After migration, BPD fields should be initialized to defaults
-    expect(stakeAccount.bpdBonusPending.toString()).to.equal("0");
-    expect(stakeAccount.bpdEligible).to.equal(false);
+    expect(stakeAccount.bpdBonusPending.toString()).toBe("0");
+    expect(stakeAccount.bpdEligible).toBe(false);
   });
 
   it("migrated stake has bpd_bonus_pending = 0", async () => {
@@ -115,8 +115,8 @@ describe("StakeAccount Migration", () => {
 
     // Verify default BPD field values
     const stakeAccount = await program.account.stakeAccount.fetch(stakePDA);
-    expect(stakeAccount.bpdBonusPending.toString()).to.equal("0");
-    expect(stakeAccount.bpdEligible).to.equal(false);
+    expect(stakeAccount.bpdBonusPending.toString()).toBe("0");
+    expect(stakeAccount.bpdEligible).toBe(false);
   });
 
   it("new stakes (112 bytes) have BPD fields", async () => {
@@ -151,7 +151,7 @@ describe("StakeAccount Migration", () => {
     expect(stakeAccount.bpdBonusPending).to.not.be.undefined;
     expect(stakeAccount.bpdEligible).to.not.be.undefined;
     expect(stakeAccount.claimPeriodStartSlot).to.not.be.undefined;
-    expect(stakeAccount.bpdBonusPending.toString()).to.equal("0");
+    expect(stakeAccount.bpdBonusPending.toString()).toBe("0");
   });
 
   it("migration preserves existing stake data", async () => {
@@ -218,11 +218,11 @@ describe("StakeAccount Migration", () => {
 
     // Verify original fields preserved
     const stakeAfter = await program.account.stakeAccount.fetch(stakePDA);
-    expect(stakeAfter.stakedAmount.toString()).to.equal(originalStakedAmount);
-    expect(stakeAfter.tShares.toString()).to.equal(originalTShares);
-    expect(stakeAfter.stakeDays).to.equal(originalStakeDays);
-    expect(stakeAfter.startSlot.toString()).to.equal(originalStartSlot);
-    expect(stakeAfter.isActive).to.equal(true);
+    expect(stakeAfter.stakedAmount.toString()).toBe(originalStakedAmount);
+    expect(stakeAfter.tShares.toString()).toBe(originalTShares);
+    expect(stakeAfter.stakeDays).toBe(originalStakeDays);
+    expect(stakeAfter.startSlot.toString()).toBe(originalStartSlot);
+    expect(stakeAfter.isActive).toBe(true);
   });
 
   it("user pays rent difference on migration", async () => {
@@ -287,7 +287,7 @@ describe("StakeAccount Migration", () => {
     const solAfter = userInfoAfter!.lamports;
 
     // User pays transaction fees at minimum
-    expect(solAfter).to.be.lessThan(solBefore);
+    expect(solAfter).toBeLessThan(solBefore);
   });
 
   it("claim_rewards includes BPD bonus after trigger", async () => {
@@ -351,7 +351,7 @@ describe("StakeAccount Migration", () => {
 
     // Verify stake is BPD eligible (created during claim period)
     const stakeAfterCreate = await program.account.stakeAccount.fetch(stakePDA);
-    expect(stakeAfterCreate.bpdEligible).to.equal(true);
+    expect(stakeAfterCreate.bpdEligible).toBe(true);
 
     // Advance past claim period end (180 days)
     await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
@@ -374,7 +374,7 @@ describe("StakeAccount Migration", () => {
 
     // Verify BPD bonus was set
     const stakeAfterBpd = await program.account.stakeAccount.fetch(stakePDA);
-    expect(new BN(stakeAfterBpd.bpdBonusPending.toString()).gtn(0)).to.equal(true);
+    expect(new BN(stakeAfterBpd.bpdBonusPending.toString()).gtn(0)).toBe(true);
   });
 
   it("claim_rewards clears bpd_bonus_pending after payout", async () => {
@@ -454,7 +454,7 @@ describe("StakeAccount Migration", () => {
     // Verify BPD bonus is set
     const stakeBeforeClaim = await program.account.stakeAccount.fetch(stakePDA);
     const bpdBonusBefore = new BN(stakeBeforeClaim.bpdBonusPending.toString());
-    expect(bpdBonusBefore.gtn(0)).to.equal(true);
+    expect(bpdBonusBefore.gtn(0)).toBe(true);
 
     // Run crank for inflation rewards
     await program.methods
@@ -483,7 +483,7 @@ describe("StakeAccount Migration", () => {
 
     // Verify BPD bonus was cleared
     const stakeAfterClaim = await program.account.stakeAccount.fetch(stakePDA);
-    expect(stakeAfterClaim.bpdBonusPending.toString()).to.equal("0");
+    expect(stakeAfterClaim.bpdBonusPending.toString()).toBe("0");
   });
 
   it("claim_rewards returns zero BPD for ineligible stake", async () => {
@@ -526,7 +526,7 @@ describe("StakeAccount Migration", () => {
 
     // Verify stake is NOT BPD eligible (created before claim period)
     const stakeBeforePeriod = await program.account.stakeAccount.fetch(stakePDA);
-    expect(stakeBeforePeriod.bpdEligible).to.equal(false);
+    expect(stakeBeforePeriod.bpdEligible).toBe(false);
 
     // Advance a bit, THEN initialize claim period
     await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(10).toString()));
@@ -570,6 +570,6 @@ describe("StakeAccount Migration", () => {
     // Stake created BEFORE claim period should have bpd_bonus_pending = 0
     // because it was created before start_slot
     const stakeAfterBpd = await program.account.stakeAccount.fetch(stakePDA);
-    expect(stakeAfterBpd.bpdBonusPending.toString()).to.equal("0");
+    expect(stakeAfterBpd.bpdBonusPending.toString()).toBe("0");
   });
 });

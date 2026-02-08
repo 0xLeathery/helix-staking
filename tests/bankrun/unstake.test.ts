@@ -1,5 +1,5 @@
-import { describe, it } from "mocha";
-import { expect } from "chai";
+import { describe, it, expect } from "vitest";
+
 import { PublicKey, Keypair } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import BN from "bn.js";
@@ -91,7 +91,7 @@ describe("Unstake", () => {
       const returned = new BN(balanceAfter.toString()).sub(new BN(balanceBefore.toString()));
 
       // Should receive 50% or less (minimum penalty)
-      expect(returned.lte(stakeAmount.div(new BN(2)))).to.equal(true);
+      expect(returned.lte(stakeAmount.div(new BN(2)))).toBe(true);
     });
 
     it("applies proportional penalty based on time served", async () => {
@@ -168,8 +168,8 @@ describe("Unstake", () => {
 
       // At 50% served, penalty is 50% (proportional), which matches minimum 50%
       // Should receive approximately 50% of staked amount
-      expect(returned.lte(stakeAmount.div(new BN(2)))).to.equal(true);
-      expect(returned.gt(stakeAmount.div(new BN(3)))).to.equal(true); // More than 33%
+      expect(returned.lte(stakeAmount.div(new BN(2)))).toBe(true);
+      expect(returned.gt(stakeAmount.div(new BN(3)))).toBe(true); // More than 33%
     });
 
     it("returns tokens via minting (not transfer)", async () => {
@@ -225,7 +225,7 @@ describe("Unstake", () => {
       await advanceClock(context, slotsPerDay * BigInt(10));
 
       const balanceBefore = await getTokenBalance(context.banksClient, userATA);
-      expect(balanceBefore.toString()).to.equal("0"); // Should be 0 after stake creation
+      expect(balanceBefore.toString()).toBe("0"); // Should be 0 after stake creation
 
       await program.methods
         .unstake()
@@ -245,7 +245,7 @@ describe("Unstake", () => {
 
       // Verify tokens were minted back to user (not transferred from treasury)
       // On-time unstake returns full amount
-      expect(balanceAfter.toString()).to.equal(stakeAmount.toString());
+      expect(balanceAfter.toString()).toBe(stakeAmount.toString());
     });
   });
 
@@ -323,7 +323,7 @@ describe("Unstake", () => {
       const returned = new BN(balanceAfter.toString()).sub(new BN(balanceBefore.toString()));
 
       // Should receive full amount (no penalty)
-      expect(returned.toString()).to.equal(stakeAmount.toString());
+      expect(returned.toString()).toBe(stakeAmount.toString());
     });
 
     it("returns full amount at exact maturity", async () => {
@@ -402,7 +402,7 @@ describe("Unstake", () => {
       const returned = new BN(balanceAfter.toString()).sub(new BN(balanceBefore.toString()));
 
       // Should receive full amount (no penalty at exact maturity)
-      expect(returned.toString()).to.equal(stakeAmount.toString());
+      expect(returned.toString()).toBe(stakeAmount.toString());
     });
   });
 
@@ -480,7 +480,7 @@ describe("Unstake", () => {
       const returned = new BN(balanceAfter.toString()).sub(new BN(balanceBefore.toString()));
 
       // Should receive full amount (within grace period)
-      expect(returned.toString()).to.equal(stakeAmount.toString());
+      expect(returned.toString()).toBe(stakeAmount.toString());
     });
 
     it("applies linear penalty after grace period", async () => {
@@ -557,8 +557,8 @@ describe("Unstake", () => {
 
       // Should have a penalty (100 days late)
       // Linear penalty: 100 days * ~27.4 bps/day ≈ 27.4% penalty
-      expect(returned.lt(stakeAmount)).to.equal(true);
-      expect(returned.gt(stakeAmount.div(new BN(2)))).to.equal(true); // More than 50%
+      expect(returned.lt(stakeAmount)).toBe(true);
+      expect(returned.gt(stakeAmount.div(new BN(2)))).toBe(true); // More than 50%
     });
 
     it("applies 100% penalty after 365 days late", async () => {
@@ -634,7 +634,7 @@ describe("Unstake", () => {
       const returned = new BN(balanceAfter.toString()).sub(new BN(balanceBefore.toString()));
 
       // Should receive 0 or very little (100% penalty)
-      expect(returned.lte(new BN(100))).to.equal(true); // Allow tiny rounding
+      expect(returned.lte(new BN(100))).toBe(true); // Allow tiny rounding
     });
 
     it("caps penalty at 100% (never more than staked)", async () => {
@@ -709,7 +709,7 @@ describe("Unstake", () => {
       const returned = new BN(balanceAfter.toString()).sub(new BN(balanceBefore.toString()));
 
       // Penalty caps at 100% (can't lose more than staked)
-      expect(returned.gte(new BN(0))).to.equal(true);
+      expect(returned.gte(new BN(0))).toBe(true);
     });
   });
 
@@ -797,10 +797,10 @@ describe("Unstake", () => {
           .signers([payer])
           .rpc();
 
-        expect.fail("Expected StakeNotActive error");
+        throw new Error("Expected StakeNotActive error");
       } catch (error: any) {
         // Expect error (stake is already closed)
-        expect(error).to.exist;
+        expect(error).toBeDefined();
       }
     });
 
@@ -914,10 +914,10 @@ describe("Unstake", () => {
           .signers([otherUser])
           .rpc();
 
-        expect.fail("Expected UnauthorizedStakeAccess error");
+        throw new Error("Expected UnauthorizedStakeAccess error");
       } catch (error: any) {
         // Expect constraint violation or unauthorized error
-        expect(error).to.exist;
+        expect(error).toBeDefined();
       }
     });
 
@@ -996,17 +996,17 @@ describe("Unstake", () => {
       const globalStateAfter = await program.account.globalState.fetch(globalState);
 
       // Verify counters updated
-      expect(globalStateAfter.totalUnstakesCreated.toString()).to.equal(
+      expect(globalStateAfter.totalUnstakesCreated.toString()).toBe(
         globalStateBefore.totalUnstakesCreated.add(new BN(1)).toString()
       );
 
       // Verify total_shares decreased
-      expect(globalStateAfter.totalShares.toString()).to.equal(
+      expect(globalStateAfter.totalShares.toString()).toBe(
         globalStateBefore.totalShares.sub(stakeAccount.tShares).toString()
       );
 
       // Verify total_tokens_staked decreased
-      expect(globalStateAfter.totalTokensStaked.toString()).to.equal(
+      expect(globalStateAfter.totalTokensStaked.toString()).toBe(
         globalStateBefore.totalTokensStaked.sub(stakeAmount).toString()
       );
     });
@@ -1103,7 +1103,7 @@ describe("Unstake", () => {
       const shareRateAfter = globalStateAfter.shareRate;
 
       // share_rate should increase (penalty redistributed to stake B)
-      expect(shareRateAfter.gt(shareRateBefore)).to.equal(true);
+      expect(shareRateAfter.gt(shareRateBefore)).toBe(true);
 
       // The increase should be: (penalty * PRECISION) / remaining_total_shares
       // penalty = 50% of stakeAmountA = 2500000000

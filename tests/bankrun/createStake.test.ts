@@ -1,5 +1,5 @@
-import { describe, it } from "mocha";
-import { expect } from "chai";
+import { describe, it, expect } from "vitest";
+
 import { PublicKey, Keypair } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import BN from "bn.js";
@@ -53,7 +53,7 @@ describe("CreateStake", () => {
 
     // Check initial balance
     const balanceBefore = await getTokenBalance(context.banksClient, userATA);
-    expect(balanceBefore.toString()).to.equal(stakeAmount.toString());
+    expect(balanceBefore.toString()).toBe(stakeAmount.toString());
 
     // Create stake for 1 day
     const stakeDays = 1;
@@ -74,11 +74,11 @@ describe("CreateStake", () => {
 
     // Verify StakeAccount
     const stakeAccount = await program.account.stakeAccount.fetch(stakePDA);
-    expect(stakeAccount.user.toBase58()).to.equal(payer.publicKey.toBase58());
-    expect(stakeAccount.stakeId.toString()).to.equal("0");
-    expect(stakeAccount.stakedAmount.toString()).to.equal(stakeAmount.toString());
-    expect(stakeAccount.stakeDays).to.equal(stakeDays);
-    expect(stakeAccount.isActive).to.equal(true);
+    expect(stakeAccount.user.toBase58()).toBe(payer.publicKey.toBase58());
+    expect(stakeAccount.stakeId.toString()).toBe("0");
+    expect(stakeAccount.stakedAmount.toString()).toBe(stakeAmount.toString());
+    expect(stakeAccount.stakeDays).toBe(stakeDays);
+    expect(stakeAccount.isActive).toBe(true);
 
     // For 1-day stake: LPB bonus = 0, BPB depends on amount
     // At minimum amount (10M), BPB bonus is negligible
@@ -86,17 +86,17 @@ describe("CreateStake", () => {
     // With starting_share_rate = 10_000 and PRECISION = 1e9:
     // t_shares ≈ (10_000_000 * 1e9) / 10_000 = 1e12
     const expectedTSharesApprox = stakeAmount.mul(new BN(1_000_000_000)).div(DEFAULT_STARTING_SHARE_RATE);
-    expect(stakeAccount.tShares.toString()).to.equal(expectedTSharesApprox.toString());
+    expect(stakeAccount.tShares.toString()).toBe(expectedTSharesApprox.toString());
 
     // Verify GlobalState counters
     const globalStateAccount = await program.account.globalState.fetch(globalState);
-    expect(globalStateAccount.totalStakesCreated.toString()).to.equal("1");
-    expect(globalStateAccount.totalTokensStaked.toString()).to.equal(stakeAmount.toString());
-    expect(globalStateAccount.totalShares.toString()).to.equal(stakeAccount.tShares.toString());
+    expect(globalStateAccount.totalStakesCreated.toString()).toBe("1");
+    expect(globalStateAccount.totalTokensStaked.toString()).toBe(stakeAmount.toString());
+    expect(globalStateAccount.totalShares.toString()).toBe(stakeAccount.tShares.toString());
 
     // Verify tokens were burned (balance decreased)
     const balanceAfter = await getTokenBalance(context.banksClient, userATA);
-    expect(balanceAfter.toString()).to.equal("0");
+    expect(balanceAfter.toString()).toBe("0");
   });
 
   it("creates a stake with LPB bonus for long duration (3641 days)", async () => {
@@ -161,7 +161,7 @@ describe("CreateStake", () => {
     const expectedTSharesMin = baseShares.mul(new BN(2)); // Should be at least 2x
 
     // Verify T-shares are significantly higher than base (indicating LPB bonus applied)
-    expect(stakeAccount.tShares.gte(expectedTSharesMin)).to.equal(true);
+    expect(stakeAccount.tShares.gte(expectedTSharesMin)).toBe(true);
   });
 
   it("creates a stake with BPB bonus for large amount", async () => {
@@ -228,7 +228,7 @@ describe("CreateStake", () => {
 
     // BPB adds up to 100% bonus at threshold (15B tokens)
     // With 100 tokens, bonus is tiny but still > 0
-    expect(stakeAccount.tShares.gt(baseShares)).to.equal(true);
+    expect(stakeAccount.tShares.gt(baseShares)).toBe(true);
   });
 
   it("rejects stake below minimum amount", async () => {
@@ -283,7 +283,7 @@ describe("CreateStake", () => {
         .signers([payer])
         .rpc();
 
-      expect.fail("Expected StakeBelowMinimum error");
+      throw new Error("Expected StakeBelowMinimum error");
     } catch (error: any) {
       expect(error.toString()).to.include("StakeBelowMinimum");
     }
@@ -340,7 +340,7 @@ describe("CreateStake", () => {
         .signers([payer])
         .rpc();
 
-      expect.fail("Expected InvalidStakeDuration error");
+      throw new Error("Expected InvalidStakeDuration error");
     } catch (error: any) {
       expect(error.toString()).to.include("InvalidStakeDuration");
     }
@@ -397,7 +397,7 @@ describe("CreateStake", () => {
         .signers([payer])
         .rpc();
 
-      expect.fail("Expected InvalidStakeDuration error");
+      throw new Error("Expected InvalidStakeDuration error");
     } catch (error: any) {
       expect(error.toString()).to.include("InvalidStakeDuration");
     }
@@ -476,11 +476,11 @@ describe("CreateStake", () => {
     const stake0 = await program.account.stakeAccount.fetch(stakePDA0);
     const stake1 = await program.account.stakeAccount.fetch(stakePDA1);
 
-    expect(stake0.stakeId.toString()).to.equal("0");
-    expect(stake1.stakeId.toString()).to.equal("1");
+    expect(stake0.stakeId.toString()).toBe("0");
+    expect(stake1.stakeId.toString()).toBe("1");
 
     // Verify global counter
     const globalStateAccount = await program.account.globalState.fetch(globalState);
-    expect(globalStateAccount.totalStakesCreated.toString()).to.equal("2");
+    expect(globalStateAccount.totalStakesCreated.toString()).toBe("2");
   });
 });
