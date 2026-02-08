@@ -10,6 +10,7 @@ use solana_nostd_keccak::hashv;
 use crate::constants::*;
 use crate::error::HelixError;
 use crate::events::TokensClaimed;
+use crate::instructions::math::mul_div;
 use crate::state::{ClaimConfig, ClaimStatus, GlobalState};
 
 #[derive(Accounts)]
@@ -140,11 +141,8 @@ pub fn free_claim(
         .ok_or(HelixError::Overflow)?;
 
     // === Split into immediate (10%) and vesting (90%) ===
-    let immediate_amount = total_amount
-        .checked_mul(IMMEDIATE_RELEASE_BPS)
-        .ok_or(HelixError::Overflow)?
-        .checked_div(BPS_SCALER)
-        .ok_or(HelixError::DivisionByZero)?;
+    // ADDL-2 FIX: Use mul_div to avoid overflow for large claims
+    let immediate_amount = mul_div(total_amount, IMMEDIATE_RELEASE_BPS, BPS_SCALER)?;
 
     let vesting_amount = total_amount
         .checked_sub(immediate_amount)
@@ -347,11 +345,8 @@ fn calculate_speed_bonus(
     // Formula: base_amount = (snapshot_balance / 1e9) * 10000 * 1e8
     //                      = snapshot_balance * 10000 / 10
     //                      = snapshot_balance * 1000
-    let base_amount = snapshot_balance
-        .checked_mul(HELIX_PER_SOL)
-        .ok_or(HelixError::Overflow)?
-        .checked_div(10)  // Adjust for decimal difference (9 -> 8)
-        .ok_or(HelixError::DivisionByZero)?;
+    // ADDL-1 FIX: Use mul_div to avoid overflow for large balances
+    let base_amount = mul_div(snapshot_balance, HELIX_PER_SOL, 10)?;
 
     let bonus_bps = if days_elapsed <= SPEED_BONUS_WEEK1_END {
         SPEED_BONUS_WEEK1_BPS  // +20%
@@ -361,11 +356,8 @@ fn calculate_speed_bonus(
         0  // No bonus
     };
 
-    let bonus_amount = base_amount
-        .checked_mul(bonus_bps)
-        .ok_or(HelixError::Overflow)?
-        .checked_div(BPS_SCALER)
-        .ok_or(HelixError::DivisionByZero)?;
+    // ADDL-3 FIX: Use mul_div to avoid overflow for bonus calculation
+    let bonus_amount = mul_div(base_amount, bonus_bps, BPS_SCALER)?;
 
     Ok((bonus_bps as u16, base_amount, bonus_amount))
 }

@@ -81,13 +81,11 @@ pub fn crank_distribution(ctx: Context<CrankDistribution>) -> Result<()> {
     // In burn-and-mint model, supply doesn't reflect locked value
     let total_staked = global_state.total_tokens_staked;
 
+    // HIGH-1 FIX: Use mul_div to avoid u64 overflow via u128 intermediates
+    // (overflows at ~50K HELIX staked without this)
     // annual_inflation = staked * annual_inflation_bp / 100_000_000
     // (basis points with 2 extra decimals of precision: 3.69% = 3_690_000 bp)
-    let annual_inflation = total_staked
-        .checked_mul(global_state.annual_inflation_bp)
-        .ok_or(HelixError::Overflow)?
-        .checked_div(100_000_000)
-        .ok_or(HelixError::Overflow)?;
+    let annual_inflation = mul_div(total_staked, global_state.annual_inflation_bp, 100_000_000)?;
 
     // daily_inflation = annual_inflation * days_elapsed / 365
     // CRITICAL: Multiply before divide to preserve precision

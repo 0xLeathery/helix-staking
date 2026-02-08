@@ -5,6 +5,7 @@ use anchor_spl::token_interface::{Mint, TokenAccount};
 use crate::constants::*;
 use crate::error::HelixError;
 use crate::events::VestedTokensWithdrawn;
+use crate::instructions::math::mul_div;
 use crate::state::{ClaimConfig, ClaimStatus, GlobalState};
 
 #[derive(Accounts)]
@@ -128,12 +129,8 @@ fn calculate_vested_amount(
     vesting_end_slot: u64,
     current_slot: u64,
 ) -> Result<u64> {
-    // Immediate portion (10%)
-    let immediate = claimed_amount
-        .checked_mul(IMMEDIATE_RELEASE_BPS)
-        .ok_or(HelixError::Overflow)?
-        .checked_div(BPS_SCALER)
-        .ok_or(HelixError::DivisionByZero)?;
+    // MED-2 FIX: Use mul_div to avoid overflow for large claims
+    let immediate = mul_div(claimed_amount, IMMEDIATE_RELEASE_BPS, BPS_SCALER)?;
 
     // If past vesting end, everything is vested
     if current_slot >= vesting_end_slot {
@@ -159,12 +156,8 @@ fn calculate_vested_amount(
         .checked_sub(immediate)
         .ok_or(HelixError::Underflow)?;
 
-    // Linear unlock: vesting_portion * elapsed / vesting_duration
-    let unlocked_vesting = vesting_portion
-        .checked_mul(elapsed)
-        .ok_or(HelixError::Overflow)?
-        .checked_div(vesting_duration)
-        .ok_or(HelixError::DivisionByZero)?;
+    // MED-2 FIX: Use mul_div to avoid u64 overflow via u128 intermediates
+    let unlocked_vesting = mul_div(vesting_portion, elapsed, vesting_duration)?;
 
     // Total vested = immediate + unlocked vesting portion
     immediate
