@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-07)
 
 **Core value:** Users can stake tokens for a chosen duration, earn T-shares proportional to their commitment, and receive daily inflation rewards -- the complete stake-lock-earn lifecycle must work trustlessly on-chain.
-**Current focus:** Phase 4 - Staking Dashboard (in progress)
+**Current focus:** Phase 5 - Light Indexer Service
 
 ## Current Position
 
-Phase: 4 of 8 (Staking Dashboard)
-Plan: 5 of 5 in current phase
-Status: Complete
-Last activity: 2026-02-08 -- Completed 04-05-PLAN.md (Free Claim, BPD Status, Mobile Polish)
+Phase: 5 of 8 (Light Indexer Service)
+Plan: 0 of 3 in current phase
+Status: Planned
+Last activity: 2026-02-08 -- Phase 5 planning complete (3 plans in 2 waves)
 
-Progress: [██████████] 100% (5 of 5 plans complete)
+Progress: [----------] 0% (0 of 3 plans complete)
 
 ## Performance Metrics
 
@@ -162,10 +162,10 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-08T06:45:00Z
-Stopped at: Completed 04-05-PLAN.md (Free Claim, BPD Status, Mobile Polish)
-Resume file: None - Phase 4 complete
-Next: Phase 5 - Backend Integration (API server, indexer, or data pipeline)
+Last session: 2026-02-08T07:00:00Z
+Stopped at: Phase 5 planning complete
+Resume file: None
+Next: Execute Phase 5 Wave 1 (05-01-PLAN.md)
 
 ## Phase 1 Notes
 
