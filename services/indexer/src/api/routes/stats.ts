@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyPluginCallback } from 'fastify';
-import { count, desc } from 'drizzle-orm';
+import { count, desc, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import {
   stakeCreatedEvents,
@@ -56,6 +56,46 @@ export const statsRoutes: FastifyPluginCallback = (
       lastDistributionAmount: latest?.amount ?? null,
       lastUpdated: new Date().toISOString(),
     });
+  });
+
+  fastify.get('/api/stats/history', async (request, reply) => {
+    const { limit = 365 } = request.query as { limit?: number };
+    const history = await db
+      .select({
+        day: inflationDistributedEvents.day,
+        shareRate: inflationDistributedEvents.newShareRate,
+        totalShares: inflationDistributedEvents.totalShares,
+        amount: inflationDistributedEvents.amount,
+      })
+      .from(inflationDistributedEvents)
+      .orderBy(desc(inflationDistributedEvents.day))
+      .limit(limit);
+
+    return reply.send(history.reverse());
+  });
+
+  fastify.get('/api/stats/distribution/stakes', async (_request, reply) => {
+    const distribution = await db
+      .select({
+        bucket: sql<string>`
+          CASE 
+            WHEN ${stakeCreatedEvents.days} < 30 THEN '< 30 days'
+            WHEN ${stakeCreatedEvents.days} BETWEEN 30 AND 89 THEN '30-90 days'
+            WHEN ${stakeCreatedEvents.days} BETWEEN 90 AND 179 THEN '90-180 days'
+            WHEN ${stakeCreatedEvents.days} BETWEEN 180 AND 364 THEN '180-365 days'
+            WHEN ${stakeCreatedEvents.days} BETWEEN 365 AND 729 THEN '1-2 years'
+            ELSE '> 2 years'
+          END
+        `.as('bucket'),
+        count: count(),
+        totalAmount: sql<string>`SUM(${stakeCreatedEvents.amount}::numeric)`.as(
+          'total_amount',
+        ),
+      })
+      .from(stakeCreatedEvents)
+      .groupBy(sql`bucket`);
+
+    return reply.send(distribution);
   });
 
   done();
