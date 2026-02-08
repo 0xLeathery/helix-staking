@@ -113,6 +113,12 @@ pub mod helix_staking {
         instructions::trigger_big_pay_day::trigger_big_pay_day(ctx)
     }
 
+    pub fn finalize_bpd_calculation<'info>(
+        ctx: Context<'_, '_, 'info, 'info, FinalizeBpdCalculation<'info>>,
+    ) -> Result<()> {
+        instructions::finalize_bpd_calculation::finalize_bpd_calculation(ctx)
+    }
+
     pub fn free_claim(
         ctx: Context<FreeClaim>,
         snapshot_balance: u64,
