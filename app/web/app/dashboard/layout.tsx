@@ -14,6 +14,10 @@ const NAV_ITEMS = [
   { label: "New Stake", href: "/dashboard/stake", icon: PlusCircleIcon },
   { label: "Rewards", href: "/dashboard/rewards", icon: GiftIcon },
   { label: "Free Claim", href: "/dashboard/claim", icon: DownloadIcon },
+  { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3Icon },
+  { label: "Swap", href: "/dashboard/swap", icon: RefreshCwIcon },
+  { label: "Leaderboard", href: "/dashboard/leaderboard", icon: TrophyIcon },
+  { label: "Whale Tracker", href: "/dashboard/whale-tracker", icon: ActivityIcon },
 ];
 
 export default function DashboardLayout({
@@ -24,7 +28,9 @@ export default function DashboardLayout({
   const { publicKey } = useWallet();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  if (!publicKey) {
+  const skipWalletCheck = process.env.NEXT_PUBLIC_SKIP_WALLET_CHECK === 'true';
+
+  if (!publicKey && !skipWalletCheck) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-950 px-4">
         <div className="text-center space-y-6 max-w-md">
@@ -70,7 +76,7 @@ export default function DashboardLayout({
           <div className="text-xs text-zinc-500 mb-2">Connected Wallet</div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-zinc-300 font-mono">
-              {truncateAddress(publicKey.toBase58())}
+              {publicKey ? truncateAddress(publicKey.toBase58()) : 'Test Mode'}
             </span>
             <WalletButton />
           </div>
@@ -281,6 +287,85 @@ function CloseIcon({ className }: { className?: string }) {
     >
       <path d="M18 6 6 18" />
       <path d="m6 6 12 12" />
+    </svg>
+  );
+}
+
+function BarChart3Icon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M3 3v18h18" />
+      <path d="M18 17V9" />
+      <path d="M13 17V5" />
+      <path d="M8 17v-3" />
+    </svg>
+  );
+}
+
+function RefreshCwIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+      <path d="M21 3v5h-5" />
+      <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+      <path d="M3 21v-5h5" />
+    </svg>
+  );
+}
+
+function TrophyIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+      <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+      <path d="M4 22h16" />
+      <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+      <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+      <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+    </svg>
+  );
+}
+
+function ActivityIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
     </svg>
   );
 }
