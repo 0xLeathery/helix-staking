@@ -18,7 +18,7 @@ pub struct MigrateStake<'info> {
         bump = stake_account.bump,
         realloc = StakeAccount::LEN,
         realloc::payer = payer,
-        realloc::zero = true,
+        realloc::zero = false,
     )]
     pub stake_account: Account<'info, StakeAccount>,
 

@@ -10,7 +10,10 @@ pub const MAX_STAKES_PER_FINALIZE: usize = 20;
 
 #[derive(Accounts)]
 pub struct FinalizeBpdCalculation<'info> {
-    /// Anyone can call this (permissionless)
+    /// M-1 FIX: Only authority can initiate BPD finalization (prevents griefing)
+    #[account(
+        constraint = caller.key() == global_state.authority @ HelixError::Unauthorized
+    )]
     pub caller: Signer<'info>,
 
     #[account(
@@ -75,6 +78,7 @@ pub fn finalize_bpd_calculation<'info>(
     if unclaimed_amount == 0 {
         claim_config.bpd_calculation_complete = true;
         claim_config.bpd_helix_per_share_day = 0;
+        global_state.set_bpd_window_active(false); // H-2 FIX: Clear window when nothing to distribute
         return Ok(());
     }
 

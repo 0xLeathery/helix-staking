@@ -1,5 +1,5 @@
-import { describe, it } from "mocha";
-import { expect } from "chai";
+import { describe, it, expect } from "vitest";
+
 import { Keypair, SystemProgram, Transaction } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync, createAssociatedTokenAccountInstruction } from "@solana/spl-token";
 import BN from "bn.js";
@@ -190,7 +190,7 @@ describe("Phase 3.3 Security Hardening", () => {
           .signers([attacker])
           .rpc();
 
-        expect.fail("Expected Unauthorized error");
+        throw new Error("Expected Unauthorized error");
       } catch (error: any) {
         expect(error.toString()).to.include("Unauthorized");
       }
@@ -222,7 +222,7 @@ describe("Phase 3.3 Security Hardening", () => {
       // Try to seal without finalize - should fail with NoEligibleStakers
       try {
         await sealBpdFinalize(program, payer, globalState, claimConfigPDA);
-        expect.fail("Expected NoEligibleStakers error");
+        throw new Error("Expected NoEligibleStakers error");
       } catch (error: any) {
         expect(error.toString()).to.include("NoEligibleStakers");
       }
@@ -241,7 +241,7 @@ describe("Phase 3.3 Security Hardening", () => {
 
       // Verify seal succeeded
       let claimConfig = await program.account.claimConfig.fetch(setup.claimConfigPDA);
-      expect(claimConfig.bpdCalculationComplete).to.equal(true);
+      expect(claimConfig.bpdCalculationComplete).toBe(true);
 
       // Advance clock to make transaction unique (avoid bankrun replay detection)
       await advanceClock(context, BigInt(1));
@@ -254,11 +254,11 @@ describe("Phase 3.3 Security Hardening", () => {
         didFail = true;
         // Just verify it threw an error - the error format in bankrun can vary
       }
-      expect(didFail).to.equal(true, "seal should have failed on second call");
+      expect(didFail).toBe(true, "seal should have failed on second call");
 
       // Verify state didn't change (still sealed)
       claimConfig = await program.account.claimConfig.fetch(setup.claimConfigPDA);
-      expect(claimConfig.bpdCalculationComplete).to.equal(true);
+      expect(claimConfig.bpdCalculationComplete).toBe(true);
     });
 
     it("finalize rejects calls after seal", async () => {
@@ -283,12 +283,12 @@ describe("Phase 3.3 Security Hardening", () => {
         didFail = true;
         // Just verify it threw an error - the error format in bankrun can vary
       }
-      expect(didFail).to.equal(true, "finalize should have failed after seal");
+      expect(didFail).toBe(true, "finalize should have failed after seal");
 
       // Verify state didn't change (still sealed with same counter)
       const claimConfig = await program.account.claimConfig.fetch(setup.claimConfigPDA);
-      expect(claimConfig.bpdCalculationComplete).to.equal(true);
-      expect(claimConfig.bpdStakesFinalized).to.equal(1);
+      expect(claimConfig.bpdCalculationComplete).toBe(true);
+      expect(claimConfig.bpdStakesFinalized).toBe(1);
     });
   });
 
@@ -318,11 +318,11 @@ describe("Phase 3.3 Security Hardening", () => {
 
       // Check ClaimConfig - should count stake only once
       const claimConfig = await program.account.claimConfig.fetch(setup.claimConfigPDA);
-      expect(claimConfig.bpdStakesFinalized).to.equal(1);
+      expect(claimConfig.bpdStakesFinalized).toBe(1);
 
       // Check stake was marked with finalize period ID
       const stake = await program.account.stakeAccount.fetch(setup.stakePDA);
-      expect(stake.bpdFinalizePeriodId).to.equal(1);
+      expect(stake.bpdFinalizePeriodId).toBe(1);
     });
 
     it("trigger skips stakes not counted in finalize", async () => {
@@ -402,13 +402,13 @@ describe("Phase 3.3 Security Hardening", () => {
 
       // Stake1 should get BPD
       const stake1 = await program.account.stakeAccount.fetch(stakePDA1);
-      expect(new BN(stake1.bpdBonusPending.toString()).gtn(0)).to.equal(true);
-      expect(stake1.bpdClaimPeriodId).to.equal(1);
+      expect(new BN(stake1.bpdBonusPending.toString()).gtn(0)).toBe(true);
+      expect(stake1.bpdClaimPeriodId).toBe(1);
 
       // Stake2 should be skipped (no BPD)
       const stake2 = await program.account.stakeAccount.fetch(stakePDA2);
-      expect(stake2.bpdBonusPending.toString()).to.equal("0");
-      expect(stake2.bpdClaimPeriodId).to.equal(0);
+      expect(stake2.bpdBonusPending.toString()).toBe("0");
+      expect(stake2.bpdClaimPeriodId).toBe(0);
     });
   });
 
@@ -474,17 +474,17 @@ describe("Phase 3.3 Security Hardening", () => {
 
       // Check completion - should NOT be complete (2 < 3)
       let claimConfig = await program.account.claimConfig.fetch(claimConfigPDA);
-      expect(claimConfig.bigPayDayComplete).to.equal(false);
-      expect(claimConfig.bpdStakesDistributed).to.equal(2);
-      expect(claimConfig.bpdStakesFinalized).to.equal(3);
+      expect(claimConfig.bigPayDayComplete).toBe(false);
+      expect(claimConfig.bpdStakesDistributed).toBe(2);
+      expect(claimConfig.bpdStakesFinalized).toBe(3);
 
       // Trigger batch 2: final stake
       await triggerBpd(program, payer, globalState, claimConfigPDA, [stakes[2]]);
 
       // Check completion - NOW complete (3 >= 3)
       claimConfig = await program.account.claimConfig.fetch(claimConfigPDA);
-      expect(claimConfig.bigPayDayComplete).to.equal(true);
-      expect(claimConfig.bpdStakesDistributed).to.equal(3);
+      expect(claimConfig.bigPayDayComplete).toBe(true);
+      expect(claimConfig.bpdStakesDistributed).toBe(3);
     });
   });
 
@@ -515,7 +515,7 @@ describe("Phase 3.3 Security Hardening", () => {
           .signers([setup.staker])
           .rpc();
 
-        expect.fail("Expected UnstakeBlockedDuringBpd error");
+        throw new Error("Expected UnstakeBlockedDuringBpd error");
       } catch (error: any) {
         expect(error.toString()).to.include("UnstakeBlockedDuringBpd");
       }
@@ -550,7 +550,7 @@ describe("Phase 3.3 Security Hardening", () => {
 
       // Verify stake is marked inactive (unstake doesn't close the account)
       const stakeAccount = await program.account.stakeAccount.fetch(setup.stakePDA);
-      expect(stakeAccount.isActive).to.equal(false);
+      expect(stakeAccount.isActive).toBe(false);
     });
   });
 
@@ -575,7 +575,7 @@ describe("Phase 3.3 Security Hardening", () => {
           .signers([payer])
           .rpc();
 
-        expect.fail("Expected InvalidClaimPeriodId error");
+        throw new Error("Expected InvalidClaimPeriodId error");
       } catch (error: any) {
         expect(error.toString()).to.include("InvalidClaimPeriodId");
       }
@@ -602,7 +602,7 @@ describe("Phase 3.3 Security Hardening", () => {
         .rpc();
 
       const claimConfig = await program.account.claimConfig.fetch(claimConfigPDA);
-      expect(claimConfig.claimPeriodId).to.equal(1);
+      expect(claimConfig.claimPeriodId).toBe(1);
     });
   });
 
@@ -623,7 +623,7 @@ describe("Phase 3.3 Security Hardening", () => {
       // Get stake details before unstake
       const stakeBefore = await program.account.stakeAccount.fetch(setup.stakePDA);
       const bpdBonus = new BN(stakeBefore.bpdBonusPending.toString());
-      expect(bpdBonus.gtn(0)).to.equal(true);
+      expect(bpdBonus.gtn(0)).toBe(true);
 
       // Get token balance before unstake (using bankrun's getAccount)
       const balanceBefore = await getTokenBalance(testContext.banksClient, setup.stakerATA);
@@ -650,7 +650,7 @@ describe("Phase 3.3 Security Hardening", () => {
       const payout = new BN(balanceAfter.toString()).sub(new BN(balanceBefore.toString()));
 
       // Payout should be at least the BPD bonus (may be more due to staking rewards)
-      expect(payout.gte(bpdBonus)).to.equal(true);
+      expect(payout.gte(bpdBonus)).toBe(true);
     });
   });
 
@@ -711,40 +711,40 @@ describe("Phase 3.3 Security Hardening", () => {
 
       // Check finalize counters
       let claimConfig = await program.account.claimConfig.fetch(claimConfigPDA);
-      expect(claimConfig.bpdStakesFinalized).to.equal(3);
-      expect(claimConfig.bpdCalculationComplete).to.equal(false);
+      expect(claimConfig.bpdStakesFinalized).toBe(3);
+      expect(claimConfig.bpdCalculationComplete).toBe(false);
 
       // SEAL
       await sealBpdFinalize(program, payer, globalState, claimConfigPDA);
 
       claimConfig = await program.account.claimConfig.fetch(claimConfigPDA);
-      expect(claimConfig.bpdCalculationComplete).to.equal(true);
+      expect(claimConfig.bpdCalculationComplete).toBe(true);
 
       // TRIGGER in 2 batches
       await triggerBpd(program, payer, globalState, claimConfigPDA, [stakes[0]]);
 
       claimConfig = await program.account.claimConfig.fetch(claimConfigPDA);
-      expect(claimConfig.bpdStakesDistributed).to.equal(1);
-      expect(claimConfig.bigPayDayComplete).to.equal(false);
+      expect(claimConfig.bpdStakesDistributed).toBe(1);
+      expect(claimConfig.bigPayDayComplete).toBe(false);
 
       await triggerBpd(program, payer, globalState, claimConfigPDA, [stakes[1], stakes[2]]);
 
       // Verify completion
       claimConfig = await program.account.claimConfig.fetch(claimConfigPDA);
-      expect(claimConfig.bpdStakesDistributed).to.equal(3);
-      expect(claimConfig.bigPayDayComplete).to.equal(true);
+      expect(claimConfig.bpdStakesDistributed).toBe(3);
+      expect(claimConfig.bigPayDayComplete).toBe(true);
 
       // Verify all stakes got BPD
       for (const stakePDA of stakes) {
         const stake = await program.account.stakeAccount.fetch(stakePDA);
-        expect(new BN(stake.bpdBonusPending.toString()).gtn(0)).to.equal(true);
-        expect(stake.bpdFinalizePeriodId).to.equal(1);
-        expect(stake.bpdClaimPeriodId).to.equal(1);
+        expect(new BN(stake.bpdBonusPending.toString()).gtn(0)).toBe(true);
+        expect(stake.bpdFinalizePeriodId).toBe(1);
+        expect(stake.bpdClaimPeriodId).toBe(1);
       }
 
       // Verify BPD window is closed
       const globalStateData = await program.account.globalState.fetch(globalState);
-      expect(globalStateData.reserved[0].toString()).to.equal("0"); // BPD window flag should be cleared
+      expect(globalStateData.reserved[0].toString()).toBe("0"); // BPD window flag should be cleared
     });
   });
 });

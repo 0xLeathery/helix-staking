@@ -78,4 +78,8 @@ pub enum HelixError {
     BpdOverDistribution,
     #[msg("Stake not counted in BPD finalize phase")]
     StakeNotFinalized,
+    #[msg("BPD finalization incomplete - no stakes finalized")]
+    BpdFinalizationIncomplete,
+    #[msg("BPD window is not active")]
+    BpdWindowNotActive,
 }

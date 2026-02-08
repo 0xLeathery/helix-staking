@@ -1,5 +1,5 @@
-import { describe, it } from "mocha";
-import { expect } from "chai";
+import { describe, it, expect } from "vitest";
+
 import { Keypair, SystemProgram } from "@solana/web3.js";
 import BN from "bn.js";
 import {
@@ -48,14 +48,14 @@ describe("InitializeClaimPeriod", () => {
 
     // Verify ClaimConfig created with correct values
     const claimConfig = await program.account.claimConfig.fetch(claimConfigPDA);
-    expect(claimConfig.authority.toBase58()).to.equal(payer.publicKey.toBase58());
+    expect(claimConfig.authority.toBase58()).toBe(payer.publicKey.toBase58());
     expect(Buffer.from(claimConfig.merkleRoot)).to.deep.equal(tree.root);
-    expect(claimConfig.totalClaimable.toString()).to.equal(totalClaimable.toString());
-    expect(claimConfig.totalClaimed.toString()).to.equal("0");
-    expect(claimConfig.claimCount).to.equal(0);
-    expect(claimConfig.claimPeriodId).to.equal(claimPeriodId);
-    expect(claimConfig.claimPeriodStarted).to.equal(true);
-    expect(claimConfig.bigPayDayComplete).to.equal(false);
+    expect(claimConfig.totalClaimable.toString()).toBe(totalClaimable.toString());
+    expect(claimConfig.totalClaimed.toString()).toBe("0");
+    expect(claimConfig.claimCount).toBe(0);
+    expect(claimConfig.claimPeriodId).toBe(claimPeriodId);
+    expect(claimConfig.claimPeriodStarted).toBe(true);
+    expect(claimConfig.bigPayDayComplete).toBe(false);
   });
 
   it("rejects non-authority caller", async () => {
@@ -99,7 +99,7 @@ describe("InitializeClaimPeriod", () => {
         .signers([randomSigner])
         .rpc();
 
-      expect.fail("Expected Unauthorized error");
+      throw new Error("Expected Unauthorized error");
     } catch (error: any) {
       expect(error.toString()).to.include("Unauthorized");
     }
@@ -144,7 +144,7 @@ describe("InitializeClaimPeriod", () => {
         .signers([payer])
         .rpc();
 
-      expect.fail("Expected error for double initialization");
+      throw new Error("Expected error for double initialization");
     } catch (error: any) {
       // Anchor throws constraint/address-in-use error for re-init
       expect(error.toString().toLowerCase()).to.satisfy((msg: string) =>
@@ -192,7 +192,7 @@ describe("InitializeClaimPeriod", () => {
     const expectedEndSlot = new BN(claimConfig.startSlot.toString())
       .add(new BN(CLAIM_PERIOD_DAYS).mul(DEFAULT_SLOTS_PER_DAY));
 
-    expect(claimConfig.endSlot.toString()).to.equal(expectedEndSlot.toString());
+    expect(claimConfig.endSlot.toString()).toBe(expectedEndSlot.toString());
   });
 
   it("emits ClaimPeriodStarted event", async () => {
@@ -229,11 +229,11 @@ describe("InitializeClaimPeriod", () => {
 
     // Verify the ClaimConfig has all the event fields correctly set
     const claimConfig = await program.account.claimConfig.fetch(claimConfigPDA);
-    expect(claimConfig.claimPeriodId).to.equal(claimPeriodId);
+    expect(claimConfig.claimPeriodId).toBe(claimPeriodId);
     expect(Buffer.from(claimConfig.merkleRoot)).to.deep.equal(tree.root);
-    expect(claimConfig.totalClaimable.toString()).to.equal(totalClaimable.toString());
-    expect(claimConfig.totalEligible).to.equal(totalEligible);
+    expect(claimConfig.totalClaimable.toString()).toBe(totalClaimable.toString());
+    expect(claimConfig.totalEligible).toBe(totalEligible);
     // endSlot is the claim_deadline_slot in the event
-    expect(claimConfig.endSlot.gt(new BN(0))).to.equal(true);
+    expect(claimConfig.endSlot.gt(new BN(0))).toBe(true);
   });
 });

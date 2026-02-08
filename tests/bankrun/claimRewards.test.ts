@@ -1,5 +1,5 @@
-import { describe, it } from "mocha";
-import { expect } from "chai";
+import { describe, it, expect } from "vitest";
+
 import { PublicKey, Keypair } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import BN from "bn.js";
@@ -105,11 +105,11 @@ describe("ClaimRewards", () => {
     const rewardsClaimed = new BN(balanceAfter.toString()).sub(new BN(balanceBefore.toString()));
 
     // Should receive some rewards
-    expect(rewardsClaimed.gt(new BN(0))).to.equal(true);
+    expect(rewardsClaimed.gt(new BN(0))).toBe(true);
 
     // Verify reward_debt was updated
     const stakeAccount = await program.account.stakeAccount.fetch(stakePDA);
-    expect(stakeAccount.rewardDebt.gt(new BN(0))).to.equal(true);
+    expect(stakeAccount.rewardDebt.gt(new BN(0))).toBe(true);
   });
 
   it("rejects claim when no rewards pending", async () => {
@@ -176,7 +176,7 @@ describe("ClaimRewards", () => {
         .signers([payer])
         .rpc();
 
-      expect.fail("Expected NoRewardsToClaim error");
+      throw new Error("Expected NoRewardsToClaim error");
     } catch (error: any) {
       expect(error.toString()).to.include("NoRewardsToClaim");
     }
@@ -277,10 +277,10 @@ describe("ClaimRewards", () => {
         .signers([payer])
         .rpc();
 
-      expect.fail("Expected NoRewardsToClaim error");
+      throw new Error("Expected NoRewardsToClaim error");
     } catch (error: any) {
       // Expect error (reward_debt prevents double-claim)
-      expect(error).to.exist;
+      expect(error).toBeDefined();
     }
   });
 
@@ -370,7 +370,7 @@ describe("ClaimRewards", () => {
     const rewardsClaimed = new BN(balanceAfter.toString()).sub(new BN(balanceBefore.toString()));
 
     // Should receive rewards for multiple days
-    expect(rewardsClaimed.gt(new BN(0))).to.equal(true);
+    expect(rewardsClaimed.gt(new BN(0))).toBe(true);
   });
 
   it("correctly distributes to multiple stakers proportionally", async () => {
@@ -544,8 +544,8 @@ describe("ClaimRewards", () => {
     // User B should get approximately 3x rewards of User A (30 vs 10 tokens)
     // Allow some tolerance for rounding
     const ratio = rewardsB.mul(new BN(100)).div(rewardsA);
-    expect(ratio.gte(new BN(250))).to.equal(true); // At least 2.5x
-    expect(ratio.lte(new BN(350))).to.equal(true); // At most 3.5x
+    expect(ratio.gte(new BN(250))).toBe(true); // At least 2.5x
+    expect(ratio.lte(new BN(350))).toBe(true); // At most 3.5x
   });
 
   it("rejects claim on inactive stake", async () => {
@@ -630,7 +630,7 @@ describe("ClaimRewards", () => {
         .signers([payer])
         .rpc();
 
-      expect.fail("Expected StakeNotActive error");
+      throw new Error("Expected StakeNotActive error");
     } catch (error: any) {
       expect(error.toString()).to.include("StakeNotActive");
     }
@@ -705,7 +705,7 @@ describe("ClaimRewards", () => {
 
     // Verify share_rate increased
     const globalStateAfterCrank = await program.account.globalState.fetch(globalState);
-    expect(globalStateAfterCrank.shareRate.gt(globalStateAfterCrank.startingShareRate)).to.equal(true);
+    expect(globalStateAfterCrank.shareRate.gt(globalStateAfterCrank.startingShareRate)).toBe(true);
 
     // Create stake B (same amount and duration, but higher share_rate)
     const [stakePDA_B] = findStakePDA(program.programId, payer.publicKey, 1);
@@ -726,6 +726,6 @@ describe("ClaimRewards", () => {
     const stakeB = await program.account.stakeAccount.fetch(stakePDA_B);
 
     // Stake B should have fewer T-shares than stake A (same amount but higher share_rate)
-    expect(stakeB.tShares.lt(stakeA.tShares)).to.equal(true);
+    expect(stakeB.tShares.lt(stakeA.tShares)).toBe(true);
   });
 });

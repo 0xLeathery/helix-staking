@@ -123,3 +123,10 @@ pub struct BigPayDayDistributed {
     pub helix_per_share_day: u64,
     pub eligible_stakers: u32,
 }
+
+#[event]
+pub struct BpdAborted {
+    pub claim_period_id: u32,
+    pub stakes_finalized: u32,
+    pub stakes_distributed: u32,
+}

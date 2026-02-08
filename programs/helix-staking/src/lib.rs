@@ -134,6 +134,10 @@ pub mod helix_staking {
     pub fn migrate_stake(ctx: Context<MigrateStake>) -> Result<()> {
         instructions::migrate_stake::migrate_stake(ctx)
     }
+
+    pub fn abort_bpd(ctx: Context<AbortBpd>) -> Result<()> {
+        instructions::abort_bpd::abort_bpd(ctx)
+    }
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
