@@ -1,6 +1,6 @@
 import { PublicKey, Keypair, Transaction, TransactionInstruction } from "@solana/web3.js";
-import { keccak_256 } from "@noble/hashes/sha3";
-import { ed25519 } from "@noble/curves/ed25519";
+import { keccak_256 } from "@noble/hashes/sha3.js";
+import { ed25519 } from "@noble/curves/ed25519.js";
 import BN from "bn.js";
 
 // Re-export base utilities
