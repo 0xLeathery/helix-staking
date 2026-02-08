@@ -11,8 +11,8 @@ See: .planning/PROJECT.md (updated 2026-02-07)
 
 Phase: 7 of 8 (Leaderboard and Marketing Site)
 Plan: 3 of 3 in current phase
-Status: In progress
-Last activity: 2026-02-08 -- Completed 07-03-PLAN.md (Public marketing site with landing page)
+Status: Complete
+Last activity: 2026-02-08 -- Completed 07-02-PLAN.md (Leaderboard and whale tracker dashboard pages)
 
 Progress: [███████████] 100% (3 of 3 plans complete)
 
@@ -21,7 +21,7 @@ Progress: [███████████] 100% (3 of 3 plans complete)
 **Velocity:**
 - Total plans completed: 33
 - Average duration: ~7.3 min
-- Total execution time: ~4h 6min
+- Total execution time: ~4h 10min
 
 **By Phase:**
 
@@ -36,10 +36,10 @@ Progress: [███████████] 100% (3 of 3 plans complete)
 | 4 | 5/5 | ~58min | ~11.6min |
 | 5 | 3/3 | ~10min | ~3.3min |
 | 6 | 3/3 | ~10min | ~3.3min |
-| 7 | 3/3 | ~12min | ~4min |
+| 7 | 3/3 | ~16min | ~5.3min |
 
 **Recent Trend:**
-- Last 5 plans: 06-02 ✓, 06-03 ✓, 07-01 ✓, 07-02 ✓, 07-03 ✓
+- Last 5 plans: 06-03 ✓, 07-01 ✓, 07-02 ✓, 07-03 ✓, Phase 7 complete ✓
 - Trend: Phase 7 complete - leaderboard, whale tracker, and marketing site shipped
 
 *Updated after each plan completion*
@@ -170,6 +170,12 @@ Recent decisions affecting current work:
 - Marketing pages use Server Components with ISR for SEO optimization (07-03)
 - Landing page and tokenomics fetch stats server-side with ISR (3600s and 86400s respectively) (07-03)
 - Marketing layout excludes wallet UI - wallet context available but not displayed on public pages (07-03)
+- RankingTable highlights current user row with bg-helix-600/10 and border-l-2 border-helix-400 (07-02)
+- Top 3 leaderboard ranks get special colors: gold (#FFD700), silver (#C0C0C0), bronze (#CD7F32) (07-02)
+- WhaleFeed shows type badges: green for stake (STAKED), red for unstake (UNSTAKED) (07-02)
+- Leaderboard refetch interval: 60s (slower, rankings change gradually) (07-02)
+- Whale tracker refetch interval: 30s (faster, feed benefits from fresher data) (07-02)
+- Time formatting in whale feed uses relative display (Xd/Xh/Xm ago) instead of absolute timestamps (07-02)
 
 ### Pending Todos
 
@@ -192,9 +198,9 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-08
-Stopped at: Completed 07-03-PLAN.md (Public marketing site with landing page)
+Stopped at: Completed 07-02-PLAN.md (Leaderboard and whale tracker dashboard pages)
 Resume file: None
-Next: Phase 7 complete - ready for Phase 8 (Testing, Polish, Deployment)
+Next: Phase 7 complete - ready for Phase 8 (Testing, Audit, and Mainnet Launch)
 
 ## Phase 1 Notes
 
