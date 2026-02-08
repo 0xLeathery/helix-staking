@@ -234,7 +234,7 @@ Note: Phase 5 (Indexer) can overlap with Phase 4 (Dashboard) development since i
 | 2.1. Critical Math Fixes | 1/1 | Complete | 2026-02-07 |
 | 3. Free Claim and Big Pay Day | 0/TBD | Not started | - |
 | 3.2. BPD Security Critical Fixes | 2/2 | Complete | 2026-02-08 |
-| 3.3. Post-Audit Security Hardening | 0/TBD | Not started | - |
+| 3.3. Post-Audit Security Hardening | 0/4 | Planned | - |
 | 4. Staking Dashboard | 0/TBD | Not started | - |
 | 5. Light Indexer Service | 0/TBD | Not started | - |
 | 6. Analytics and Jupiter Integration | 0/TBD | Not started | - |
