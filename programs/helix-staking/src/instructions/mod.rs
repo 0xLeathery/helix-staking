@@ -33,3 +33,6 @@ pub use free_claim::*;
 
 pub mod seal_bpd_finalize;
 pub use seal_bpd_finalize::*;
+
+pub mod migrate_stake;
+pub use migrate_stake::*;

@@ -55,6 +55,9 @@ pub fn admin_mint(ctx: Context<AdminMint>, amount: u64) -> Result<()> {
         HelixError::AdminMintCapExceeded
     );
 
+    // MED-6 FIX: Update state BEFORE CPI (Check-Effects-Interactions pattern)
+    global_state.total_admin_minted = new_total;
+
     // Create PDA signer seeds
     let mint_authority_seeds = &[
         MINT_AUTHORITY_SEED,
@@ -75,9 +78,6 @@ pub fn admin_mint(ctx: Context<AdminMint>, amount: u64) -> Result<()> {
         ),
         amount,
     )?;
-
-    // Update admin mint counter
-    global_state.total_admin_minted = new_total;
 
     // Emit event for indexer
     emit!(AdminMinted {

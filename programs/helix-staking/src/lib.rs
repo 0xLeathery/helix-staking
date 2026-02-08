@@ -130,6 +130,10 @@ pub mod helix_staking {
     pub fn seal_bpd_finalize(ctx: Context<SealBpdFinalize>) -> Result<()> {
         instructions::seal_bpd_finalize::seal_bpd_finalize(ctx)
     }
+
+    pub fn migrate_stake(ctx: Context<MigrateStake>) -> Result<()> {
+        instructions::migrate_stake::migrate_stake(ctx)
+    }
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
