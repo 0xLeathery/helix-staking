@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-07)
 ## Current Position
 
 Phase: 4 of 8 (Staking Dashboard)
-Plan: 1 of 5 in current phase
+Plan: 2 of 5 in current phase
 Status: In progress
-Last activity: 2026-02-08 -- Completed 04-01-PLAN.md (Scaffold and Wallet Integration)
+Last activity: 2026-02-08 -- Completed 04-02-PLAN.md (Dashboard and Hooks)
 
-Progress: [██░░░░░░░░] 20% (1 of 5 plans complete)
+Progress: [████░░░░░░] 40% (2 of 5 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 20
-- Average duration: ~8.2 min
-- Total execution time: ~2h 44min
+- Total plans completed: 21
+- Average duration: ~8.4 min
+- Total execution time: ~2h 56min
 
 **By Phase:**
 
@@ -33,11 +33,11 @@ Progress: [██░░░░░░░░] 20% (1 of 5 plans complete)
 | 3 | 6 | ~19min | ~3.2min |
 | 3.2 | 2 | ~19min | ~9.5min |
 | 3.3 | 4 | ~19min | ~4.75min |
-| 4 | 1/5 | ~8min | ~8min |
+| 4 | 2/5 | ~20min | ~10min |
 
 **Recent Trend:**
-- Last 5 plans: 03.3-01 ✓, 03.3-02 ✓, 03.3-03 ✓, 03.3-04 ✓, 04-01 ✓
-- Trend: Phase 4 started - scaffold completed in 8min
+- Last 5 plans: 03.3-02 ✓, 03.3-03 ✓, 03.3-04 ✓, 04-01 ✓, 04-02 ✓
+- Trend: Phase 4 progressing - dashboard + hooks completed in 12min
 
 *Updated after each plan completion*
 
@@ -127,6 +127,11 @@ Recent decisions affecting current work:
 - QueryClient singleton with staleTime 15s, gcTime 30s for on-chain data freshness (04-01)
 - Dark-mode-only theme with forcedTheme="dark" (04-01)
 - autoConnect=false on wallet adapter per security requirement (04-01)
+- React Query hooks use WebSocket onAccountChange + polling fallback for cache invalidation (04-02)
+- Math module uses BN.js mulDiv/mulDivUp matching on-chain Rust exactly (04-02)
+- useStakes uses memcmp filter at offset 8 (after Anchor discriminator) for user pubkey (04-02)
+- useTokenBalance uses Token-2022 program ID for ATA derivation (04-02)
+- Dashboard layout uses wallet gate pattern with responsive sidebar/hamburger (04-02)
 
 ### Pending Todos
 
@@ -148,10 +153,10 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-08T05:39:40Z
-Stopped at: Completed 04-01-PLAN.md (Scaffold and Wallet Integration)
-Resume file: .planning/phases/04-staking-dashboard/04-02-PLAN.md
-Next: Phase 4 Plan 2 - Dashboard, stake viewing, global stats, React Query hooks
+Last session: 2026-02-08T05:58:42Z
+Stopped at: Completed 04-02-PLAN.md (Dashboard and Hooks)
+Resume file: .planning/phases/04-staking-dashboard/04-03-PLAN.md
+Next: Phase 4 Plan 3 - Create stake wizard (3-step: Amount -> Duration -> Confirm)
 
 ## Phase 1 Notes
 

@@ -157,8 +157,8 @@ Fixes from post-Phase-3.2 security audit (7-agent team, 2026-02-08):
 **Plans**: 5 plans in 3 waves
 
 Plans:
-- [ ] 04-01-PLAN.md -- Scaffold Next.js 14 + providers + wallet connection + CSP headers + RPC proxy + shadcn/ui primitives + Solana constants/IDL/PDAs
-- [ ] 04-02-PLAN.md -- Dashboard page + stake viewing + global stats + React Query hooks + math module + format utils
+- [x] 04-01-PLAN.md -- Scaffold Next.js 14 + providers + wallet connection + CSP headers + RPC proxy + shadcn/ui primitives + Solana constants/IDL/PDAs
+- [x] 04-02-PLAN.md -- Dashboard page + stake viewing + global stats + React Query hooks + math module + format utils
 - [ ] 04-03-PLAN.md -- Create stake wizard (3-step: Amount -> Duration -> Confirm) with bonus preview and T-share calculation
 - [ ] 04-04-PLAN.md -- Unstake + penalty calculator + reward claiming + BPD window blocking
 - [ ] 04-05-PLAN.md -- Free claim + vesting + BPD status + permissionless crank + mobile/a11y polish
@@ -238,7 +238,7 @@ Note: Phase 5 (Indexer) can overlap with Phase 4 (Dashboard) development since i
 | 3. Free Claim and Big Pay Day | 0/TBD | Not started | - |
 | 3.2. BPD Security Critical Fixes | 2/2 | Complete | 2026-02-08 |
 | 3.3. Post-Audit Security Hardening | 4/4 | Complete | 2026-02-08 |
-| 4. Staking Dashboard | 0/TBD | Not started | - |
+| 4. Staking Dashboard | 2/5 | In progress | - |
 | 5. Light Indexer Service | 0/TBD | Not started | - |
 | 6. Analytics and Jupiter Integration | 0/TBD | Not started | - |
 | 7. Leaderboard and Marketing Site | 0/TBD | Not started | - |
