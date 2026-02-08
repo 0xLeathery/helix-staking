@@ -30,3 +30,6 @@ pub use finalize_bpd_calculation::*;
 
 pub mod free_claim;
 pub use free_claim::*;
+
+pub mod seal_bpd_finalize;
+pub use seal_bpd_finalize::*;
