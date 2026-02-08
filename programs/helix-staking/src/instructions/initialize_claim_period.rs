@@ -67,6 +67,12 @@ pub fn initialize_claim_period(
     claim_config.total_eligible = total_eligible;
     claim_config.bump = ctx.bumps.claim_config;
 
+    // BPD pagination fields (Phase 3.1)
+    claim_config.bpd_remaining_unclaimed = 0;
+    claim_config.bpd_total_share_days = 0;
+    claim_config.bpd_helix_per_share_day = 0;
+    claim_config.bpd_calculation_complete = false;
+
     // Emit event
     emit!(ClaimPeriodStarted {
         slot: clock.slot,

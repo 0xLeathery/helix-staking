@@ -29,6 +29,8 @@ pub struct StakeAccount {
     /// Slot when claim period started (for T-share-days calculation)
     /// Set when stake is created during an active claim period, 0 otherwise
     pub claim_period_start_slot: u64,
+    /// Last claim period that received BPD (0 = never, periods start at 1)
+    pub bpd_claim_period_id: u32,
 }
 
 impl StakeAccount {
@@ -48,6 +50,7 @@ impl StakeAccount {
         + 1    // bump
         + 8    // bpd_bonus_pending (NEW)
         + 1    // bpd_eligible (NEW)
-        + 8;   // claim_period_start_slot (NEW)
-    // Total: 109 bytes
+        + 8    // claim_period_start_slot (NEW)
+        + 4;   // bpd_claim_period_id (NEW)
+    // Total: 113 bytes
 }
