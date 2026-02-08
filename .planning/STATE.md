@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-07)
 ## Current Position
 
 Phase: 5 of 8 (Light Indexer Service)
-Plan: 0 of 3 in current phase
-Status: Planned
-Last activity: 2026-02-08 -- Phase 5 planning complete (3 plans in 2 waves)
+Plan: 1 of 3 in current phase
+Status: In progress
+Last activity: 2026-02-08 -- Completed 05-01-PLAN.md (indexer infrastructure scaffold)
 
-Progress: [----------] 0% (0 of 3 plans complete)
+Progress: [███-------] 33% (1 of 3 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 24
-- Average duration: ~8.3 min
-- Total execution time: ~3h 34min
+- Total plans completed: 25
+- Average duration: ~8.1 min
+- Total execution time: ~3h 38min
 
 **By Phase:**
 
@@ -34,10 +34,11 @@ Progress: [----------] 0% (0 of 3 plans complete)
 | 3.2 | 2 | ~19min | ~9.5min |
 | 3.3 | 4 | ~19min | ~4.75min |
 | 4 | 5/5 | ~58min | ~11.6min |
+| 5 | 1/3 | ~4min | ~4min |
 
 **Recent Trend:**
-- Last 5 plans: 04-01 ✓, 04-02 ✓, 04-03 ✓, 04-04 ✓, 04-05 ✓
-- Trend: Phase 4 complete - all dashboard features implemented in 58min (avg 11.6min/plan)
+- Last 5 plans: 04-03 ✓, 04-04 ✓, 04-05 ✓, 05-01 ✓
+- Trend: Phase 5 started - indexer scaffold completed in 4min
 
 *Updated after each plan completion*
 
@@ -141,6 +142,11 @@ Recent decisions affecting current work:
 - useToast wraps sonner with variant: destructive->error, default->success (04-05)
 - Button touch targets 44-48px minimum for WCAG 2.1 AA mobile accessibility (04-05)
 - Skip-to-content link for keyboard navigation (sr-only, focus:not-sr-only) (04-05)
+- Lazy DB initialization via Proxy to avoid import-time env validation failures in tests (05-01)
+- Token-value fields (amount, tShares, shareRate) stored as text in Postgres; slot/day/count as bigint mode number (05-01)
+- Finality type (confirmed/finalized) instead of Commitment for getParsedTransaction to match Solana API (05-01)
+- Logger reads LOG_LEVEL directly from process.env to avoid circular dependency with env.ts (05-01)
+- Anchor IDL loaded via fs.readFileSync + JSON.parse for ESM compatibility (05-01)
 
 ### Pending Todos
 
@@ -162,10 +168,10 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-08T07:00:00Z
-Stopped at: Phase 5 planning complete
+Last session: 2026-02-08T07:18:00Z
+Stopped at: Completed 05-01-PLAN.md
 Resume file: None
-Next: Execute Phase 5 Wave 1 (05-01-PLAN.md)
+Next: Execute Phase 5 Wave 1 continued (05-02-PLAN.md)
 
 ## Phase 1 Notes
 
