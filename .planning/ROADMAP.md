@@ -17,6 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2.1: Critical Math Fixes** - Expert board fixes: precision bugs, BPB bonus, admin_mint security (INSERTED)
 - [ ] **Phase 3: Free Claim and Big Pay Day** - Merkle-based token claim, unclaimed token distribution to stakers
 - [x] **Phase 3.2: BPD Security Critical Fixes** - Fix CRITICAL BPD rate calculation and duplicate prevention (INSERTED)
+- [ ] **Phase 3.3: Post-Audit Security Hardening** - Fix permissionless finalize rate manipulation, crank overflow, arithmetic safety (INSERTED)
 - [ ] **Phase 4: Staking Dashboard** - Next.js app with wallet connection, stake management, penalty calculator
 - [ ] **Phase 5: Light Indexer Service** - Event polling, Postgres storage, read-only REST API for historical data
 - [ ] **Phase 6: Analytics and Jupiter Integration** - Rich charts, supply breakdown, APY estimator, swap widget
@@ -110,6 +111,40 @@ Fixes from security audit `.planning/phases/03-free-claim-and-big-pay-day/03-SEC
 - CRIT-1: BPD rate calculated per-batch instead of globally (first batch drains pool)
 - CRIT-2: Same stake can receive BPD multiple times (drain entire unclaimed pool)
 
+### Phase 3.3: Post-Audit Security Hardening (INSERTED)
+**Goal**: Fix all CRITICAL, HIGH, and MEDIUM security vulnerabilities identified by the 7-agent post-Phase-3.2 security audit before proceeding to frontend development
+**Depends on**: Phase 3.2
+**Requirements**: Security audit findings (CRIT-NEW-1, HIGH-1, HIGH-2, MED-1 through MED-8)
+**Success Criteria** (what must be TRUE):
+  1. `finalize_bpd_calculation` cannot be gamed by callers to manipulate the BPD rate (either authority-gated or has per-stake tracking to prevent omission/duplication)
+  2. `crank_distribution` inflation calculation uses u128 intermediates and does not overflow at any realistic staked amount
+  3. Stakes cannot be unstaked between finalize and trigger phases to cause permanent token loss
+  4. All u128-to-u64 casts use `try_from` with error handling (no silent `as u64` truncation)
+  5. `withdraw_vested` calculation uses `mul_div` to prevent u64 overflow for claims > 28K HELIX
+  6. `claim_period_id` is validated to be > 0 in `initialize_claim_period`
+  7. All existing tests continue to pass + new tests cover fixed vulnerabilities
+**Plans**: 4 plans in 3 waves
+
+Plans:
+- [ ] 03.3-01-PLAN.md -- State expansion (StakeAccount + ClaimConfig + GlobalState helpers) + seal_bpd_finalize instruction + error codes + MED-5
+- [ ] 03.3-02-PLAN.md -- Harden finalize_bpd_calculation + trigger_big_pay_day + unstake (CRIT-NEW-1 + MED-1 + MED-3 + MED-4 + HIGH-2 + LOW-2)
+- [ ] 03.3-03-PLAN.md -- Arithmetic safety (HIGH-1 + MED-2 + ADDL-1/2/3) + MED-6 admin_mint CEI + MED-8 migrate_stake
+- [ ] 03.3-04-PLAN.md -- Update existing BPD tests + new security hardening tests
+
+**Details:**
+Fixes from post-Phase-3.2 security audit (7-agent team, 2026-02-08):
+- CRIT-NEW-1: Permissionless finalize_bpd_calculation allows BPD rate manipulation via selective stake inclusion (corroborated by 5/7 auditors)
+- HIGH-1: crank_distribution u64 overflow bricks rewards at ~50K staked tokens (pre-existing, newly discovered)
+- HIGH-2: Unstake between finalize and trigger causes permanent token loss
+- MED-1: Unchecked `as u64` truncation in BPD bonus calculation
+- MED-2: withdraw_vested u64 overflow at ~28K HELIX claims
+- MED-3: saturating_sub masks over-distribution in trigger_big_pay_day
+- MED-4: Zero-eligible-stakes path creates infinite finalize loop
+- MED-5: claim_period_id=0 collision with default bpd_claim_period_id
+- MED-6: admin_mint CEI violation (state update after CPI)
+- MED-7: No authority transfer mechanism
+- MED-8: Old-format stakes (92 bytes) silently excluded from BPD
+
 ### Phase 4: Staking Dashboard
 **Goal**: Users can connect a Solana wallet and perform all staking operations through a web interface, reading state directly from the chain
 **Depends on**: Phase 3
@@ -199,6 +234,7 @@ Note: Phase 5 (Indexer) can overlap with Phase 4 (Dashboard) development since i
 | 2.1. Critical Math Fixes | 1/1 | Complete | 2026-02-07 |
 | 3. Free Claim and Big Pay Day | 0/TBD | Not started | - |
 | 3.2. BPD Security Critical Fixes | 2/2 | Complete | 2026-02-08 |
+| 3.3. Post-Audit Security Hardening | 0/TBD | Not started | - |
 | 4. Staking Dashboard | 0/TBD | Not started | - |
 | 5. Light Indexer Service | 0/TBD | Not started | - |
 | 6. Analytics and Jupiter Integration | 0/TBD | Not started | - |
