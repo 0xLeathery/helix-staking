@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-07)
 
 **Core value:** Users can stake tokens for a chosen duration, earn T-shares proportional to their commitment, and receive daily inflation rewards -- the complete stake-lock-earn lifecycle must work trustlessly on-chain.
-**Current focus:** Phase 6 - Analytics and Jupiter Integration
+**Current focus:** Phase 7 - Leaderboard and Marketing Site
 
 ## Current Position
 
-Phase: 5 of 8 (Light Indexer Service)
-Plan: 3 of 3 in current phase
-Status: Phase complete
-Last activity: 2026-02-08 -- Completed 05-03-PLAN.md (REST API implementation)
+Phase: 7 of 8 (Leaderboard and Marketing Site)
+Plan: 1 of 3 in current phase
+Status: In progress
+Last activity: 2026-02-08 -- Completed 07-01-PLAN.md (Leaderboard and whale activity API endpoints)
 
-Progress: [██████████] 100% (3 of 3 plans complete)
+Progress: [███░░░░░░░] 33% (1 of 3 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 27
-- Average duration: ~7.7 min
-- Total execution time: ~3h 44min
+- Total plans completed: 31
+- Average duration: ~7.6 min
+- Total execution time: ~3h 58min
 
 **By Phase:**
 
@@ -35,10 +35,12 @@ Progress: [██████████] 100% (3 of 3 plans complete)
 | 3.3 | 4 | ~19min | ~4.75min |
 | 4 | 5/5 | ~58min | ~11.6min |
 | 5 | 3/3 | ~10min | ~3.3min |
+| 6 | 3/3 | ~10min | ~3.3min |
+| 7 | 1/3 | ~4min | ~4min |
 
 **Recent Trend:**
-- Last 5 plans: 04-05 ✓, 05-01 ✓, 05-02 ✓, 05-03 ✓
-- Trend: Phase 5 complete - all 3 plans averaged 3.3min each
+- Last 5 plans: 05-01 ✓, 05-02 ✓, 05-03 ✓, 06-01 ✓, 06-02 ✓, 06-03 ✓, 07-01 ✓
+- Trend: Phase 7 started - backend API endpoints complete
 
 *Updated after each plan completion*
 
@@ -158,6 +160,12 @@ Recent decisions affecting current work:
 - Individual signature failures do not abort the batch -- logged and skipped (05-02)
 - Gap detection for InflationDistributed is informational-only (warn log, no corrective action) (05-02)
 - BN values converted via toString(), Pubkeys via toBase58(), byte arrays via Buffer.from().toString('hex') (05-02)
+- Leaderboard uses RANK() window function with active-stakes-only CTE (LEFT JOIN + WHERE se.id IS NULL) (07-01)
+- Leaderboard supports sorting by t_shares (default), total_staked, or stake_count (07-01)
+- Leaderboard WHERE clause includes user even if outside top N: WHERE rank <= limit OR user = user (07-01)
+- Whale activity uses UNION ALL pattern combining stake_created_events and stake_ended_events (07-01)
+- Whale activity default minAmount: 100 HELIX (100000000000 with 9 decimals), configurable via query param (07-01)
+- Both leaderboard and whale activity return { data: rows } format matching existing indexer endpoints (07-01)
 
 ### Pending Todos
 
@@ -179,10 +187,10 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-08T07:25:00Z
-Stopped at: Completed 05-03-PLAN.md (Phase 5 complete)
+Last session: 2026-02-08
+Stopped at: Completed 07-01-PLAN.md (Leaderboard and whale activity API endpoints)
 Resume file: None
-Next: Plan Phase 6 (Analytics and Jupiter Integration)
+Next: Plan 07-02 (Leaderboard and whale tracker dashboard pages)
 
 ## Phase 1 Notes
 
