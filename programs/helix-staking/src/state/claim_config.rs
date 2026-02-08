@@ -4,7 +4,7 @@ use anchor_lang::prelude::*;
 /// Seeds: [b"claim_config"]
 #[account]
 pub struct ClaimConfig {
-    /// Authority that can initialize claim period
+    /// DEPRECATED: Authority checked via GlobalState constraint. Kept for layout compatibility.
     pub authority: Pubkey,
     /// Merkle root of the snapshot
     pub merkle_root: [u8; 32],
@@ -42,6 +42,12 @@ pub struct ClaimConfig {
     pub bpd_helix_per_share_day: u128,
     /// True once finalize_bpd_calculation has processed all stakes
     pub bpd_calculation_complete: bool,
+    /// Slot pinned on first finalize batch for consistent days_staked calculation (Phase 3.3)
+    pub bpd_snapshot_slot: u64,
+    /// Count of unique stakes processed during finalize_bpd_calculation (Phase 3.3)
+    pub bpd_stakes_finalized: u32,
+    /// Count of unique stakes distributed to during trigger_big_pay_day (Phase 3.3)
+    pub bpd_stakes_distributed: u32,
 }
 
 impl ClaimConfig {
@@ -62,6 +68,9 @@ impl ClaimConfig {
         + 8    // bpd_remaining_unclaimed (Phase 3.1)
         + 16   // bpd_total_share_days (Phase 3.1)
         + 16   // bpd_helix_per_share_day (Phase 3.2)
-        + 1;   // bpd_calculation_complete (Phase 3.2)
-    // Total: 168 bytes
+        + 1    // bpd_calculation_complete (Phase 3.2)
+        + 8    // bpd_snapshot_slot (Phase 3.3)
+        + 4    // bpd_stakes_finalized (Phase 3.3)
+        + 4;   // bpd_stakes_distributed (Phase 3.3)
+    // Total: 184 bytes
 }
