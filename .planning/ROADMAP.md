@@ -126,10 +126,10 @@ Fixes from security audit `.planning/phases/03-free-claim-and-big-pay-day/03-SEC
 **Plans**: 4 plans in 3 waves
 
 Plans:
-- [ ] 03.3-01-PLAN.md -- State expansion (StakeAccount + ClaimConfig + GlobalState helpers) + seal_bpd_finalize instruction + error codes + MED-5
-- [ ] 03.3-02-PLAN.md -- Harden finalize_bpd_calculation + trigger_big_pay_day + unstake (CRIT-NEW-1 + MED-1 + MED-3 + MED-4 + HIGH-2 + LOW-2)
-- [ ] 03.3-03-PLAN.md -- Arithmetic safety (HIGH-1 + MED-2 + ADDL-1/2/3) + MED-6 admin_mint CEI + MED-8 migrate_stake
-- [ ] 03.3-04-PLAN.md -- Update existing BPD tests + new security hardening tests
+- [x] 03.3-01-PLAN.md -- State expansion (StakeAccount + ClaimConfig + GlobalState helpers) + seal_bpd_finalize instruction + error codes + MED-5
+- [x] 03.3-02-PLAN.md -- Harden finalize_bpd_calculation + trigger_big_pay_day + unstake (CRIT-NEW-1 + MED-1 + MED-3 + MED-4 + HIGH-2 + LOW-2)
+- [x] 03.3-03-PLAN.md -- Arithmetic safety (HIGH-1 + MED-2 + ADDL-1/2/3) + MED-6 admin_mint CEI + MED-8 migrate_stake
+- [x] 03.3-04-PLAN.md -- Update existing BPD tests + new security hardening tests
 
 **Details:**
 Fixes from post-Phase-3.2 security audit (7-agent team, 2026-02-08):
@@ -234,7 +234,7 @@ Note: Phase 5 (Indexer) can overlap with Phase 4 (Dashboard) development since i
 | 2.1. Critical Math Fixes | 1/1 | Complete | 2026-02-07 |
 | 3. Free Claim and Big Pay Day | 0/TBD | Not started | - |
 | 3.2. BPD Security Critical Fixes | 2/2 | Complete | 2026-02-08 |
-| 3.3. Post-Audit Security Hardening | 0/4 | Planned | - |
+| 3.3. Post-Audit Security Hardening | 4/4 | Complete | 2026-02-08 |
 | 4. Staking Dashboard | 0/TBD | Not started | - |
 | 5. Light Indexer Service | 0/TBD | Not started | - |
 | 6. Analytics and Jupiter Integration | 0/TBD | Not started | - |

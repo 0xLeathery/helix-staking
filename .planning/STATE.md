@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-02-07)
 
 **Core value:** Users can stake tokens for a chosen duration, earn T-shares proportional to their commitment, and receive daily inflation rewards -- the complete stake-lock-earn lifecycle must work trustlessly on-chain.
-**Current focus:** Phase 3.3 - Post-Audit Security Hardening
+**Current focus:** Phase 4 - Staking Dashboard (next up)
 
 ## Current Position
 
