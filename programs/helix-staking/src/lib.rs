@@ -126,6 +126,10 @@ pub mod helix_staking {
     ) -> Result<()> {
         instructions::free_claim::free_claim(ctx, snapshot_balance, proof)
     }
+
+    pub fn seal_bpd_finalize(ctx: Context<SealBpdFinalize>) -> Result<()> {
+        instructions::seal_bpd_finalize::seal_bpd_finalize(ctx)
+    }
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
