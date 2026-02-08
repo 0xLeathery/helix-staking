@@ -64,4 +64,10 @@ pub enum HelixError {
     StakeNotBpdEligible,
     #[msg("Snapshot balance below minimum")]
     SnapshotBalanceTooLow,
+    #[msg("Reward debt calculation exceeds maximum storable value")]
+    RewardDebtOverflow,
+    #[msg("BPD rate calculation not yet complete")]
+    BpdCalculationNotComplete,
+    #[msg("BPD rate calculation already finalized")]
+    BpdCalculationAlreadyComplete,
 }

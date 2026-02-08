@@ -22,7 +22,7 @@ pub struct ClaimConfig {
     pub claim_period_id: u32,
     /// True once claim period has started (merkle root immutable after this)
     pub claim_period_started: bool,
-    /// True once Big Pay Day has been triggered
+    /// True once Big Pay Day has been triggered and fully distributed
     pub big_pay_day_complete: bool,
     /// Total tokens distributed via BPD
     pub bpd_total_distributed: u64,
@@ -30,6 +30,18 @@ pub struct ClaimConfig {
     pub total_eligible: u32,
     /// PDA bump seed
     pub bump: u8,
+
+    // === BPD Pagination Fields (Phase 3.1) ===
+    /// Remaining unclaimed amount for BPD distribution (tracks across batches)
+    /// Set on first trigger_big_pay_day call, decremented with each batch
+    pub bpd_remaining_unclaimed: u64,
+    /// Total share-days accumulated across all BPD batches (for consistent rate calculation)
+    /// Stored as u128 to prevent overflow with large stake counts
+    pub bpd_total_share_days: u128,
+    /// Pre-calculated BPD rate (Phase 3.2)
+    pub bpd_helix_per_share_day: u128,
+    /// True once finalize_bpd_calculation has processed all stakes
+    pub bpd_calculation_complete: bool,
 }
 
 impl ClaimConfig {
@@ -46,6 +58,10 @@ impl ClaimConfig {
         + 1    // big_pay_day_complete
         + 8    // bpd_total_distributed
         + 4    // total_eligible
-        + 1;   // bump
-    // Total: 127 bytes
+        + 1    // bump
+        + 8    // bpd_remaining_unclaimed (Phase 3.1)
+        + 16   // bpd_total_share_days (Phase 3.1)
+        + 16   // bpd_helix_per_share_day (Phase 3.2)
+        + 1;   // bpd_calculation_complete (Phase 3.2)
+    // Total: 168 bytes
 }
