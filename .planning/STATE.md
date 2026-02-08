@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-07)
 
 **Core value:** Users can stake tokens for a chosen duration, earn T-shares proportional to their commitment, and receive daily inflation rewards -- the complete stake-lock-earn lifecycle must work trustlessly on-chain.
-**Current focus:** Phase 3 - Free Claim and Big Pay Day
+**Current focus:** Phase 3.2 - BPD Security Critical Fixes
 
 ## Current Position
 
-Phase: 3 of 8 (Free Claim and Big Pay Day)
-Plan: 6 of 6 in current phase
-Status: Phase complete
-Last activity: 2026-02-08 -- Completed 03-06-PLAN.md (Bankrun Test Suite)
+Phase: 3.2 of 8 (BPD Security Critical Fixes)
+Plan: 1 of 2 in current phase
+Status: Executing
+Last activity: 2026-02-08 -- Completed 03.2-01-PLAN.md (BPD Rate Pre-Calculation Foundation)
 
-Progress: [██████████] 100% (Phase 3 complete)
+Progress: [█████-----] 50% (Plan 1 of 2 complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 13
-- Average duration: ~9.5 min
-- Total execution time: ~2h 6min
+- Total plans completed: 14
+- Average duration: ~9.3 min
+- Total execution time: ~2h 16min
 
 **By Phase:**
 
@@ -31,10 +31,11 @@ Progress: [██████████] 100% (Phase 3 complete)
 | 2 | 4 | ~41min | ~10.25min |
 | 2.1 | 1 | ~6min | ~6min |
 | 3 | 6 | ~19min | ~3.2min |
+| 3.2 | 1 | ~10min | ~10min |
 
 **Recent Trend:**
-- Last 5 plans: 03-05 ✓, 03-04 ✓, 03-03 ✓, 03-06 ✓
-- Trend: Phase 3 complete (avg 3.2min/plan)
+- Last 5 plans: 03-04 ✓, 03-03 ✓, 03-06 ✓, 03.2-01 ✓
+- Trend: Security fixes phase started (avg 10min/plan)
 
 *Updated after each plan completion*
 
@@ -90,6 +91,11 @@ Recent decisions affecting current work:
 - @noble/hashes and @noble/curves for Merkle tree and Ed25519 in tests (03-06)
 - Merkle tree sorts leaves deterministically for reproducible proofs (03-06)
 - Ed25519 instruction data manually constructed to match Solana format (03-06)
+- Two-phase BPD distribution: finalize_bpd_calculation pre-calculates rate, trigger_big_pay_day distributes (03.2-01)
+- StakeAccount expanded from 109 to 113 bytes with bpd_claim_period_id field (03.2-01)
+- ClaimConfig expanded from 151 to 168 bytes with bpd_helix_per_share_day and bpd_calculation_complete (03.2-01)
+- finalize_bpd_calculation is READ-ONLY: never writes to StakeAccount, only ClaimConfig (03.2-01)
+- Global BPD rate locked after calculation to prevent first-batch-drains-pool attack (03.2-01)
 
 ### Pending Todos
 
@@ -102,13 +108,14 @@ None yet.
 ### Roadmap Evolution
 
 - Phase 2.1 inserted after Phase 2: Critical Math Fixes (URGENT) - Expert board identified 5 critical issues requiring fixes before Phase 3
+- Phase 3.2 inserted after Phase 3: BPD Security Critical Fixes (URGENT) - Security audit identified 2 CRITICAL vulnerabilities in BPD distribution
 
 ## Session Continuity
 
-Last session: 2026-02-08T22:59:00Z
-Stopped at: Completed 03-06-PLAN.md (Bankrun Test Suite) - Phase 3 COMPLETE
+Last session: 2026-02-08T08:50:00Z
+Stopped at: Completed 03.2-01-PLAN.md (BPD Rate Pre-Calculation Foundation)
 Resume file: None
-Next: Phase 4 - Frontend Integration
+Next: 03.2-02-PLAN.md (Modify trigger_big_pay_day to use pre-calculated rate and prevent duplicate distributions)
 
 ## Phase 1 Notes
 
