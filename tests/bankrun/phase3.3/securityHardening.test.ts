@@ -219,12 +219,12 @@ describe("Phase 3.3 Security Hardening", () => {
       // Advance past claim period
       await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
-      // Try to seal without finalize - should fail with NoEligibleStakers
+      // Try to seal without finalize - should fail with BpdFinalizationIncomplete (HIGH-2 fix)
       try {
         await sealBpdFinalize(program, payer, globalState, claimConfigPDA);
-        throw new Error("Expected NoEligibleStakers error");
+        throw new Error("Expected BpdFinalizationIncomplete error");
       } catch (error: any) {
-        expect(error.toString()).to.include("NoEligibleStakers");
+        expect(error.toString()).to.include("BpdFinalizationIncomplete");
       }
     });
 
