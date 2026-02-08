@@ -26,6 +26,7 @@ pub struct TriggerBigPayDay<'info> {
         bump = claim_config.bump,
         constraint = claim_config.claim_period_started @ HelixError::ClaimPeriodNotStarted,
         constraint = !claim_config.big_pay_day_complete @ HelixError::BigPayDayAlreadyTriggered,
+        constraint = claim_config.bpd_calculation_complete @ HelixError::BpdCalculationNotComplete,
     )]
     pub claim_config: Account<'info, ClaimConfig>,
 
@@ -46,13 +47,12 @@ pub fn trigger_big_pay_day<'info>(
         HelixError::BigPayDayNotAvailable
     );
 
-    // === Calculate unclaimed amount ===
-    let unclaimed_amount = claim_config.total_claimable
-        .checked_sub(claim_config.total_claimed)
-        .ok_or(HelixError::Underflow)?;
+    // === Load pre-calculated rate from finalize_bpd_calculation ===
+    // bpd_calculation_complete constraint already verified this is set
+    let helix_per_share_day = claim_config.bpd_helix_per_share_day;
 
-    // If nothing to distribute, just mark complete
-    if unclaimed_amount == 0 {
+    // If rate is 0, nothing to distribute - mark complete and return
+    if helix_per_share_day == 0 {
         claim_config.big_pay_day_complete = true;
         emit!(ClaimPeriodEnded {
             slot: clock.slot,
@@ -65,11 +65,10 @@ pub fn trigger_big_pay_day<'info>(
         return Ok(());
     }
 
-    // === Calculate total eligible T-share-days ===
+    // === Iterate through remaining_accounts to find eligible stakes ===
     // T-share-days = sum(stake.t_shares * days_staked_during_claim_period)
     // Only stakes created DURING claim period are eligible
 
-    let mut total_eligible_share_days: u128 = 0;
     let mut eligible_stakes: Vec<(usize, u128)> = Vec::new(); // (index, share_days)
 
     for (i, account_info) in ctx.remaining_accounts.iter().enumerate() {
@@ -109,6 +108,12 @@ pub fn trigger_big_pay_day<'info>(
             continue;
         }
 
+        // === SECURITY: Duplicate prevention check FIRST ===
+        // If this stake already received BPD for this claim period, skip it
+        if stake.bpd_claim_period_id == claim_config.claim_period_id {
+            continue; // Already received BPD this period
+        }
+
         // Check eligibility:
         // 1. Must be active
         // 2. Must have been created DURING the claim period
@@ -141,43 +146,50 @@ pub fn trigger_big_pay_day<'info>(
             .checked_mul(days_staked as u128)
             .ok_or(HelixError::Overflow)?;
 
-        total_eligible_share_days = total_eligible_share_days
-            .checked_add(share_days)
-            .ok_or(HelixError::Overflow)?;
-
         eligible_stakes.push((i, share_days));
     }
 
-    // If no eligible stakers, keep tokens in pool for future distribution
-    // per CONTEXT.md: "If no stakers: keep pool pending until stakers appear"
-    if total_eligible_share_days == 0 {
-        // Don't mark complete - allow future trigger when stakers exist
-        emit!(ClaimPeriodEnded {
-            slot: clock.slot,
-            timestamp: clock.unix_timestamp,
-            claim_period_id: claim_config.claim_period_id,
-            total_claimed: claim_config.total_claimed,
-            claims_count: claim_config.claim_count,
-            unclaimed_amount,
-        });
+    // === Handle empty batch ===
+    // If no eligible stakes in this batch (all filtered out or already received BPD)
+    if eligible_stakes.is_empty() {
+        // Check if this looks like the last batch
+        let is_last_batch = ctx.remaining_accounts.len() < MAX_STAKES_PER_BPD;
+
+        if is_last_batch {
+            // Last batch with no new stakes to process = all done
+            claim_config.big_pay_day_complete = true;
+            claim_config.bpd_remaining_unclaimed = 0;
+
+            emit!(ClaimPeriodEnded {
+                slot: clock.slot,
+                timestamp: clock.unix_timestamp,
+                claim_period_id: claim_config.claim_period_id,
+                total_claimed: claim_config.total_claimed,
+                claims_count: claim_config.claim_count,
+                unclaimed_amount: 0, // Distribution complete
+            });
+
+            emit!(BigPayDayDistributed {
+                slot: clock.slot,
+                timestamp: clock.unix_timestamp,
+                claim_period_id: claim_config.claim_period_id,
+                total_unclaimed: claim_config.bpd_remaining_unclaimed,
+                total_eligible_share_days: claim_config.bpd_total_share_days.min(u64::MAX as u128) as u64,
+                helix_per_share_day: helix_per_share_day.min(u64::MAX as u128) as u64,
+                eligible_stakers: 0,
+            });
+        }
+
         return Ok(());
     }
 
-    // === Calculate helix per share-day ===
-    // Use u128 to prevent overflow
-    let helix_per_share_day = (unclaimed_amount as u128)
-        .checked_mul(PRECISION as u128)
-        .ok_or(HelixError::Overflow)?
-        .checked_div(total_eligible_share_days)
-        .ok_or(HelixError::DivisionByZero)?;
-
     // === Distribute BPD bonus to each eligible stake ===
-    let mut total_distributed: u64 = 0;
+    let mut batch_distributed: u64 = 0;
 
     for (idx, share_days) in eligible_stakes.iter() {
         let account_info = &ctx.remaining_accounts[*idx];
 
-        // Calculate this stake's BPD bonus
+        // Calculate this stake's BPD bonus using pre-calculated rate
         // *share_days is already u128, no cast needed
         let bonus = ((*share_days)
             .checked_mul(helix_per_share_day)
@@ -196,33 +208,55 @@ pub fn trigger_big_pay_day<'info>(
         stake.bpd_bonus_pending = stake.bpd_bonus_pending
             .checked_add(bonus)
             .ok_or(HelixError::Overflow)?;
+
+        // === SECURITY: Mark stake as having received BPD for this claim period ===
+        // This prevents duplicate distribution if same stake passed multiple times
+        stake.bpd_claim_period_id = claim_config.claim_period_id;
+
         stake.try_serialize(&mut &mut account_info.try_borrow_mut_data()?[..])?;
 
-        total_distributed = total_distributed
+        batch_distributed = batch_distributed
             .checked_add(bonus)
             .ok_or(HelixError::Overflow)?;
     }
 
-    // === Update ClaimConfig ===
-    claim_config.big_pay_day_complete = true;
-    claim_config.bpd_total_distributed = total_distributed;
+    // === Update ClaimConfig pagination state ===
+    claim_config.bpd_total_distributed = claim_config.bpd_total_distributed
+        .checked_add(batch_distributed)
+        .ok_or(HelixError::Overflow)?;
 
-    // === Emit events ===
-    emit!(ClaimPeriodEnded {
-        slot: clock.slot,
-        timestamp: clock.unix_timestamp,
-        claim_period_id: claim_config.claim_period_id,
-        total_claimed: claim_config.total_claimed,
-        claims_count: claim_config.claim_count,
-        unclaimed_amount,
-    });
+    // Deduct distributed amount from remaining
+    claim_config.bpd_remaining_unclaimed = claim_config.bpd_remaining_unclaimed
+        .saturating_sub(batch_distributed);
 
+    // === Check if we should mark complete ===
+    // Mark complete if:
+    // 1. Remaining unclaimed is 0 (all distributed), OR
+    // 2. This batch had fewer than MAX_STAKES_PER_BPD stakes (indicates last batch)
+    let is_last_batch = ctx.remaining_accounts.len() < MAX_STAKES_PER_BPD
+        || claim_config.bpd_remaining_unclaimed == 0;
+
+    if is_last_batch {
+        claim_config.big_pay_day_complete = true;
+        claim_config.bpd_remaining_unclaimed = 0;
+
+        emit!(ClaimPeriodEnded {
+            slot: clock.slot,
+            timestamp: clock.unix_timestamp,
+            claim_period_id: claim_config.claim_period_id,
+            total_claimed: claim_config.total_claimed,
+            claims_count: claim_config.claim_count,
+            unclaimed_amount: 0, // All distributed
+        });
+    }
+
+    // === Emit batch distribution event ===
     emit!(BigPayDayDistributed {
         slot: clock.slot,
         timestamp: clock.unix_timestamp,
         claim_period_id: claim_config.claim_period_id,
-        total_unclaimed: unclaimed_amount,
-        total_eligible_share_days: total_eligible_share_days.min(u64::MAX as u128) as u64,
+        total_unclaimed: claim_config.bpd_remaining_unclaimed,
+        total_eligible_share_days: claim_config.bpd_total_share_days.min(u64::MAX as u128) as u64,
         helix_per_share_day: helix_per_share_day.min(u64::MAX as u128) as u64,
         eligible_stakers: eligible_stakes.len() as u32,
     });
