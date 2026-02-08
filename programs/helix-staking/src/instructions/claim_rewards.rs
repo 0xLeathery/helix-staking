@@ -6,7 +6,7 @@ use crate::constants::*;
 use crate::error::HelixError;
 use crate::events::RewardsClaimed;
 use crate::state::{GlobalState, StakeAccount};
-use crate::instructions::math::calculate_pending_rewards;
+use crate::instructions::math::{calculate_pending_rewards, calculate_reward_debt};
 
 #[derive(Accounts)]
 pub struct ClaimRewards<'info> {
@@ -85,10 +85,9 @@ pub fn claim_rewards(ctx: Context<ClaimRewards>) -> Result<()> {
     require!(total_rewards > 0, HelixError::NoRewardsToClaim);
 
     // CRITICAL: Update reward_debt BEFORE CPI (prevents double-claim)
+    // Uses u128 intermediate to prevent overflow
     let stake_mut = &mut ctx.accounts.stake_account;
-    stake_mut.reward_debt = t_shares
-        .checked_mul(global_state.share_rate)
-        .ok_or(HelixError::Overflow)?;
+    stake_mut.reward_debt = calculate_reward_debt(t_shares, global_state.share_rate)?;
 
     // Clear BPD bonus after claiming
     if bpd_bonus > 0 {

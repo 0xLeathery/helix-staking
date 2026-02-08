@@ -245,6 +245,18 @@ pub fn calculate_pending_rewards(
     u64::try_from(pending_128).map_err(|_| error!(HelixError::Overflow))
 }
 
+/// Calculate reward_debt = t_shares × share_rate with overflow protection.
+/// Uses u128 intermediate to prevent overflow during multiplication.
+/// Returns RewardDebtOverflow error if result exceeds u64::MAX.
+/// Frontend TypeScript: BigInt(tShares) * BigInt(shareRate)
+pub fn calculate_reward_debt(t_shares: u64, share_rate: u64) -> Result<u64> {
+    let result = (t_shares as u128)
+        .checked_mul(share_rate as u128)
+        .ok_or(error!(HelixError::Overflow))?;
+
+    u64::try_from(result).map_err(|_| error!(HelixError::RewardDebtOverflow))
+}
+
 /// Get current day from init_slot
 /// Returns day number (0-indexed)
 pub fn get_current_day(
@@ -337,5 +349,32 @@ mod tests {
         let way_late = end + (500 * slots_per_day);
         let max_penalty = calculate_late_penalty(staked, end, way_late, slots_per_day).unwrap();
         assert_eq!(max_penalty, staked); // 100% penalty
+    }
+
+    #[test]
+    fn test_calculate_reward_debt() {
+        // Normal case: small values that fit in u64
+        let result = calculate_reward_debt(1000, 10000).unwrap();
+        assert_eq!(result, 10_000_000);
+
+        // Moderate case: larger but still fits
+        let result = calculate_reward_debt(1_000_000_000, 1_000_000).unwrap();
+        assert_eq!(result, 1_000_000_000_000_000);
+
+        // Edge case: zero values
+        let zero_shares = calculate_reward_debt(0, 10000).unwrap();
+        assert_eq!(zero_shares, 0);
+
+        let zero_rate = calculate_reward_debt(1000, 0).unwrap();
+        assert_eq!(zero_rate, 0);
+
+        // Maximum safe case: sqrt(u64::MAX) × sqrt(u64::MAX) fits
+        let sqrt_max = 4_294_967_295u64; // ~sqrt(u64::MAX)
+        let result = calculate_reward_debt(sqrt_max, sqrt_max).unwrap();
+        assert!(result > 0);
+
+        // Overflow case: u64::MAX × 2 should fail with RewardDebtOverflow
+        let overflow_result = calculate_reward_debt(u64::MAX, 2);
+        assert!(overflow_result.is_err());
     }
 }

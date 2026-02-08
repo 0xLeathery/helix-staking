@@ -6,7 +6,7 @@ use crate::constants::*;
 use crate::error::HelixError;
 use crate::events::StakeCreated;
 use crate::state::{GlobalState, StakeAccount, ClaimConfig};
-use crate::instructions::math::calculate_t_shares;
+use crate::instructions::math::{calculate_t_shares, calculate_reward_debt};
 
 #[derive(Accounts)]
 pub struct CreateStake<'info> {
@@ -87,9 +87,8 @@ pub fn create_stake<'info>(
         .ok_or(HelixError::Overflow)?;
 
     // Calculate reward debt (for lazy distribution)
-    let reward_debt = t_shares
-        .checked_mul(global_state.share_rate)
-        .ok_or(HelixError::Overflow)?;
+    // Uses u128 intermediate to prevent overflow
+    let reward_debt = calculate_reward_debt(t_shares, global_state.share_rate)?;
 
     // Initialize StakeAccount
     stake_account.user = ctx.accounts.user.key();
