@@ -21,7 +21,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Staking Dashboard** - Next.js app with wallet connection, stake management, penalty calculator
 - [x] **Phase 5: Light Indexer Service** - Event polling, Postgres storage, read-only REST API for historical data
 - [x] **Phase 6: Analytics and Jupiter Integration** - Rich charts, supply breakdown, APY estimator, swap widget
-- [ ] **Phase 7: Leaderboard and Marketing Site** - Whale tracker, leaderboard pages, marketing/landing site, economics explainer
+- [x] **Phase 7: Leaderboard and Marketing Site** - Whale tracker, leaderboard pages, marketing/landing site, economics explainer
 - [ ] **Phase 8: Testing, Audit, and Mainnet Launch** - Comprehensive tests, devnet validation, security audit, mainnet deployment
 
 ## Phase Details
@@ -209,9 +209,9 @@ Plans:
 **Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 07-01-PLAN.md -- Indexer API: leaderboard rankings (RANK() window function) and whale activity feed endpoints + frontend API client
-- [ ] 07-02-PLAN.md -- Dashboard: leaderboard page, whale tracker page, ranking table, whale feed components, nav updates
-- [ ] 07-03-PLAN.md -- Marketing site: public route group, landing page with ISR, how-it-works, tokenomics, nav, footer
+- [x] 07-01-PLAN.md -- Indexer API: leaderboard rankings (RANK() window function) and whale activity feed endpoints + frontend API client
+- [x] 07-02-PLAN.md -- Dashboard: leaderboard page, whale tracker page, ranking table, whale feed components, nav updates
+- [x] 07-03-PLAN.md -- Marketing site: public route group, landing page with ISR, how-it-works, tokenomics, nav, footer
 
 ### Phase 8: Testing, Audit, and Mainnet Launch
 **Goal**: The protocol is comprehensively tested, security-audited, validated on devnet with real usage patterns, and deployed to mainnet with proper upgrade authority management
@@ -248,5 +248,5 @@ Note: Phase 5 (Indexer) can overlap with Phase 4 (Dashboard) development since i
 | 4. Staking Dashboard | 5/5 | Complete | 2026-02-08 |
 | 5. Light Indexer Service | 3/3 | Complete | 2026-02-08 |
 | 6. Analytics and Jupiter Integration | 3/3 | Complete | 2026-02-08 |
-| 7. Leaderboard and Marketing Site | 0/TBD | Not started | - |
+| 7. Leaderboard and Marketing Site | 3/3 | Complete | 2026-02-08 |
 | 8. Testing, Audit, and Mainnet Launch | 0/TBD | Not started | - |

@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-07)
 ## Current Position
 
 Phase: 7 of 8 (Leaderboard and Marketing Site)
-Plan: 1 of 3 in current phase
+Plan: 3 of 3 in current phase
 Status: In progress
-Last activity: 2026-02-08 -- Completed 07-01-PLAN.md (Leaderboard and whale activity API endpoints)
+Last activity: 2026-02-08 -- Completed 07-03-PLAN.md (Public marketing site with landing page)
 
-Progress: [███░░░░░░░] 33% (1 of 3 plans complete)
+Progress: [███████████] 100% (3 of 3 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 31
-- Average duration: ~7.6 min
-- Total execution time: ~3h 58min
+- Total plans completed: 33
+- Average duration: ~7.3 min
+- Total execution time: ~4h 6min
 
 **By Phase:**
 
@@ -36,11 +36,11 @@ Progress: [███░░░░░░░] 33% (1 of 3 plans complete)
 | 4 | 5/5 | ~58min | ~11.6min |
 | 5 | 3/3 | ~10min | ~3.3min |
 | 6 | 3/3 | ~10min | ~3.3min |
-| 7 | 1/3 | ~4min | ~4min |
+| 7 | 3/3 | ~12min | ~4min |
 
 **Recent Trend:**
-- Last 5 plans: 05-01 ✓, 05-02 ✓, 05-03 ✓, 06-01 ✓, 06-02 ✓, 06-03 ✓, 07-01 ✓
-- Trend: Phase 7 started - backend API endpoints complete
+- Last 5 plans: 06-02 ✓, 06-03 ✓, 07-01 ✓, 07-02 ✓, 07-03 ✓
+- Trend: Phase 7 complete - leaderboard, whale tracker, and marketing site shipped
 
 *Updated after each plan completion*
 
@@ -166,6 +166,10 @@ Recent decisions affecting current work:
 - Whale activity uses UNION ALL pattern combining stake_created_events and stake_ended_events (07-01)
 - Whale activity default minAmount: 100 HELIX (100000000000 with 9 decimals), configurable via query param (07-01)
 - Both leaderboard and whale activity return { data: rows } format matching existing indexer endpoints (07-01)
+- Next.js route groups (public) separate marketing site layout from dashboard layout without affecting URLs (07-03)
+- Marketing pages use Server Components with ISR for SEO optimization (07-03)
+- Landing page and tokenomics fetch stats server-side with ISR (3600s and 86400s respectively) (07-03)
+- Marketing layout excludes wallet UI - wallet context available but not displayed on public pages (07-03)
 
 ### Pending Todos
 
@@ -188,9 +192,9 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-08
-Stopped at: Completed 07-01-PLAN.md (Leaderboard and whale activity API endpoints)
+Stopped at: Completed 07-03-PLAN.md (Public marketing site with landing page)
 Resume file: None
-Next: Plan 07-02 (Leaderboard and whale tracker dashboard pages)
+Next: Phase 7 complete - ready for Phase 8 (Testing, Polish, Deployment)
 
 ## Phase 1 Notes
 
