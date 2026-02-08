@@ -58,6 +58,16 @@ pub struct GlobalState {
 }
 
 impl GlobalState {
+    /// Check if BPD calculation window is active (unstaking blocked)
+    pub fn is_bpd_window_active(&self) -> bool {
+        self.reserved[0] != 0
+    }
+
+    /// Set BPD window flag (called by finalize on first batch, cleared by trigger on completion)
+    pub fn set_bpd_window_active(&mut self, active: bool) {
+        self.reserved[0] = if active { 1 } else { 0 };
+    }
+
     pub const LEN: usize = 8    // discriminator
         + 32   // authority
         + 32   // mint

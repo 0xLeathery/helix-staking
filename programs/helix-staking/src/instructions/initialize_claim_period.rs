@@ -39,6 +39,11 @@ pub fn initialize_claim_period(
     total_eligible: u32,
     claim_period_id: u32,
 ) -> Result<()> {
+    // MED-5 FIX: Prevent claim_period_id=0 which collides with
+    // StakeAccount's default bpd_claim_period_id=0, causing all
+    // stakes to be skipped in trigger_big_pay_day
+    require!(claim_period_id > 0, HelixError::InvalidClaimPeriodId);
+
     let clock = Clock::get()?;
     let claim_config = &mut ctx.accounts.claim_config;
     let global_state = &ctx.accounts.global_state;
@@ -72,6 +77,11 @@ pub fn initialize_claim_period(
     claim_config.bpd_total_share_days = 0;
     claim_config.bpd_helix_per_share_day = 0;
     claim_config.bpd_calculation_complete = false;
+
+    // BPD Phase 3.3 fields
+    claim_config.bpd_snapshot_slot = 0;
+    claim_config.bpd_stakes_finalized = 0;
+    claim_config.bpd_stakes_distributed = 0;
 
     // Emit event
     emit!(ClaimPeriodStarted {

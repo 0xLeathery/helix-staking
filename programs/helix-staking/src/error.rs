@@ -70,4 +70,12 @@ pub enum HelixError {
     BpdCalculationNotComplete,
     #[msg("BPD rate calculation already finalized")]
     BpdCalculationAlreadyComplete,
+    #[msg("Unstaking is temporarily blocked during Big Pay Day calculation")]
+    UnstakeBlockedDuringBpd,
+    #[msg("Claim period ID must be greater than 0")]
+    InvalidClaimPeriodId,
+    #[msg("BPD distribution exceeded remaining pool")]
+    BpdOverDistribution,
+    #[msg("Stake not counted in BPD finalize phase")]
+    StakeNotFinalized,
 }
