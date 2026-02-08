@@ -15,12 +15,12 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Foundation and Token Infrastructure** - Anchor scaffold, Token-2022 mint, GlobalState, dev environment
 - [x] **Phase 2: Core Staking Mechanics** - Stake/unstake lifecycle, T-share math, penalties, inflation, share rate
 - [x] **Phase 2.1: Critical Math Fixes** - Expert board fixes: precision bugs, BPB bonus, admin_mint security (INSERTED)
-- [ ] **Phase 3: Free Claim and Big Pay Day** - Merkle-based token claim, unclaimed token distribution to stakers
+- [x] **Phase 3: Free Claim and Big Pay Day** - Merkle-based token claim, unclaimed token distribution to stakers
 - [x] **Phase 3.2: BPD Security Critical Fixes** - Fix CRITICAL BPD rate calculation and duplicate prevention (INSERTED)
-- [ ] **Phase 3.3: Post-Audit Security Hardening** - Fix permissionless finalize rate manipulation, crank overflow, arithmetic safety (INSERTED)
+- [x] **Phase 3.3: Post-Audit Security Hardening** - Fix permissionless finalize rate manipulation, crank overflow, arithmetic safety (INSERTED)
 - [x] **Phase 4: Staking Dashboard** - Next.js app with wallet connection, stake management, penalty calculator
-- [ ] **Phase 5: Light Indexer Service** - Event polling, Postgres storage, read-only REST API for historical data
-- [ ] **Phase 6: Analytics and Jupiter Integration** - Rich charts, supply breakdown, APY estimator, swap widget
+- [x] **Phase 5: Light Indexer Service** - Event polling, Postgres storage, read-only REST API for historical data
+- [x] **Phase 6: Analytics and Jupiter Integration** - Rich charts, supply breakdown, APY estimator, swap widget
 - [ ] **Phase 7: Leaderboard and Marketing Site** - Whale tracker, leaderboard pages, marketing/landing site, economics explainer
 - [ ] **Phase 8: Testing, Audit, and Mainnet Launch** - Comprehensive tests, devnet validation, security audit, mainnet deployment
 
@@ -85,11 +85,15 @@ Plans:
   1. User with SOL in the snapshot can submit a Merkle proof and receive HELIX tokens proportional to their balance
   2. Each address can claim exactly once (double-claim attempts are rejected)
   3. After the claim period ends, Big Pay Day distributes all unclaimed tokens proportionally to active T-share holders
-**Plans**: TBD
+**Plans**: 6 plans in 6 waves (Complete)
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
+- [x] 03-01: Merkle-based Claim instruction + PDA seeds
+- [x] 03-02: Stake expansion for BPD + BPD bonus calculation
+- [x] 03-03: Merkle proof verification + Ed25519 signature introspection
+- [x] 03-04: Vesting logic (10% immediate / 90% linear)
+- [x] 03-05: ClaimConfig initialization and period management
+- [x] 03-06: Bankrun test suite (43 tests)
 
 ### Phase 3.2: BPD Security Critical Fixes (INSERTED)
 **Goal**: Fix CRITICAL security vulnerabilities in Big Pay Day distribution preventing unfair rate calculation per-batch and duplicate bonus exploitation
@@ -186,11 +190,12 @@ Plans:
   1. User can view T-share price history chart with selectable timeframes (1d, 7d, 30d, all)
   2. User can view daily payout history, supply breakdown (staked vs. liquid vs. unclaimed), and stake distribution histogram
   3. User can swap SOL/HELIX tokens through an embedded Jupiter widget without leaving the dashboard
-**Plans**: TBD
+**Plans**: 3 plans in 3 waves (Complete)
 
 Plans:
-- [ ] 06-01: TBD
-- [ ] 06-02: TBD
+- [x] 06-01-PLAN.md -- Indexer API updates for historical data + Frontend chart infrastructure (Recharts)
+- [x] 06-02-PLAN.md -- Analytics Dashboard: T-Share history, Stake distribution, and Supply breakdown charts
+- [x] 06-03-PLAN.md -- Jupiter Integration: Swap widget and navigation
 
 ### Phase 7: Leaderboard and Marketing Site
 **Goal**: A public-facing marketing site explains the protocol and attracts participants, while the leaderboard and whale tracker showcase top stakers
@@ -201,11 +206,12 @@ Plans:
   2. Whale tracker displays large stake movements (new large stakes, large unstakes)
   3. Marketing site explains HELIX mechanics (staking, T-shares, bonuses, penalties, Big Pay Day) with clear visuals
   4. Marketing site is SSR-rendered and loads fast for SEO and first-time visitors
-**Plans**: TBD
+**Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 07-01: TBD
-- [ ] 07-02: TBD
+- [ ] 07-01-PLAN.md -- Indexer API: leaderboard rankings (RANK() window function) and whale activity feed endpoints + frontend API client
+- [ ] 07-02-PLAN.md -- Dashboard: leaderboard page, whale tracker page, ranking table, whale feed components, nav updates
+- [ ] 07-03-PLAN.md -- Marketing site: public route group, landing page with ISR, how-it-works, tokenomics, nav, footer
 
 ### Phase 8: Testing, Audit, and Mainnet Launch
 **Goal**: The protocol is comprehensively tested, security-audited, validated on devnet with real usage patterns, and deployed to mainnet with proper upgrade authority management
@@ -236,11 +242,11 @@ Note: Phase 5 (Indexer) can overlap with Phase 4 (Dashboard) development since i
 | 1. Foundation and Token Infrastructure | 2/2 | Complete | 2026-02-07 |
 | 2. Core Staking Mechanics | 4/4 | Complete | 2026-02-07 |
 | 2.1. Critical Math Fixes | 1/1 | Complete | 2026-02-07 |
-| 3. Free Claim and Big Pay Day | 0/TBD | Not started | - |
+| 3. Free Claim and Big Pay Day | 6/6 | Complete | 2026-02-08 |
 | 3.2. BPD Security Critical Fixes | 2/2 | Complete | 2026-02-08 |
 | 3.3. Post-Audit Security Hardening | 4/4 | Complete | 2026-02-08 |
 | 4. Staking Dashboard | 5/5 | Complete | 2026-02-08 |
 | 5. Light Indexer Service | 3/3 | Complete | 2026-02-08 |
-| 6. Analytics and Jupiter Integration | 0/TBD | Not started | - |
+| 6. Analytics and Jupiter Integration | 3/3 | Complete | 2026-02-08 |
 | 7. Leaderboard and Marketing Site | 0/TBD | Not started | - |
 | 8. Testing, Audit, and Mainnet Launch | 0/TBD | Not started | - |
