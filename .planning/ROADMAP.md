@@ -174,9 +174,9 @@ Plans:
 **Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 05-01-PLAN.md -- Project scaffold, Drizzle schema (11 event tables + checkpoints), DB client, RPC wrapper, Anchor decoder, logger
-- [ ] 05-02-PLAN.md -- Polling worker: checkpoint management, signature fetcher, event decoder, event processor, graceful shutdown
-- [ ] 05-03-PLAN.md -- REST API: health check, aggregate stats, distribution/stake/claim history with pagination
+- [x] 05-01-PLAN.md -- Project scaffold, Drizzle schema (11 event tables + checkpoints), DB client, RPC wrapper, Anchor decoder, logger
+- [x] 05-02-PLAN.md -- Polling worker: checkpoint management, signature fetcher, event decoder, event processor, graceful shutdown
+- [x] 05-03-PLAN.md -- REST API: health check, aggregate stats, distribution/stake/claim history with pagination
 
 ### Phase 6: Analytics and Jupiter Integration
 **Goal**: The dashboard displays rich historical analytics powered by the indexer and users can trade HELIX tokens via an embedded Jupiter swap widget
@@ -240,7 +240,7 @@ Note: Phase 5 (Indexer) can overlap with Phase 4 (Dashboard) development since i
 | 3.2. BPD Security Critical Fixes | 2/2 | Complete | 2026-02-08 |
 | 3.3. Post-Audit Security Hardening | 4/4 | Complete | 2026-02-08 |
 | 4. Staking Dashboard | 5/5 | Complete | 2026-02-08 |
-| 5. Light Indexer Service | 0/TBD | Not started | - |
+| 5. Light Indexer Service | 3/3 | Complete | 2026-02-08 |
 | 6. Analytics and Jupiter Integration | 0/TBD | Not started | - |
 | 7. Leaderboard and Marketing Site | 0/TBD | Not started | - |
 | 8. Testing, Audit, and Mainnet Launch | 0/TBD | Not started | - |

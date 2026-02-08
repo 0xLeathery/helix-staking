@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-02-07)
 
 **Core value:** Users can stake tokens for a chosen duration, earn T-shares proportional to their commitment, and receive daily inflation rewards -- the complete stake-lock-earn lifecycle must work trustlessly on-chain.
-**Current focus:** Phase 5 - Light Indexer Service (complete)
+**Current focus:** Phase 6 - Analytics and Jupiter Integration
 
 ## Current Position
 
@@ -182,7 +182,7 @@ None yet.
 Last session: 2026-02-08T07:25:00Z
 Stopped at: Completed 05-03-PLAN.md (Phase 5 complete)
 Resume file: None
-Next: Phase 6 (Analytics) or next milestone planning
+Next: Plan Phase 6 (Analytics and Jupiter Integration)
 
 ## Phase 1 Notes
 
