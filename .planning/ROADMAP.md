@@ -154,11 +154,14 @@ Fixes from post-Phase-3.2 security audit (7-agent team, 2026-02-08):
   2. User can create a new stake by choosing amount and duration, and the transaction succeeds on-chain
   3. User can view all their active stakes with remaining days, T-share count, and accrued rewards
   4. User can end a stake (early, on-time, or late) and the penalty calculator shows the exact penalty before confirming
-**Plans**: TBD
+**Plans**: 5 plans in 3 waves
 
 Plans:
-- [ ] 04-01: TBD
-- [ ] 04-02: TBD
+- [ ] 04-01-PLAN.md -- Scaffold Next.js 14 + providers + wallet connection + CSP headers + RPC proxy + shadcn/ui primitives + Solana constants/IDL/PDAs
+- [ ] 04-02-PLAN.md -- Dashboard page + stake viewing + global stats + React Query hooks + math module + format utils
+- [ ] 04-03-PLAN.md -- Create stake wizard (3-step: Amount -> Duration -> Confirm) with bonus preview and T-share calculation
+- [ ] 04-04-PLAN.md -- Unstake + penalty calculator + reward claiming + BPD window blocking
+- [ ] 04-05-PLAN.md -- Free claim + vesting + BPD status + permissionless crank + mobile/a11y polish
 
 ### Phase 5: Light Indexer Service
 **Goal**: A background service continuously indexes on-chain program events into Postgres and serves historical data through a read-only REST API
