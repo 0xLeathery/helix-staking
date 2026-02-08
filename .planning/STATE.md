@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-07)
 ## Current Position
 
 Phase: 3.3 of 8 (Post-Audit Security Hardening)
-Plan: 3 of 4 in current phase (3 waves)
+Plan: 2 of 4 in current phase (3 waves)
 Status: 🔨 IN PROGRESS
-Last activity: 2026-02-08 -- Completed 03.3-03-PLAN.md (Arithmetic Safety and CEI Hardening)
+Last activity: 2026-02-08 -- Completed 03.3-02-PLAN.md (BPD Distribution Hardening)
 
-Progress: [████████░░] 75% (3 of 4 plans complete)
+Progress: [█████░░░░░] 50% (2 of 4 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 18
-- Average duration: ~8.2 min
-- Total execution time: ~2h 34min
+- Total plans completed: 17
+- Average duration: ~8.5 min
+- Total execution time: ~2h 25min
 
 **By Phase:**
 
@@ -32,11 +32,11 @@ Progress: [████████░░] 75% (3 of 4 plans complete)
 | 2.1 | 1 | ~6min | ~6min |
 | 3 | 6 | ~19min | ~3.2min |
 | 3.2 | 2 | ~19min | ~9.5min |
-| 3.3 | 3 | ~9min | ~3min |
+| 3.3 | 2 | ~8min | ~4min |
 
 **Recent Trend:**
-- Last 5 plans: 03.2-01 ✓, 03.2-02 ✓, 03.3-01 ✓, 03.3-02 ✓, 03.3-03 ✓
-- Trend: Consistent 3min execution for security hardening - highly efficient
+- Last 5 plans: 03-06 ✓, 03.2-01 ✓, 03.2-02 ✓, 03.3-01 ✓, 03.3-02 ✓
+- Trend: Consistent fast execution for security hardening - highly efficient
 
 *Updated after each plan completion*
 
@@ -107,13 +107,17 @@ Recent decisions affecting current work:
 - seal_bpd_finalize instruction created as authority-gated phase transition (03.3-01)
 - MED-5 fixed: claim_period_id=0 rejected to prevent BPD distribution collision (03.3-01)
 - Deprecation comments added on unused legacy fields for layout compatibility (03.3-01)
-- HIGH-1 fixed: crank_distribution uses mul_div for inflation calculation to prevent overflow (03.3-03)
-- MED-2 fixed: withdraw_vested uses mul_div for immediate and vesting calculations (03.3-03)
-- ADDL-1/2/3 fixed: free_claim uses mul_div for all proportion calculations (03.3-03)
-- MED-6 fixed: admin_mint follows CEI pattern (state update before CPI) (03.3-03)
-- MED-8 fixed: migrate_stake instruction added for reallocating old StakeAccounts (03.3-03)
-- CEI pattern established: all state updates occur BEFORE external calls (03.3-03)
-- mul_div pattern established: all proportion calculations use u128 intermediates (03.3-03)
+- CRIT-NEW-1 fixed: finalize_bpd_calculation marks each stake with bpd_finalize_period_id to prevent duplicate counting (03.3-02)
+- finalize_bpd_calculation captures bpd_snapshot_slot on first batch for consistent days_staked across all batches (03.3-02)
+- finalize_bpd_calculation sets BPD window active on first batch to block unstake during distribution (03.3-02)
+- finalize_bpd_calculation NEVER sets bpd_calculation_complete (removed -- seal_bpd_finalize does this) (03.3-02)
+- trigger_big_pay_day verifies each stake has bpd_finalize_period_id == claim_period_id before distributing (03.3-02)
+- trigger_big_pay_day uses counter-based completion (bpd_stakes_distributed >= bpd_stakes_finalized) instead of len < MAX heuristic (03.3-02)
+- trigger_big_pay_day clears BPD window on completion (HIGH-2) (03.3-02)
+- MED-1 fixed: trigger_big_pay_day uses u64::try_from instead of 'as u64' for bonus cast (03.3-02)
+- MED-3 fixed: trigger_big_pay_day uses checked_sub instead of saturating_sub for bpd_remaining_unclaimed (03.3-02)
+- HIGH-2 fixed: unstake blocked during BPD window via is_bpd_window_active check (03.3-02)
+- LOW-2 fixed: unstake includes bpd_bonus_pending in payout (03.3-02)
 
 ### Pending Todos
 
@@ -131,10 +135,10 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-08T03:22:42Z
-Stopped at: Completed 03.3-03-PLAN.md (Arithmetic Safety and CEI Hardening)
-Resume file: .planning/phases/03.3-post-audit-security-hardening/03.3-04-PLAN.md
-Next: Continue Phase 3.3 execution - 1 plan remaining in Wave 3 (final security fixes)
+Last session: 2026-02-08T03:25:18Z
+Stopped at: Completed 03.3-02-PLAN.md (BPD Distribution Hardening)
+Resume file: .planning/phases/03.3-post-audit-security-hardening/03.3-03-PLAN.md
+Next: Continue Phase 3.3 execution - 2 plans remaining in Wave 2 and Wave 3
 
 ## Phase 1 Notes
 
