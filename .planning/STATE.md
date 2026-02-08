@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-07)
 ## Current Position
 
 Phase: 5 of 8 (Light Indexer Service)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-02-08 -- Completed 05-01-PLAN.md (indexer infrastructure scaffold)
+Last activity: 2026-02-08 -- Completed 05-02-PLAN.md (polling worker implementation)
 
-Progress: [███-------] 33% (1 of 3 plans complete)
+Progress: [██████░░░░] 67% (2 of 3 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 25
-- Average duration: ~8.1 min
-- Total execution time: ~3h 38min
+- Total plans completed: 26
+- Average duration: ~7.9 min
+- Total execution time: ~3h 41min
 
 **By Phase:**
 
@@ -34,11 +34,11 @@ Progress: [███-------] 33% (1 of 3 plans complete)
 | 3.2 | 2 | ~19min | ~9.5min |
 | 3.3 | 4 | ~19min | ~4.75min |
 | 4 | 5/5 | ~58min | ~11.6min |
-| 5 | 1/3 | ~4min | ~4min |
+| 5 | 2/3 | ~7min | ~3.5min |
 
 **Recent Trend:**
-- Last 5 plans: 04-03 ✓, 04-04 ✓, 04-05 ✓, 05-01 ✓
-- Trend: Phase 5 started - indexer scaffold completed in 4min
+- Last 5 plans: 04-04 ✓, 04-05 ✓, 05-01 ✓, 05-02 ✓
+- Trend: Phase 5 progressing fast - polling worker completed in 3min
 
 *Updated after each plan completion*
 
@@ -147,6 +147,11 @@ Recent decisions affecting current work:
 - Finality type (confirmed/finalized) instead of Commitment for getParsedTransaction to match Solana API (05-01)
 - Logger reads LOG_LEVEL directly from process.env to avoid circular dependency with env.ts (05-01)
 - Anchor IDL loaded via fs.readFileSync + JSON.parse for ESM compatibility (05-01)
+- Per-signature checkpoint updates (not per-batch) for granular crash recovery (05-02)
+- Signatures reversed to oldest-first for chronological processing and consistent checkpoint state (05-02)
+- Individual signature failures do not abort the batch -- logged and skipped (05-02)
+- Gap detection for InflationDistributed is informational-only (warn log, no corrective action) (05-02)
+- BN values converted via toString(), Pubkeys via toBase58(), byte arrays via Buffer.from().toString('hex') (05-02)
 
 ### Pending Todos
 
@@ -168,10 +173,10 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-08T07:18:00Z
-Stopped at: Completed 05-01-PLAN.md
+Last session: 2026-02-08T07:24:00Z
+Stopped at: Completed 05-02-PLAN.md
 Resume file: None
-Next: Execute Phase 5 Wave 1 continued (05-02-PLAN.md)
+Next: Execute Phase 5 Plan 03 (05-03-PLAN.md - REST API)
 
 ## Phase 1 Notes
 
