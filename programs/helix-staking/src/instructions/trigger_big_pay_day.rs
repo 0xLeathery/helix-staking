@@ -15,6 +15,7 @@ pub struct TriggerBigPayDay<'info> {
     pub caller: Signer<'info>,
 
     #[account(
+        mut,
         seeds = [GLOBAL_STATE_SEED],
         bump = global_state.bump,
     )]
@@ -39,7 +40,7 @@ pub fn trigger_big_pay_day<'info>(
 ) -> Result<()> {
     let clock = Clock::get()?;
     let claim_config = &mut ctx.accounts.claim_config;
-    let global_state = &ctx.accounts.global_state;
+    let global_state = &mut ctx.accounts.global_state;
 
     // === Verify claim period has ended ===
     require!(
@@ -50,10 +51,12 @@ pub fn trigger_big_pay_day<'info>(
     // === Load pre-calculated rate from finalize_bpd_calculation ===
     // bpd_calculation_complete constraint already verified this is set
     let helix_per_share_day = claim_config.bpd_helix_per_share_day;
+    let snapshot_slot = claim_config.bpd_snapshot_slot;
 
     // If rate is 0, nothing to distribute - mark complete and return
     if helix_per_share_day == 0 {
         claim_config.big_pay_day_complete = true;
+        global_state.set_bpd_window_active(false); // HIGH-2: Clear BPD window
         emit!(ClaimPeriodEnded {
             slot: clock.slot,
             timestamp: clock.unix_timestamp,
@@ -114,6 +117,11 @@ pub fn trigger_big_pay_day<'info>(
             continue; // Already received BPD this period
         }
 
+        // CRIT-NEW-1: Only distribute to stakes counted in finalize
+        if stake.bpd_finalize_period_id != claim_config.claim_period_id {
+            continue;
+        }
+
         // Check eligibility:
         // 1. Must be active
         // 2. Must have been created DURING the claim period
@@ -130,8 +138,8 @@ pub fn trigger_big_pay_day<'info>(
             continue; // Created after claim period ended
         }
 
-        // Calculate days staked during claim period
-        let stake_end = std::cmp::min(clock.slot, stake.end_slot);
+        // Calculate days staked during claim period using snapshot slot
+        let stake_end = std::cmp::min(snapshot_slot, stake.end_slot);
         let days_staked = stake_end
             .saturating_sub(stake.start_slot)
             .checked_div(global_state.slots_per_day)
@@ -152,50 +160,26 @@ pub fn trigger_big_pay_day<'info>(
     // === Handle empty batch ===
     // If no eligible stakes in this batch (all filtered out or already received BPD)
     if eligible_stakes.is_empty() {
-        // Check if this looks like the last batch
-        let is_last_batch = ctx.remaining_accounts.len() < MAX_STAKES_PER_BPD;
-
-        if is_last_batch {
-            // Last batch with no new stakes to process = all done
-            claim_config.big_pay_day_complete = true;
-            claim_config.bpd_remaining_unclaimed = 0;
-
-            emit!(ClaimPeriodEnded {
-                slot: clock.slot,
-                timestamp: clock.unix_timestamp,
-                claim_period_id: claim_config.claim_period_id,
-                total_claimed: claim_config.total_claimed,
-                claims_count: claim_config.claim_count,
-                unclaimed_amount: 0, // Distribution complete
-            });
-
-            emit!(BigPayDayDistributed {
-                slot: clock.slot,
-                timestamp: clock.unix_timestamp,
-                claim_period_id: claim_config.claim_period_id,
-                total_unclaimed: claim_config.bpd_remaining_unclaimed,
-                total_eligible_share_days: claim_config.bpd_total_share_days.min(u64::MAX as u128) as u64,
-                helix_per_share_day: helix_per_share_day.min(u64::MAX as u128) as u64,
-                eligible_stakers: 0,
-            });
-        }
-
         return Ok(());
     }
 
     // === Distribute BPD bonus to each eligible stake ===
     let mut batch_distributed: u64 = 0;
+    let mut batch_stakes_distributed: u32 = 0;
 
     for (idx, share_days) in eligible_stakes.iter() {
         let account_info = &ctx.remaining_accounts[*idx];
 
         // Calculate this stake's BPD bonus using pre-calculated rate
         // *share_days is already u128, no cast needed
-        let bonus = ((*share_days)
+        let bonus_u128 = (*share_days)
             .checked_mul(helix_per_share_day)
             .ok_or(HelixError::Overflow)?
             .checked_div(PRECISION as u128)
-            .ok_or(HelixError::DivisionByZero)?) as u64;
+            .ok_or(HelixError::DivisionByZero)?;
+
+        // MED-1: Use try_from instead of 'as u64' for safe casting
+        let bonus = u64::try_from(bonus_u128).map_err(|_| error!(HelixError::Overflow))?;
 
         if bonus == 0 {
             continue;
@@ -218,6 +202,10 @@ pub fn trigger_big_pay_day<'info>(
         batch_distributed = batch_distributed
             .checked_add(bonus)
             .ok_or(HelixError::Overflow)?;
+
+        batch_stakes_distributed = batch_stakes_distributed
+            .checked_add(1)
+            .ok_or(HelixError::Overflow)?;
     }
 
     // === Update ClaimConfig pagination state ===
@@ -225,20 +213,21 @@ pub fn trigger_big_pay_day<'info>(
         .checked_add(batch_distributed)
         .ok_or(HelixError::Overflow)?;
 
-    // Deduct distributed amount from remaining
+    claim_config.bpd_stakes_distributed = claim_config.bpd_stakes_distributed
+        .checked_add(batch_stakes_distributed)
+        .ok_or(HelixError::Overflow)?;
+
+    // MED-3: Use checked_sub instead of saturating_sub for bpd_remaining_unclaimed
     claim_config.bpd_remaining_unclaimed = claim_config.bpd_remaining_unclaimed
-        .saturating_sub(batch_distributed);
+        .checked_sub(batch_distributed)
+        .ok_or(HelixError::BpdOverDistribution)?;
 
-    // === Check if we should mark complete ===
-    // Mark complete if:
-    // 1. Remaining unclaimed is 0 (all distributed), OR
-    // 2. This batch had fewer than MAX_STAKES_PER_BPD stakes (indicates last batch)
-    let is_last_batch = ctx.remaining_accounts.len() < MAX_STAKES_PER_BPD
-        || claim_config.bpd_remaining_unclaimed == 0;
-
-    if is_last_batch {
+    // === Check if we should mark complete using counter-based logic ===
+    // CRIT-NEW-1: Use counter-based completion (bpd_stakes_distributed >= bpd_stakes_finalized)
+    if claim_config.bpd_stakes_distributed >= claim_config.bpd_stakes_finalized {
         claim_config.big_pay_day_complete = true;
         claim_config.bpd_remaining_unclaimed = 0;
+        global_state.set_bpd_window_active(false); // HIGH-2: Clear BPD window
 
         emit!(ClaimPeriodEnded {
             slot: clock.slot,
