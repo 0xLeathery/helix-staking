@@ -138,6 +138,20 @@ pub mod helix_staking {
     pub fn abort_bpd(ctx: Context<AbortBpd>) -> Result<()> {
         instructions::abort_bpd::abort_bpd(ctx)
     }
+
+    pub fn admin_set_claim_end_slot(
+        ctx: Context<AdminSetClaimEndSlot>,
+        new_end_slot: u64,
+    ) -> Result<()> {
+        instructions::admin_set_claim_end_slot::admin_set_claim_end_slot(ctx, new_end_slot)
+    }
+
+    pub fn admin_set_slots_per_day(
+        ctx: Context<AdminSetSlotsPerDay>,
+        new_slots_per_day: u64,
+    ) -> Result<()> {
+        instructions::admin_set_slots_per_day::admin_set_slots_per_day(ctx, new_slots_per_day)
+    }
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]

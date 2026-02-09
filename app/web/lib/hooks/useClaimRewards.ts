@@ -46,13 +46,18 @@ export function useClaimRewards() {
         TOKEN_2022_PROGRAM_ID
       );
 
-      // Build transaction (Anchor auto-resolves PDA accounts)
+      // Build transaction — pass all writable accounts explicitly so
+      // Anchor marks them correctly (auto-resolution can drop writable flag)
       const tx = await program.methods
         .claimRewards()
         .accountsPartial({
           user: publicKey,
+          globalState: globalStatePda,
           stakeAccount: stakePublicKey,
           userTokenAccount,
+          mint: mintPda,
+          mintAuthority: mintAuthorityPda,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
         })
         .transaction();
 

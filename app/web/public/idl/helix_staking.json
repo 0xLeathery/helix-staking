@@ -8,6 +8,79 @@
   },
   "instructions": [
     {
+      "name": "abort_bpd",
+      "discriminator": [
+        135,
+        115,
+        41,
+        80,
+        48,
+        233,
+        102,
+        209
+      ],
+      "accounts": [
+        {
+          "name": "global_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "claim_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  108,
+                  97,
+                  105,
+                  109,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true,
+          "relations": [
+            "global_state"
+          ]
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "admin_mint",
       "discriminator": [
         137,
@@ -111,6 +184,130 @@
       "args": [
         {
           "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "admin_set_claim_end_slot",
+      "discriminator": [
+        185,
+        218,
+        12,
+        8,
+        210,
+        189,
+        217,
+        223
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "global_state",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "claim_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  108,
+                  97,
+                  105,
+                  109,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "new_end_slot",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "admin_set_slots_per_day",
+      "discriminator": [
+        21,
+        154,
+        109,
+        58,
+        79,
+        237,
+        202,
+        113
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "global_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "new_slots_per_day",
           "type": "u64"
         }
       ]
@@ -536,7 +733,7 @@
         {
           "name": "caller",
           "docs": [
-            "Anyone can call this (permissionless)"
+            "M-1 FIX: Only authority can initiate BPD finalization (prevents griefing)"
           ],
           "signer": true
         },
@@ -1670,6 +1867,19 @@
       ]
     },
     {
+      "name": "BpdAborted",
+      "discriminator": [
+        171,
+        154,
+        147,
+        10,
+        175,
+        142,
+        9,
+        102
+      ]
+    },
+    {
       "name": "ClaimPeriodEnded",
       "discriminator": [
         51,
@@ -1977,6 +2187,16 @@
       "code": 6037,
       "name": "StakeNotFinalized",
       "msg": "Stake not counted in BPD finalize phase"
+    },
+    {
+      "code": 6038,
+      "name": "BpdFinalizationIncomplete",
+      "msg": "BPD finalization incomplete - no stakes finalized"
+    },
+    {
+      "code": 6039,
+      "name": "BpdWindowNotActive",
+      "msg": "BPD window is not active"
     }
   ],
   "types": [
@@ -2039,6 +2259,26 @@
           },
           {
             "name": "eligible_stakers",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BpdAborted",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "claim_period_id",
+            "type": "u32"
+          },
+          {
+            "name": "stakes_finalized",
+            "type": "u32"
+          },
+          {
+            "name": "stakes_distributed",
             "type": "u32"
           }
         ]

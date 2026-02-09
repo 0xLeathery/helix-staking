@@ -39,3 +39,9 @@ pub use migrate_stake::*;
 
 pub mod abort_bpd;
 pub use abort_bpd::*;
+
+pub mod admin_set_claim_end_slot;
+pub use admin_set_claim_end_slot::*;
+
+pub mod admin_set_slots_per_day;
+pub use admin_set_slots_per_day::*;

@@ -202,6 +202,16 @@ export const bigPayDayDistributedEvents = pgTable(
 );
 
 // ---------------------------------------------------------------------------
+// 12. BpdAborted
+// ---------------------------------------------------------------------------
+export const bpdAbortedEvents = pgTable('bpd_aborted_events', {
+  ...sharedColumns,
+  claimPeriodId: integer('claim_period_id').notNull(),
+  stakesFinalized: integer('stakes_finalized').notNull(),
+  stakesDistributed: integer('stakes_distributed').notNull(),
+});
+
+// ---------------------------------------------------------------------------
 // Operational: Checkpoints (polling state)
 // ---------------------------------------------------------------------------
 export const checkpoints = pgTable('checkpoints', {

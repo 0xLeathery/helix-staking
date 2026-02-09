@@ -8,6 +8,9 @@ skip-lint = false
 [programs.localnet]
 helix_staking = "E9B7BsxdPS89M66CRGGbsCzQ9LkiGv6aNsra3cNBJha7"
 
+[programs.devnet]
+helix_staking = "E9B7BsxdPS89M66CRGGbsCzQ9LkiGv6aNsra3cNBJha7"
+
 [registry]
 url = "https://api.apr.dev"
 

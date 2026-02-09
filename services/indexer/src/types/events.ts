@@ -120,6 +120,12 @@ export interface BigPayDayDistributed {
   eligibleStakers: number;
 }
 
+export interface BpdAborted {
+  claimPeriodId: number;
+  stakesFinalized: number;
+  stakesDistributed: number;
+}
+
 /** All event name strings */
 export const EVENT_NAMES = [
   'ProtocolInitialized',
@@ -133,6 +139,7 @@ export const EVENT_NAMES = [
   'VestedTokensWithdrawn',
   'ClaimPeriodEnded',
   'BigPayDayDistributed',
+  'BpdAborted',
 ] as const;
 
 export type EventName = (typeof EVENT_NAMES)[number];
@@ -150,6 +157,7 @@ export interface EventDataMap {
   VestedTokensWithdrawn: VestedTokensWithdrawn;
   ClaimPeriodEnded: ClaimPeriodEnded;
   BigPayDayDistributed: BigPayDayDistributed;
+  BpdAborted: BpdAborted;
 }
 
 /** Discriminated union type for any indexed event */

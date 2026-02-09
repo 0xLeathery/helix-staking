@@ -15,3 +15,6 @@ npm-debug.log*
 # misc
 .DS_Store
 *.pem
+
+# E2E test wallet (devnet keypair)
+e2e/.test-wallet.json

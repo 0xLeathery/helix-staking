@@ -3,7 +3,7 @@
 import BN from "bn.js";
 import { calculateLpbBonus, calculateBpbBonus, calculateTShares } from "@/lib/solana/math";
 import { PRECISION, LPB_MAX_DAYS, BPB_THRESHOLD, LABELS } from "@/lib/solana/constants";
-import { formatTShares } from "@/lib/utils/format";
+import { formatTShares, formatHelix } from "@/lib/utils/format";
 import { useGlobalState } from "@/lib/hooks/useGlobalState";
 
 interface BonusPreviewProps {
@@ -102,7 +102,7 @@ export function BonusPreview({ amount, days }: BonusPreviewProps) {
         <div className="flex items-center justify-between">
           <span className="text-sm text-zinc-400">{LABELS.SHARE_RATE}</span>
           <span className="font-mono text-sm text-zinc-300">
-            {shareRate.toString(10)}
+            {formatHelix(new BN(shareRate.toString()), false)}
           </span>
         </div>
 

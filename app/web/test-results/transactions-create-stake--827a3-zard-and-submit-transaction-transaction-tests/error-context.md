@@ -1,0 +1,94 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - link "Skip to content" [ref=e3] [cursor=pointer]:
+      - /url: "#main-content"
+    - navigation "Main navigation" [ref=e4]:
+      - link "HELIX" [ref=e6] [cursor=pointer]:
+        - /url: /
+      - navigation [ref=e7]:
+        - link "Dashboard" [ref=e8] [cursor=pointer]:
+          - /url: /dashboard
+          - img [ref=e9]
+          - text: Dashboard
+        - link "New Stake" [ref=e11] [cursor=pointer]:
+          - /url: /dashboard/stake
+          - img [ref=e12]
+          - text: New Stake
+        - link "Rewards" [ref=e14] [cursor=pointer]:
+          - /url: /dashboard/rewards
+          - img [ref=e15]
+          - text: Rewards
+        - link "Free Claim" [ref=e19] [cursor=pointer]:
+          - /url: /dashboard/claim
+          - img [ref=e20]
+          - text: Free Claim
+        - link "Analytics" [ref=e23] [cursor=pointer]:
+          - /url: /dashboard/analytics
+          - img [ref=e24]
+          - text: Analytics
+        - link "Swap" [ref=e26] [cursor=pointer]:
+          - /url: /dashboard/swap
+          - img [ref=e27]
+          - text: Swap
+        - link "Leaderboard" [ref=e32] [cursor=pointer]:
+          - /url: /dashboard/leaderboard
+          - img [ref=e33]
+          - text: Leaderboard
+        - link "Whale Tracker" [ref=e39] [cursor=pointer]:
+          - /url: /dashboard/whale-tracker
+          - img [ref=e40]
+          - text: Whale Tracker
+      - generic [ref=e42]:
+        - generic [ref=e43]: Connected Wallet
+        - generic [ref=e44]:
+          - generic [ref=e45]: 6U6C...3oeG
+          - button "6U6C...3oeG" [ref=e47] [cursor=pointer]
+    - main [ref=e49]:
+      - generic [ref=e50]:
+        - generic [ref=e51]:
+          - generic [ref=e53]: "1"
+          - generic [ref=e56]: "2"
+          - generic [ref=e59]: "3"
+        - generic [ref=e61]:
+          - generic [ref=e62]:
+            - heading "Review & Confirm" [level=2] [ref=e63]
+            - paragraph [ref=e64]: Review your stake details before confirming.
+          - generic [ref=e65]:
+            - generic [ref=e66]:
+              - generic [ref=e67]: Amount
+              - generic [ref=e68]: 1.00 HELIX
+            - generic [ref=e69]:
+              - generic [ref=e70]: Duration
+              - generic [ref=e71]: 30 days
+            - generic [ref=e73]:
+              - generic [ref=e74]: Duration Bonus
+              - generic [ref=e75]: +1.59%
+            - generic [ref=e76]:
+              - generic [ref=e77]: Size Bonus
+              - generic [ref=e78]: +0.00%
+            - generic [ref=e80]:
+              - generic [ref=e81]: Estimated T-Shares
+              - generic [ref=e82]: "10.15"
+            - generic [ref=e83]:
+              - generic [ref=e84]: T-Share Price
+              - generic [ref=e85]: "0.00010005"
+          - generic [ref=e87]:
+            - img [ref=e89]
+            - generic [ref=e91]:
+              - paragraph [ref=e92]: Early Unstake Penalty
+              - paragraph [ref=e93]: If you unstake before your stake matures, you will lose at least 50% of your staked tokens. The penalty decreases as you serve more time. Unstaking late (after maturity) also incurs penalties that increase over time.
+          - generic [ref=e95]:
+            - generic [ref=e96]: Estimated Transaction Fee
+            - generic [ref=e97]: ~0.000005 SOL
+          - generic [ref=e98]:
+            - button "Back" [disabled]
+            - button "Confirming..." [disabled]:
+              - generic:
+                - img
+                - text: Confirming...
+  - region "Notifications alt+T"
+  - alert [ref=e99]
+```

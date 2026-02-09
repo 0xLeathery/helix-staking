@@ -16,7 +16,7 @@ export function middleware(request: NextRequest) {
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
-    "connect-src 'self' https://*.helius-rpc.com wss://*.helius-rpc.com",
+    `connect-src 'self' https://*.helius-rpc.com wss://*.helius-rpc.com https://*.solana.com wss://*.solana.com${isDev ? " http://localhost:* ws://localhost:*" : ""}`,
     "upgrade-insecure-requests",
   ];
 

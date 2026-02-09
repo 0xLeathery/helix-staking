@@ -86,7 +86,7 @@ export function ProtocolStats() {
             {isLoading || stat.value === null ? (
               <Skeleton className="h-7 w-24" />
             ) : (
-              <p className="text-lg font-semibold text-zinc-100">
+              <p className="text-lg font-semibold text-zinc-100 truncate">
                 {stat.value}
               </p>
             )}

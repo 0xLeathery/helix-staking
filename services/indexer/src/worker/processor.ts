@@ -12,6 +12,7 @@ import {
   vestedTokensWithdrawnEvents,
   claimPeriodEndedEvents,
   bigPayDayDistributedEvents,
+  bpdAbortedEvents,
 } from '../db/schema.js';
 import { logger } from '../lib/logger.js';
 
@@ -242,6 +243,19 @@ export async function processEvent(
             totalEligibleShareDays: toStr(data.totalEligibleShareDays),
             helixPerShareDay: toStr(data.helixPerShareDay),
             eligibleStakers: toNum(data.eligibleStakers),
+          })
+          .onConflictDoNothing();
+        break;
+
+      case 'BpdAborted':
+        await db
+          .insert(bpdAbortedEvents)
+          .values({
+            signature,
+            slot,
+            claimPeriodId: toNum(data.claimPeriodId),
+            stakesFinalized: toNum(data.stakesFinalized),
+            stakesDistributed: toNum(data.stakesDistributed),
           })
           .onConflictDoNothing();
         break;
