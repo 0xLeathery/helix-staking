@@ -138,6 +138,12 @@ pub struct AuthorityTransferInitiated {
 }
 
 #[event]
+pub struct AuthorityTransferCancelled {
+    pub authority: Pubkey,
+    pub cancelled_new_authority: Pubkey,
+}
+
+#[event]
 pub struct AuthorityTransferCompleted {
     pub old_authority: Pubkey,
     pub new_authority: Pubkey,

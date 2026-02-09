@@ -111,7 +111,10 @@ pub fn finalize_bpd_calculation<'info>(
         };
         drop(data);
 
-        // CRIT-NEW-1: Skip stakes already counted this period (duplicate prevention)
+        // CRIT-NEW-1: Skip stakes already counted this period (duplicate prevention).
+        // Note: After abort_bpd, these flags remain set, so re-finalization for the same
+        // claim_period_id will skip all previously-finalized stakes. This is by design —
+        // abort_bpd is a permanent cancel, not a restart. See abort_bpd doc comment.
         if stake.bpd_finalize_period_id == claim_config.claim_period_id {
             continue;
         }

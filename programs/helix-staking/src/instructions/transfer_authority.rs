@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 
 use crate::constants::*;
 use crate::error::HelixError;
-use crate::events::AuthorityTransferInitiated;
+use crate::events::{AuthorityTransferCancelled, AuthorityTransferInitiated};
 use crate::state::{GlobalState, PendingAuthority};
 
 #[derive(Accounts)]
@@ -31,6 +31,15 @@ pub struct TransferAuthority<'info> {
 
 pub fn transfer_authority(ctx: Context<TransferAuthority>, new_authority: Pubkey) -> Result<()> {
     let pending = &mut ctx.accounts.pending_authority;
+
+    // Detect overwrite of existing pending transfer
+    if pending.new_authority != Pubkey::default() && pending.new_authority != new_authority {
+        emit!(AuthorityTransferCancelled {
+            authority: ctx.accounts.authority.key(),
+            cancelled_new_authority: pending.new_authority,
+        });
+    }
+
     pending.new_authority = new_authority;
     pending.bump = ctx.bumps.pending_authority;
 

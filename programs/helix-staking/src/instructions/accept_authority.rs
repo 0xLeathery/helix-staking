@@ -11,6 +11,7 @@ pub struct AcceptAuthority<'info> {
         mut,
         seeds = [GLOBAL_STATE_SEED],
         bump = global_state.bump,
+        constraint = !global_state.is_bpd_window_active() @ HelixError::AuthorityTransferBlockedDuringBpd,
     )]
     pub global_state: Account<'info, GlobalState>,
 

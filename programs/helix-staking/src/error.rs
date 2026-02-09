@@ -88,4 +88,6 @@ pub enum HelixError {
     BpdDistributionAlreadyStarted,
     #[msg("Signer does not match pending authority")]
     UnauthorizedNewAuthority,
+    #[msg("Authority transfer blocked while BPD window is active")]
+    AuthorityTransferBlockedDuringBpd,
 }
