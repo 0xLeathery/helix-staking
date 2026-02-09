@@ -46,6 +46,7 @@ pub fn abort_bpd(ctx: Context<AbortBpd>) -> Result<()> {
     claim_config.bpd_snapshot_slot = 0;
     claim_config.bpd_stakes_finalized = 0;
     claim_config.bpd_stakes_distributed = 0;
+    claim_config.bpd_remaining_unclaimed = 0;
 
     // Clear BPD window flag (uses same method as MED-1 zero-amount finalize path)
     global_state.set_bpd_window_active(false);

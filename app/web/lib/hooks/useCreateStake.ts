@@ -74,13 +74,17 @@ export function useCreateStake() {
             TOKEN_2022_PROGRAM_ID
           );
 
-          // Build transaction
+          // Build transaction — pass all writable accounts explicitly so
+          // Anchor marks them correctly (auto-resolution can drop writable flag)
           const tx = await program.methods
             .createStake(amount, days)
             .accountsPartial({
               user: publicKey,
+              globalState: globalStatePda,
               stakeAccount: stakeAccountPda,
               userTokenAccount,
+              mint: mintPda,
+              tokenProgram: TOKEN_2022_PROGRAM_ID,
             })
             .transaction();
 

@@ -23,6 +23,9 @@ test-ledger/
 .DS_Store
 *.log
 
+# E2E test wallet (devnet keypair)
+app/web/e2e/.test-wallet.json
+
 # Lock files (optional - comment out if you want to track)
 # package-lock.json
 

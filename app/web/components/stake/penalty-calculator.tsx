@@ -96,13 +96,13 @@ export function PenaltyCalculator({
     if (daysUntilTotalLoss < 0) daysUntilTotalLoss = 0;
   }
 
-  // Visual bar percentages
-  const totalStaked = stakedAmount.toNumber();
-  const totalReceiveNum = totalReceive.toNumber();
-  const penaltyNum = penalty.toNumber();
-
-  const receivePercent = totalStaked > 0 ? (totalReceiveNum / totalStaked) * 100 : 0;
-  const penaltyPercent = totalStaked > 0 ? (penaltyNum / totalStaked) * 100 : 0;
+  // Visual bar percentages — use BN arithmetic to avoid overflow on large values
+  const receivePercent = stakedAmount.gtn(0)
+    ? totalReceive.muln(100).div(stakedAmount).toNumber()
+    : 0;
+  const penaltyPercent = stakedAmount.gtn(0)
+    ? penalty.muln(100).div(stakedAmount).toNumber()
+    : 0;
 
   return (
     <div className="space-y-4">

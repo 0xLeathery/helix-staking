@@ -46,6 +46,9 @@ export const MIN_PENALTY_BPS = 5000;
 /** Basis points scaler */
 export const BPS_SCALER = 10_000;
 
+/** Display scaling for T-Shares. Raw on-chain values are divided by this for display. */
+export const TSHARE_DISPLAY_FACTOR = new BN("1000000000000"); // 10^12
+
 /** Solana slots per logical day (~400ms per slot) */
 export const SLOTS_PER_DAY = 216_000;
 

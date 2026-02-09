@@ -2,7 +2,7 @@
 
 import { useStakeWizard } from "@/lib/store/ui-store";
 import { useCreateStake } from "@/lib/hooks/useCreateStake";
-import { parseHelix, formatHelix, formatDays } from "@/lib/utils/format";
+import { parseHelix, formatHelix, formatDays, formatTShares } from "@/lib/utils/format";
 import { calculateLpbBonus, calculateBpbBonus, calculateTShares } from "@/lib/solana/math";
 import { useGlobalState } from "@/lib/hooks/useGlobalState";
 import { PRECISION } from "@/lib/solana/constants";
@@ -83,14 +83,14 @@ export function ConfirmStep() {
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium text-zinc-300">Estimated T-Shares</span>
           <span className="font-mono text-xl font-bold text-transparent bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text">
-            {tShares.toString(10)}
+            {formatTShares(tShares)}
           </span>
         </div>
 
         <div className="flex items-center justify-between">
           <span className="text-xs text-zinc-500">T-Share Price</span>
           <span className="font-mono text-xs text-zinc-500">
-            {shareRate.toString(10)}
+            {formatHelix(new BN(shareRate.toString()), false)}
           </span>
         </div>
       </div>

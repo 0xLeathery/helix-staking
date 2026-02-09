@@ -1,5 +1,5 @@
 import BN from "bn.js";
-import { TOKEN_DECIMALS } from "@/lib/solana/constants";
+import { TOKEN_DECIMALS, TSHARE_DISPLAY_FACTOR } from "@/lib/solana/constants";
 
 const ZERO = new BN(0);
 const DECIMALS_FACTOR = new BN(10).pow(new BN(TOKEN_DECIMALS)); // 10^8
@@ -61,7 +61,10 @@ export function formatHelixCompact(amount: BN): string {
     return `${(k / 100).toFixed(2)}K`;
   }
 
-  return `${addCommas(whole.toString(10))}`;
+  // For small amounts, show 2 decimal places
+  const rem = amount.mod(DECIMALS_FACTOR);
+  const decStr = rem.toString(10).padStart(TOKEN_DECIMALS, "0").slice(0, 2);
+  return `${addCommas(whole.toString(10))}.${decStr}`;
 }
 
 /**
@@ -126,16 +129,33 @@ export function formatDays(days: number): string {
 
 /**
  * Format T-shares for display.
- * T-shares are stored as u64 values. Display with appropriate precision.
+ * Raw on-chain T-shares are scaled down by TSHARE_DISPLAY_FACTOR (10^12) so that
+ * a 10 HELIX stake ≈ 100 display T-Shares (intuitive, proportional to stake size).
+ * Uses compact notation (K, M) for very large portfolios.
  */
 export function formatTShares(amount: BN): string {
   if (amount.isZero()) {
     return "0";
   }
 
-  // T-shares can be large numbers. Format with commas.
-  const str = amount.toString(10);
-  return addCommas(str);
+  // Scale down: divide by 10^12 with 2 decimal places
+  const whole = amount.div(TSHARE_DISPLAY_FACTOR);
+  const remainder = amount.mod(TSHARE_DISPLAY_FACTOR);
+  // Get 2 decimal places from remainder
+  const fracBN = remainder.mul(new BN(100)).div(TSHARE_DISPLAY_FACTOR);
+  const frac = fracBN.toNumber();
+
+  const wholeNum = parseFloat(whole.toString(10));
+
+  // Compact notation for very large display values
+  if (wholeNum >= 1_000_000) {
+    return `${(wholeNum / 1_000_000).toFixed(2)}M`;
+  }
+  if (wholeNum >= 1_000) {
+    return `${(wholeNum / 1_000).toFixed(2)}K`;
+  }
+
+  return `${addCommas(whole.toString(10))}.${frac.toString().padStart(2, "0")}`;
 }
 
 /**
