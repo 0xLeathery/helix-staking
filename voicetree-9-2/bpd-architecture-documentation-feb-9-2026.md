@@ -1,5 +1,9 @@
 ---
 color: blue
+position:
+  x: -30
+  y: 83
+isContextNode: false
 agent_name: Anna
 ---
 

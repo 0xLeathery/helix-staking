@@ -152,6 +152,14 @@ pub mod helix_staking {
     ) -> Result<()> {
         instructions::admin_set_slots_per_day::admin_set_slots_per_day(ctx, new_slots_per_day)
     }
+
+    pub fn transfer_authority(ctx: Context<TransferAuthority>, new_authority: Pubkey) -> Result<()> {
+        instructions::transfer_authority::transfer_authority(ctx, new_authority)
+    }
+
+    pub fn accept_authority(ctx: Context<AcceptAuthority>) -> Result<()> {
+        instructions::accept_authority::accept_authority(ctx)
+    }
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]

@@ -130,3 +130,15 @@ pub struct BpdAborted {
     pub stakes_finalized: u32,
     pub stakes_distributed: u32,
 }
+
+#[event]
+pub struct AuthorityTransferInitiated {
+    pub old_authority: Pubkey,
+    pub new_authority: Pubkey,
+}
+
+#[event]
+pub struct AuthorityTransferCompleted {
+    pub old_authority: Pubkey,
+    pub new_authority: Pubkey,
+}

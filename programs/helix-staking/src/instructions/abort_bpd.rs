@@ -35,6 +35,13 @@ pub fn abort_bpd(ctx: Context<AbortBpd>) -> Result<()> {
         HelixError::BpdWindowNotActive
     );
 
+    // Only allow abort before trigger distribution has started
+    // After distribution begins, per-stake state cannot be cleanly reverted
+    require!(
+        claim_config.bpd_stakes_distributed == 0,
+        HelixError::BpdDistributionAlreadyStarted
+    );
+
     // Capture state for event
     let stakes_finalized = claim_config.bpd_stakes_finalized;
     let stakes_distributed = claim_config.bpd_stakes_distributed;

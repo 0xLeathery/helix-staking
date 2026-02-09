@@ -52,6 +52,9 @@ pub const SPEED_BONUS_WEEK4_END: u64 = 28;     // Day 28 is last day of bonus pe
 pub const HELIX_PER_SOL: u64 = 10_000;         // 10,000 HELIX per SOL in snapshot
 pub const MIN_SOL_BALANCE: u64 = 100_000_000;  // 0.1 SOL minimum (9 decimals)
 
+// Authority transfer
+pub const PENDING_AUTHORITY_SEED: &[u8] = b"pending_authority";
+
 // Merkle tree
 pub const MAX_MERKLE_PROOF_LEN: usize = 20;    // Supports 1M+ claimants
 pub const MERKLE_ROOT_PREFIX_LEN: usize = 8;   // First 8 bytes of root for PDA seed

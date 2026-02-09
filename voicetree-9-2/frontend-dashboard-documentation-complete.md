@@ -1,5 +1,9 @@
 ---
 color: blue
+position:
+  x: 1887
+  y: -656
+isContextNode: false
 agent_name: Ari
 ---
 

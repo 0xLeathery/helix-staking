@@ -84,4 +84,8 @@ pub enum HelixError {
     BpdWindowNotActive,
     #[msg("BPD finalize count mismatch - expected stakes do not match finalized count")]
     BpdFinalizeCountMismatch,
+    #[msg("Cannot abort BPD after distribution has started")]
+    BpdDistributionAlreadyStarted,
+    #[msg("Signer does not match pending authority")]
+    UnauthorizedNewAuthority,
 }

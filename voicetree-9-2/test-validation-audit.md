@@ -1,5 +1,9 @@
 ---
 color: yellow
+position:
+  x: 2244
+  y: -1303
+isContextNode: false
 agent_name: Aki
 ---
 

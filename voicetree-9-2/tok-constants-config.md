@@ -1,5 +1,9 @@
 ---
 color: purple
+position:
+  x: 1769
+  y: -2265
+isContextNode: false
 agent_name: Aki
 ---
 

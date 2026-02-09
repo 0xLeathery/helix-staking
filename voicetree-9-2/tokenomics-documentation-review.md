@@ -1,5 +1,9 @@
 ---
 color: orange
+position:
+  x: 1806
+  y: -1852
+isContextNode: false
 agent_name: Documentation Review Agent
 ---
 

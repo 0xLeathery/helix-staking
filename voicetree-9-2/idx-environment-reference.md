@@ -1,5 +1,9 @@
 ---
 color: green
+position:
+  x: -124
+  y: -1470
+isContextNode: false
 agent_name: Amy
 ---
 
