@@ -65,27 +65,65 @@ pub fn calculate_lpb_bonus(stake_days: u64) -> Result<u64> {
     Ok(bonus)
 }
 
-/// Calculate Bigger Pays Better (BPB) bonus multiplier
-/// Returns bonus scaled by PRECISION (e.g., PRECISION = 1x = 100% bonus)
-/// Small amounts = 0 bonus, 150M+ tokens = 100% bonus
+/// Calculate Bigger Pays Better (BPB) bonus multiplier with diminishing returns.
+/// Returns bonus scaled by PRECISION.
+///
+/// Note: BPB divides staked_amount by 10 before comparing to BPB_THRESHOLD,
+/// so the effective "full bonus" point is at BPB_THRESHOLD * 10 raw tokens (1.5B display tokens).
+///
+/// Tier 1: 0 → BPB_THRESHOLD×10 (1.5B tokens): Linear 0 → 1.0x (PRECISION) — backward compatible
+/// Tier 2: 1.5B → BPB_TIER_2 (5B tokens):       Linear 1.0x → 1.25x (25% slope)
+/// Tier 3: BPB_TIER_2 → BPB_TIER_3 (10B tokens): Linear 1.25x → 1.4x (15% slope)
+/// Tier 4: Above BPB_TIER_3:                      Hard cap at BPB_MAX_BONUS (1.5x)
 pub fn calculate_bpb_bonus(staked_amount: u64) -> Result<u64> {
     if staked_amount == 0 {
         return Ok(0);
     }
 
-    // Cap at BPB_THRESHOLD for bonus calculation - return exact 100% at threshold
-    // STAKE-02 requirement: BPB caps at 100%, not 10%
+    // Tier 1: Linear 0 → PRECISION (unchanged from original for amounts ≤ threshold)
     let amount_div_10 = staked_amount / 10;
 
-    if amount_div_10 >= BPB_THRESHOLD {
-        return Ok(PRECISION);  // 100% max BPB bonus per STAKE-02 requirement
+    if amount_div_10 < BPB_THRESHOLD {
+        // Original formula preserved exactly for backward compatibility
+        return mul_div(amount_div_10, PRECISION, BPB_THRESHOLD);
     }
 
-    // Formula: (amount / 10) * PRECISION / BPB_THRESHOLD
-    // Frontend TypeScript: (BigInt(amount / 10n) * BigInt(PRECISION)) / BigInt(BPB_THRESHOLD)
-    let bonus = mul_div(amount_div_10, PRECISION, BPB_THRESHOLD)?;
+    // Base bonus at threshold = 1.0x = PRECISION
+    let mut bonus: u128 = PRECISION as u128;
 
-    Ok(bonus)
+    // Tier 2: 25% additional from threshold to tier 2
+    // BPB uses amount_div_10, but tier thresholds are in raw token amounts (8 decimals)
+    // We compare raw staked_amount against tier thresholds
+    if staked_amount <= BPB_TIER_2 {
+        let excess = (staked_amount - BPB_THRESHOLD * 10) as u128;
+        let tier_range = (BPB_TIER_2 - BPB_THRESHOLD * 10) as u128;
+        let tier_bonus = 250_000_000u128; // 0.25x in PRECISION
+        bonus = bonus.checked_add(
+            excess.checked_mul(tier_bonus).ok_or(error!(HelixError::Overflow))?
+                .checked_div(tier_range).ok_or(error!(HelixError::Overflow))?
+        ).ok_or(error!(HelixError::Overflow))?;
+    } else {
+        // Full tier 2 bonus
+        bonus = bonus.checked_add(250_000_000u128).ok_or(error!(HelixError::Overflow))?;
+
+        // Tier 3: 15% additional from tier 2 to tier 3
+        if staked_amount <= BPB_TIER_3 {
+            let excess = (staked_amount - BPB_TIER_2) as u128;
+            let tier_range = (BPB_TIER_3 - BPB_TIER_2) as u128;
+            let tier_bonus = 150_000_000u128; // 0.15x in PRECISION
+            bonus = bonus.checked_add(
+                excess.checked_mul(tier_bonus).ok_or(error!(HelixError::Overflow))?
+                    .checked_div(tier_range).ok_or(error!(HelixError::Overflow))?
+            ).ok_or(error!(HelixError::Overflow))?;
+        } else {
+            // Above tier 3: hard cap
+            bonus = BPB_MAX_BONUS as u128;
+        }
+    }
+
+    // Safety cap
+    let final_bonus = bonus.min(BPB_MAX_BONUS as u128);
+    Ok(u64::try_from(final_bonus).map_err(|_| error!(HelixError::Overflow))?)
 }
 
 /// Calculate T-shares from staked amount, applying LPB + BPB bonuses and share rate
@@ -275,6 +313,36 @@ pub fn get_current_day(
     Ok(day)
 }
 
+/// Calculate loyalty bonus based on proportion of committed term already served.
+/// Returns bonus in PRECISION units (0 to LOYALTY_MAX_BONUS).
+///
+/// Formula: loyalty_bonus = min(days_served / committed_days, 1) × LOYALTY_MAX_BONUS
+///
+/// Examples (with LOYALTY_MAX_BONUS = 0.5x):
+/// - Day 0 of 365-day stake: 0% bonus
+/// - Day 182 of 365-day stake: ~25% bonus
+/// - Day 365 of 365-day stake: 50% bonus (max)
+/// - Day 400 of 365-day stake (in grace period): 50% bonus (capped)
+pub fn calculate_loyalty_bonus(
+    start_slot: u64,
+    current_slot: u64,
+    committed_days: u64,
+    slots_per_day: u64,
+) -> Result<u64> {
+    if committed_days == 0 || slots_per_day == 0 {
+        return Ok(0);
+    }
+
+    let elapsed_slots = current_slot.saturating_sub(start_slot);
+    let days_served = elapsed_slots.checked_div(slots_per_day).unwrap_or(0);
+
+    // Cap at committed_days (don't exceed max bonus even in grace/late period)
+    let capped_days = days_served.min(committed_days);
+
+    // loyalty_bonus = capped_days * LOYALTY_MAX_BONUS / committed_days
+    mul_div(capped_days, LOYALTY_MAX_BONUS, committed_days)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -298,13 +366,82 @@ mod tests {
         // 0 amount = 0 bonus
         assert_eq!(calculate_bpb_bonus(0).unwrap(), 0);
 
-        // BPB_THRESHOLD = 100% bonus = PRECISION (fixed from PRECISION/10)
-        let max_bonus = calculate_bpb_bonus(BPB_THRESHOLD * 10).unwrap();
-        assert_eq!(max_bonus, PRECISION);
+        // At BPB_THRESHOLD (amount = threshold * 10): 100% bonus = PRECISION
+        let at_threshold = calculate_bpb_bonus(BPB_THRESHOLD * 10).unwrap();
+        assert_eq!(at_threshold, PRECISION);
 
-        // Over threshold should cap
-        let over_threshold = calculate_bpb_bonus(BPB_THRESHOLD * 20).unwrap();
-        assert_eq!(over_threshold, PRECISION);
+        // Below threshold: still linear
+        let half = calculate_bpb_bonus(BPB_THRESHOLD * 5).unwrap();
+        assert!(half > 0 && half < PRECISION);
+    }
+
+    #[test]
+    fn test_bpb_diminishing_returns() {
+        // At threshold: PRECISION (1.0x)
+        let at_threshold = calculate_bpb_bonus(BPB_THRESHOLD * 10).unwrap();
+        assert_eq!(at_threshold, PRECISION);
+
+        // Mid tier 2 (3B tokens = 300_000_000_000_000_000): between 1.0x and 1.25x
+        let mid_tier2 = calculate_bpb_bonus(300_000_000_000_000_000).unwrap();
+        assert!(mid_tier2 > PRECISION);
+        assert!(mid_tier2 < PRECISION + 250_000_000); // less than 1.25x
+
+        // At BPB_TIER_2 (5B): ~1.25x
+        let at_tier2 = calculate_bpb_bonus(BPB_TIER_2).unwrap();
+        assert_eq!(at_tier2, PRECISION + 250_000_000);
+
+        // At BPB_TIER_3 (10B): ~1.4x
+        let at_tier3 = calculate_bpb_bonus(BPB_TIER_3).unwrap();
+        assert_eq!(at_tier3, PRECISION + 250_000_000 + 150_000_000);
+
+        // Above tier 3 (20B): hard cap at BPB_MAX_BONUS (1.5x)
+        let above_tier3 = calculate_bpb_bonus(2_000_000_000_000_000_000).unwrap();
+        assert_eq!(above_tier3, BPB_MAX_BONUS);
+
+        // Monotonically increasing
+        let vals = [
+            BPB_THRESHOLD * 10,                 // 1.5B (threshold)
+            300_000_000_000_000_000,             // 3B (mid tier 2)
+            BPB_TIER_2,                          // 5B (tier 2/3 boundary)
+            750_000_000_000_000_000,             // 7.5B (mid tier 3)
+            BPB_TIER_3,                          // 10B (tier 3/4 boundary)
+            2_000_000_000_000_000_000,           // 20B (above tier 3, capped)
+        ];
+        for i in 1..vals.len() {
+            let prev = calculate_bpb_bonus(vals[i - 1]).unwrap();
+            let curr = calculate_bpb_bonus(vals[i]).unwrap();
+            assert!(curr >= prev, "BPB not monotonically increasing at index {}", i);
+        }
+    }
+
+    #[test]
+    fn test_loyalty_bonus() {
+        let spd = DEFAULT_SLOTS_PER_DAY;
+
+        // Day 0: no bonus
+        assert_eq!(calculate_loyalty_bonus(0, 0, 365, spd).unwrap(), 0);
+
+        // Half-term: half of max bonus (~250_000_000 = ~25%)
+        let half = calculate_loyalty_bonus(0, 182 * spd, 365, spd).unwrap();
+        assert!(half > 240_000_000 && half < 260_000_000, "half-term loyalty = {}", half);
+
+        // Full term: max bonus (500_000_000 = 50%)
+        let full = calculate_loyalty_bonus(0, 365 * spd, 365, spd).unwrap();
+        assert_eq!(full, LOYALTY_MAX_BONUS);
+
+        // Past term (grace period): still capped at max
+        let over = calculate_loyalty_bonus(0, 400 * spd, 365, spd).unwrap();
+        assert_eq!(over, LOYALTY_MAX_BONUS);
+
+        // 1-day stake at day 1: max bonus
+        let min_stake = calculate_loyalty_bonus(0, spd, 1, spd).unwrap();
+        assert_eq!(min_stake, LOYALTY_MAX_BONUS);
+
+        // Edge: committed_days=0 returns 0
+        assert_eq!(calculate_loyalty_bonus(0, spd, 0, spd).unwrap(), 0);
+
+        // Edge: slots_per_day=0 returns 0
+        assert_eq!(calculate_loyalty_bonus(0, spd, 365, 0).unwrap(), 0);
     }
 
     #[test]

@@ -432,6 +432,7 @@ describe("AuthorityTransfer", () => {
 
     // Complete BPD: seal + trigger to clear the window
     const claimConfig = await program.account.claimConfig.fetch(claimConfigPDA);
+    await advanceClock(context, BigInt(216_001));
     await program.methods
       .sealBpdFinalize(claimConfig.bpdStakesFinalized)
       .accounts({

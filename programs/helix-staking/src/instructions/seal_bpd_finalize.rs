@@ -45,6 +45,18 @@ pub fn seal_bpd_finalize(ctx: Context<SealBpdFinalize>, expected_finalized_count
         HelixError::BpdFinalizationIncomplete
     );
 
+    // Phase 8.1: Governance delay — require observation window before sealing
+    require!(
+        claim_config.bpd_finalize_start_timestamp > 0,
+        HelixError::BpdFinalizationIncomplete
+    );
+    require!(
+        clock.unix_timestamp >= claim_config.bpd_finalize_start_timestamp
+            .checked_add(BPD_SEAL_DELAY_SECONDS)
+            .ok_or(error!(HelixError::Overflow))?,
+        HelixError::BpdSealTooEarly
+    );
+
     // Completeness guard: authority must acknowledge exact count of finalized stakes.
     // Catches crank crashes / partial finalization where authority's off-chain
     // getProgramAccounts count diverges from what was actually processed on-chain.
@@ -71,6 +83,9 @@ pub fn seal_bpd_finalize(ctx: Context<SealBpdFinalize>, expected_finalized_count
 
     claim_config.bpd_helix_per_share_day = helix_per_share_day;
     claim_config.bpd_calculation_complete = true;
+
+    // Phase 8.1: Store original unclaimed for consistent whale cap in trigger_big_pay_day
+    claim_config.bpd_original_unclaimed = unclaimed_amount;
 
     Ok(())
 }

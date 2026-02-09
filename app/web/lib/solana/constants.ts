@@ -49,6 +49,22 @@ export const BPS_SCALER = 10_000;
 /** Display scaling for T-Shares. Raw on-chain values are divided by this for display. */
 export const TSHARE_DISPLAY_FACTOR = new BN("1000000000000"); // 10^12
 
+// === Phase 8.1: Loyalty Multiplier ===
+/** Maximum loyalty bonus (0.5x = 50%) in PRECISION units */
+export const LOYALTY_MAX_BONUS = new BN("500000000");
+
+// === Phase 8.1: Anti-Whale BPD ===
+/** Maximum % of BPD pool any single stake can receive */
+export const BPD_MAX_SHARE_PCT = new BN(5);
+
+// === Phase 8.1: Anti-Whale BPB Tiers ===
+/** Tier 2 threshold: 5B tokens (8 decimals) */
+export const BPB_TIER_2 = new BN("500000000000000000");
+/** Tier 3 threshold: 10B tokens (8 decimals) */
+export const BPB_TIER_3 = new BN("1000000000000000000");
+/** Maximum BPB bonus (1.5x in PRECISION units) */
+export const BPB_MAX_BONUS = new BN("1500000000");
+
 /** Solana slots per logical day (~400ms per slot) */
 export const SLOTS_PER_DAY = 216_000;
 

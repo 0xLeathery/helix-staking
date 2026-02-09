@@ -8,6 +8,7 @@ pub mod instructions;
 pub mod state;
 
 use constants::*;
+use error::HelixError;
 use events::*;
 use state::GlobalState;
 use instructions::*;
@@ -21,6 +22,9 @@ pub mod helix_staking {
     pub fn initialize(ctx: Context<Initialize>, params: InitializeParams) -> Result<()> {
         let clock = Clock::get()?;
         let global_state = &mut ctx.accounts.global_state;
+
+        // XRAY-3: Validate slots_per_day > 0 to prevent division-by-zero in downstream calculations
+        require!(params.slots_per_day > 0, HelixError::InvalidParameter);
 
         // Initialize GlobalState fields
         global_state.authority = ctx.accounts.authority.key();

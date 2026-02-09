@@ -83,6 +83,10 @@ pub fn initialize_claim_period(
     claim_config.bpd_stakes_finalized = 0;
     claim_config.bpd_stakes_distributed = 0;
 
+    // Phase 8.1 fields
+    claim_config.bpd_finalize_start_timestamp = 0;
+    claim_config.bpd_original_unclaimed = 0;
+
     // Emit event
     emit!(ClaimPeriodStarted {
         slot: clock.slot,

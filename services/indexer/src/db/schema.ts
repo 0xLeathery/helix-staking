@@ -212,6 +212,18 @@ export const bpdAbortedEvents = pgTable('bpd_aborted_events', {
 });
 
 // ---------------------------------------------------------------------------
+// 13. BpdBatchFinalized (Phase 8.1)
+// ---------------------------------------------------------------------------
+export const bpdBatchFinalizedEvents = pgTable('bpd_batch_finalized_events', {
+  ...sharedColumns,
+  claimPeriodId: integer('claim_period_id').notNull(),
+  batchStakesProcessed: integer('batch_stakes_processed').notNull(),
+  totalStakesFinalized: integer('total_stakes_finalized').notNull(),
+  cumulativeShareDays: text('cumulative_share_days').notNull(),
+  timestamp: bigint('timestamp', { mode: 'number' }).notNull(),
+});
+
+// ---------------------------------------------------------------------------
 // Operational: Checkpoints (polling state)
 // ---------------------------------------------------------------------------
 export const checkpoints = pgTable('checkpoints', {

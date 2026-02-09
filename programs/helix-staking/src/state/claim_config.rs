@@ -48,6 +48,15 @@ pub struct ClaimConfig {
     pub bpd_stakes_finalized: u32,
     /// Count of unique stakes distributed to during trigger_big_pay_day (Phase 3.3)
     pub bpd_stakes_distributed: u32,
+
+    // === Phase 8.1 Fields ===
+    /// Unix timestamp of the first finalize_bpd_calculation batch.
+    /// Used to enforce seal delay (must wait BPD_SEAL_DELAY_SECONDS after this).
+    /// Set on first batch, reset by abort_bpd.
+    pub bpd_finalize_start_timestamp: i64,
+    /// Original unclaimed amount captured at seal time, used for consistent
+    /// per-stake whale cap calculation across all trigger_big_pay_day batches.
+    pub bpd_original_unclaimed: u64,
 }
 
 impl ClaimConfig {
@@ -71,6 +80,8 @@ impl ClaimConfig {
         + 1    // bpd_calculation_complete (Phase 3.2)
         + 8    // bpd_snapshot_slot (Phase 3.3)
         + 4    // bpd_stakes_finalized (Phase 3.3)
-        + 4;   // bpd_stakes_distributed (Phase 3.3)
-    // Total: 184 bytes
+        + 4    // bpd_stakes_distributed (Phase 3.3)
+        + 8    // bpd_finalize_start_timestamp (Phase 8.1)
+        + 8;   // bpd_original_unclaimed (Phase 8.1)
+    // Total: 200 bytes
 }

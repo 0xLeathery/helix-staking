@@ -44,6 +44,7 @@ describe("Phase 3.3 Security Hardening", () => {
 
   // Helper: Seal BPD finalize (authority-gated)
   async function sealBpdFinalize(
+    context: any,
     program: any,
     payer: any,
     globalState: any,
@@ -55,6 +56,8 @@ describe("Phase 3.3 Security Hardening", () => {
       const claimConfig = await program.account.claimConfig.fetch(claimConfigPDA);
       expectedFinalizedCount = claimConfig.bpdStakesFinalized;
     }
+    // Advance clock past 24-hour seal delay
+    await advanceClock(context, BigInt(216_001));
     await program.methods
       .sealBpdFinalize(expectedFinalizedCount)
       .accounts({
@@ -185,6 +188,7 @@ describe("Phase 3.3 Security Hardening", () => {
       await program.provider.sendAndConfirm(fundTx, [payer]);
 
       // Attacker tries to seal - should fail with Unauthorized
+      await advanceClock(context, BigInt(216_001));
       try {
         await program.methods
           .sealBpdFinalize(0)
@@ -227,7 +231,7 @@ describe("Phase 3.3 Security Hardening", () => {
 
       // Try to seal without finalize - should fail with BpdFinalizationIncomplete (HIGH-2 fix)
       try {
-        await sealBpdFinalize(program, payer, globalState, claimConfigPDA);
+        await sealBpdFinalize(context, program, payer, globalState, claimConfigPDA);
         throw new Error("Expected BpdFinalizationIncomplete error");
       } catch (error: any) {
         expect(error.toString()).to.include("BpdFinalizationIncomplete");
@@ -243,7 +247,7 @@ describe("Phase 3.3 Security Hardening", () => {
 
       // Finalize and seal
       await finalizeBpd(program, payer, setup.globalState, setup.claimConfigPDA, [setup.stakePDA]);
-      await sealBpdFinalize(program, payer, setup.globalState, setup.claimConfigPDA);
+      await sealBpdFinalize(context, program, payer, setup.globalState, setup.claimConfigPDA);
 
       // Verify seal succeeded
       let claimConfig = await program.account.claimConfig.fetch(setup.claimConfigPDA);
@@ -255,7 +259,7 @@ describe("Phase 3.3 Security Hardening", () => {
       // Try to seal again - should fail
       let didFail = false;
       try {
-        await sealBpdFinalize(program, payer, setup.globalState, setup.claimConfigPDA);
+        await sealBpdFinalize(context, program, payer, setup.globalState, setup.claimConfigPDA);
       } catch (error: any) {
         didFail = true;
         // Just verify it threw an error - the error format in bankrun can vary
@@ -276,7 +280,7 @@ describe("Phase 3.3 Security Hardening", () => {
 
       // Finalize and seal
       await finalizeBpd(program, payer, setup.globalState, setup.claimConfigPDA, [setup.stakePDA]);
-      await sealBpdFinalize(program, payer, setup.globalState, setup.claimConfigPDA);
+      await sealBpdFinalize(context, program, payer, setup.globalState, setup.claimConfigPDA);
 
       // Advance clock to make transaction unique (avoid bankrun replay detection)
       await advanceClock(context, BigInt(1));
@@ -401,7 +405,7 @@ describe("Phase 3.3 Security Hardening", () => {
       await finalizeBpd(program, payer, globalState, claimConfigPDA, [stakePDA1]);
 
       // Seal
-      await sealBpdFinalize(program, payer, globalState, claimConfigPDA);
+      await sealBpdFinalize(context, program, payer, globalState, claimConfigPDA);
 
       // Try to trigger with BOTH stakes (including stake2 that wasn't finalized)
       await triggerBpd(program, payer, globalState, claimConfigPDA, [stakePDA1, stakePDA2]);
@@ -473,7 +477,7 @@ describe("Phase 3.3 Security Hardening", () => {
       await finalizeBpd(program, payer, globalState, claimConfigPDA, stakes);
 
       // Seal
-      await sealBpdFinalize(program, payer, globalState, claimConfigPDA);
+      await sealBpdFinalize(context, program, payer, globalState, claimConfigPDA);
 
       // Trigger batch 1: only 2 stakes
       await triggerBpd(program, payer, globalState, claimConfigPDA, [stakes[0], stakes[1]]);
@@ -536,7 +540,7 @@ describe("Phase 3.3 Security Hardening", () => {
 
       // Complete BPD flow (finalize, seal, trigger)
       await finalizeBpd(program, payer, setup.globalState, setup.claimConfigPDA, [setup.stakePDA]);
-      await sealBpdFinalize(program, payer, setup.globalState, setup.claimConfigPDA);
+      await sealBpdFinalize(context, program, payer, setup.globalState, setup.claimConfigPDA);
       await triggerBpd(program, payer, setup.globalState, setup.claimConfigPDA, [setup.stakePDA]);
 
       // BPD window should now be closed - unstake should succeed
@@ -623,7 +627,7 @@ describe("Phase 3.3 Security Hardening", () => {
 
       // Complete BPD flow
       await finalizeBpd(program, payer, setup.globalState, setup.claimConfigPDA, [setup.stakePDA]);
-      await sealBpdFinalize(program, payer, setup.globalState, setup.claimConfigPDA);
+      await sealBpdFinalize(context, program, payer, setup.globalState, setup.claimConfigPDA);
       await triggerBpd(program, payer, setup.globalState, setup.claimConfigPDA, [setup.stakePDA]);
 
       // Get stake details before unstake
@@ -721,7 +725,7 @@ describe("Phase 3.3 Security Hardening", () => {
       expect(claimConfig.bpdCalculationComplete).toBe(false);
 
       // SEAL
-      await sealBpdFinalize(program, payer, globalState, claimConfigPDA);
+      await sealBpdFinalize(context, program, payer, globalState, claimConfigPDA);
 
       claimConfig = await program.account.claimConfig.fetch(claimConfigPDA);
       expect(claimConfig.bpdCalculationComplete).toBe(true);

@@ -131,6 +131,16 @@ pub struct BpdAborted {
     pub stakes_distributed: u32,
 }
 
+/// Phase 8.1: Emitted after each finalize_bpd_calculation batch for off-chain transparency
+#[event]
+pub struct BpdBatchFinalized {
+    pub claim_period_id: u32,
+    pub batch_stakes_processed: u32,
+    pub total_stakes_finalized: u32,
+    pub cumulative_share_days: u64,
+    pub timestamp: i64,
+}
+
 #[event]
 pub struct AuthorityTransferInitiated {
     pub old_authority: Pubkey,

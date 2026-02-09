@@ -90,4 +90,6 @@ pub enum HelixError {
     UnauthorizedNewAuthority,
     #[msg("Authority transfer blocked while BPD window is active")]
     AuthorityTransferBlockedDuringBpd,
+    #[msg("BPD seal attempted before observation window elapsed")]
+    BpdSealTooEarly,
 }

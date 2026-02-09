@@ -58,3 +58,29 @@ pub const PENDING_AUTHORITY_SEED: &[u8] = b"pending_authority";
 // Merkle tree
 pub const MAX_MERKLE_PROOF_LEN: usize = 20;    // Supports 1M+ claimants
 pub const MERKLE_ROOT_PREFIX_LEN: usize = 8;   // First 8 bytes of root for PDA seed
+
+// === Phase 8.1: Duration Loyalty Multiplier ===
+/// Maximum loyalty bonus for stakes that have served their full committed term.
+/// 500_000_000 = 0.5x = 50% bonus in PRECISION units.
+/// A stake at 50% of its term gets 25% bonus; at 100% gets 50% bonus.
+pub const LOYALTY_MAX_BONUS: u64 = 500_000_000;
+
+// === Phase 8.1: Anti-Whale BPD Share Cap ===
+/// Maximum percentage of the BPD pool any single stake can receive.
+/// 5 = 5%. Excess remains in pool for redistribution to other stakes.
+pub const BPD_MAX_SHARE_PCT: u64 = 5;
+
+// === Phase 8.1: Anti-Whale BPB Diminishing Returns ===
+/// Tier 2 threshold: above effective BPB cap (1.5B tokens), bonus slope decreases
+/// Linear 1.0x → 1.25x from effective_threshold → BPB_TIER_2
+pub const BPB_TIER_2: u64 = 500_000_000_000_000_000; // 5B tokens with 8 decimals
+/// Tier 3 threshold: above 5B tokens, bonus slope decreases further
+/// Linear 1.25x → 1.4x from BPB_TIER_2 → BPB_TIER_3
+pub const BPB_TIER_3: u64 = 1_000_000_000_000_000_000; // 10B tokens with 8 decimals
+/// Maximum BPB bonus regardless of stake size (1.5x in PRECISION units)
+pub const BPB_MAX_BONUS: u64 = 1_500_000_000;
+
+// === Phase 8.1: BPD Transparency ===
+/// Minimum seconds between first finalize batch and seal.
+/// 86400 = 24 hours observation window for community verification.
+pub const BPD_SEAL_DELAY_SECONDS: i64 = 86400;

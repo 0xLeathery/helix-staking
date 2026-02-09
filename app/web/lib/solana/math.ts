@@ -7,6 +7,10 @@ import {
   MIN_PENALTY_BPS,
   GRACE_PERIOD_DAYS,
   LATE_PENALTY_WINDOW_DAYS,
+  LOYALTY_MAX_BONUS,
+  BPB_TIER_2,
+  BPB_TIER_3,
+  BPB_MAX_BONUS,
 } from "./constants";
 
 // BN constants used in calculations
@@ -57,12 +61,13 @@ export function calculateLpbBonus(stakeDays: BN): BN {
 }
 
 /**
- * Calculate Size Bonus (BPB) multiplier.
- * Returns bonus scaled by PRECISION (max = PRECISION = 100% bonus).
+ * Calculate Size Bonus (BPB) multiplier with diminishing returns.
+ * Returns bonus scaled by PRECISION.
  *
- * - 0 amount -> 0
- * - >= BPB_THRESHOLD * 10 -> PRECISION (100%)
- * - Formula: (amount / 10) * PRECISION / BPB_THRESHOLD
+ * Tier 1: 0 → BPB_THRESHOLD×10 (1.5B tokens): Linear 0 → PRECISION (100%)
+ * Tier 2: 1.5B → BPB_TIER_2 (5B tokens): Linear 1.0x → 1.25x
+ * Tier 3: BPB_TIER_2 → BPB_TIER_3 (10B tokens): Linear 1.25x → 1.4x
+ * Tier 4: Above BPB_TIER_3: Hard cap at BPB_MAX_BONUS (1.5x)
  */
 export function calculateBpbBonus(stakedAmount: BN): BN {
   if (stakedAmount.isZero()) {
@@ -72,12 +77,39 @@ export function calculateBpbBonus(stakedAmount: BN): BN {
   const TEN = new BN(10);
   const amountDiv10 = stakedAmount.div(TEN);
 
-  if (amountDiv10.gte(BPB_THRESHOLD)) {
-    return PRECISION.clone();
+  // Tier 1: Linear 0 → PRECISION (backward compatible)
+  if (amountDiv10.lt(BPB_THRESHOLD)) {
+    return mulDiv(amountDiv10, PRECISION, BPB_THRESHOLD);
   }
 
-  // (amount / 10) * PRECISION / BPB_THRESHOLD
-  return mulDiv(amountDiv10, PRECISION, BPB_THRESHOLD);
+  // Base bonus at threshold = 1.0x = PRECISION
+  let bonus = PRECISION.clone();
+
+  const thresholdRaw = BPB_THRESHOLD.mul(TEN);
+
+  // Tier 2: 1.0x → 1.25x
+  const TIER_2_BONUS = new BN("250000000"); // 0.25x
+  if (stakedAmount.lte(BPB_TIER_2)) {
+    const excess = stakedAmount.sub(thresholdRaw);
+    const tierRange = BPB_TIER_2.sub(thresholdRaw);
+    bonus = bonus.add(mulDiv(excess, TIER_2_BONUS, tierRange));
+  } else {
+    bonus = bonus.add(TIER_2_BONUS);
+
+    // Tier 3: 1.25x → 1.4x
+    const TIER_3_BONUS = new BN("150000000"); // 0.15x
+    if (stakedAmount.lte(BPB_TIER_3)) {
+      const excess = stakedAmount.sub(BPB_TIER_2);
+      const tierRange = BPB_TIER_3.sub(BPB_TIER_2);
+      bonus = bonus.add(mulDiv(excess, TIER_3_BONUS, tierRange));
+    } else {
+      // Above tier 3: hard cap
+      bonus = BPB_MAX_BONUS.clone();
+    }
+  }
+
+  // Safety cap
+  return BN.min(bonus, BPB_MAX_BONUS);
 }
 
 /**
@@ -212,4 +244,35 @@ export function calculatePendingRewards(
   }
 
   return currentValue.sub(rewardDebt);
+}
+
+/**
+ * Calculate loyalty bonus based on proportion of committed term served.
+ * Returns bonus in PRECISION units (0 to LOYALTY_MAX_BONUS).
+ *
+ * Formula: loyalty_bonus = min(days_served / committed_days, 1) × LOYALTY_MAX_BONUS
+ */
+export function calculateLoyaltyBonus(
+  startSlot: BN,
+  currentSlot: BN,
+  committedDays: BN,
+  slotsPerDay: BN,
+): BN {
+  if (committedDays.isZero() || slotsPerDay.isZero()) return ZERO;
+
+  const elapsedSlots = BN.max(currentSlot.sub(startSlot), ZERO);
+  const daysServed = elapsedSlots.div(slotsPerDay);
+  const cappedDays = BN.min(daysServed, committedDays);
+
+  return mulDiv(cappedDays, LOYALTY_MAX_BONUS, committedDays);
+}
+
+/**
+ * Apply loyalty multiplier to pending rewards.
+ * Returns: rewards × (1 + loyaltyBonus / PRECISION)
+ */
+export function applyLoyaltyMultiplier(pendingRewards: BN, loyaltyBonus: BN): BN {
+  if (pendingRewards.isZero() || loyaltyBonus.isZero()) return pendingRewards;
+  const totalMultiplier = PRECISION.add(loyaltyBonus);
+  return mulDiv(pendingRewards, totalMultiplier, PRECISION);
 }

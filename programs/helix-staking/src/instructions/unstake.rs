@@ -5,7 +5,7 @@ use crate::constants::*;
 use crate::error::HelixError;
 use crate::events::StakeEnded;
 use crate::state::{GlobalState, StakeAccount};
-use crate::instructions::math::{calculate_early_penalty, calculate_late_penalty, calculate_pending_rewards, mul_div};
+use crate::instructions::math::{calculate_early_penalty, calculate_late_penalty, calculate_pending_rewards, calculate_loyalty_bonus, mul_div};
 
 #[derive(Accounts)]
 pub struct Unstake<'info> {
@@ -78,6 +78,29 @@ pub fn unstake(ctx: Context<Unstake>) -> Result<()> {
         reward_debt,
     )?;
 
+    // Phase 8.1: Calculate loyalty bonus based on time served
+    let loyalty_bonus = calculate_loyalty_bonus(
+        start_slot,
+        clock.slot,
+        stake.stake_days as u64,
+        global_state.slots_per_day,
+    )?;
+
+    // Apply loyalty multiplier to inflation rewards only (NOT principal or BPD bonus)
+    let loyalty_adjusted_rewards = if loyalty_bonus > 0 && pending_rewards > 0 {
+        let total_multiplier = (PRECISION as u128)
+            .checked_add(loyalty_bonus as u128)
+            .ok_or(error!(HelixError::Overflow))?;
+        let adjusted = (pending_rewards as u128)
+            .checked_mul(total_multiplier)
+            .ok_or(error!(HelixError::Overflow))?
+            .checked_div(PRECISION as u128)
+            .ok_or(error!(HelixError::DivisionByZero))?;
+        u64::try_from(adjusted).map_err(|_| error!(HelixError::Overflow))?
+    } else {
+        pending_rewards
+    };
+
     // Determine penalty based on timing
     let (penalty, penalty_type) = if clock.slot < end_slot {
         // EARLY unstake
@@ -108,9 +131,9 @@ pub fn unstake(ctx: Context<Unstake>) -> Result<()> {
         .checked_sub(penalty)
         .ok_or(HelixError::Underflow)?;
 
-    // LOW-2: Total amount to mint to user (return + rewards + bpd_bonus)
+    // LOW-2: Total amount to mint to user (return + loyalty-adjusted rewards + bpd_bonus)
     let total_mint_amount = return_amount
-        .checked_add(pending_rewards)
+        .checked_add(loyalty_adjusted_rewards)
         .ok_or(HelixError::Overflow)?
         .checked_add(bpd_bonus)
         .ok_or(HelixError::Overflow)?;
@@ -179,7 +202,7 @@ pub fn unstake(ctx: Context<Unstake>) -> Result<()> {
         return_amount,
         penalty_amount: penalty,
         penalty_type,
-        rewards_claimed: pending_rewards.checked_add(bpd_bonus).unwrap_or(pending_rewards),
+        rewards_claimed: loyalty_adjusted_rewards.checked_add(bpd_bonus).unwrap_or(loyalty_adjusted_rewards),
     });
 
     Ok(())

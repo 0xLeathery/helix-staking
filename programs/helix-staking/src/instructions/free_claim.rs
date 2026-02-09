@@ -326,7 +326,10 @@ fn calculate_days_elapsed(
         .checked_sub(start_slot)
         .ok_or(HelixError::Underflow)?;
 
-    Ok(elapsed_slots / slots_per_day)
+    // XRAY-3: Use checked_div to prevent division-by-zero
+    elapsed_slots
+        .checked_div(slots_per_day)
+        .ok_or(error!(HelixError::DivisionByZero))
 }
 
 /// Calculate speed bonus based on days elapsed
