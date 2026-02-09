@@ -13,6 +13,7 @@ import {
   claimPeriodEndedEvents,
   bigPayDayDistributedEvents,
   bpdAbortedEvents,
+  bpdBatchFinalizedEvents,
 } from '../db/schema.js';
 import { logger } from '../lib/logger.js';
 
@@ -258,6 +259,30 @@ export async function processEvent(
             stakesDistributed: toNum(data.stakesDistributed),
           })
           .onConflictDoNothing();
+        break;
+
+      case 'BpdBatchFinalized':
+        await db
+          .insert(bpdBatchFinalizedEvents)
+          .values({
+            signature,
+            slot,
+            claimPeriodId: toNum(data.claimPeriodId),
+            batchStakesProcessed: toNum(data.batchStakesProcessed),
+            totalStakesFinalized: toNum(data.totalStakesFinalized),
+            cumulativeShareDays: toStr(data.cumulativeShareDays),
+            timestamp: toNum(data.timestamp),
+          })
+          .onConflictDoNothing();
+        logger.info(
+          {
+            period: toNum(data.claimPeriodId),
+            batch: toNum(data.batchStakesProcessed),
+            total: toNum(data.totalStakesFinalized),
+            shareDays: toStr(data.cumulativeShareDays),
+          },
+          'BPD batch finalized',
+        );
         break;
 
       default:

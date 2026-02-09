@@ -43,6 +43,7 @@ describe("Phase 8 Security Fixes", () => {
 
   // Helper: Seal BPD finalize (authority-gated)
   async function sealBpdFinalize(
+    context: any,
     program: any,
     payer: any,
     globalState: any,
@@ -54,6 +55,8 @@ describe("Phase 8 Security Fixes", () => {
       const claimConfig = await program.account.claimConfig.fetch(claimConfigPDA);
       expectedFinalizedCount = claimConfig.bpdStakesFinalized;
     }
+    // Advance clock past 24-hour seal delay
+    await advanceClock(context, BigInt(216_001));
     await program.methods
       .sealBpdFinalize(expectedFinalizedCount)
       .accounts({
@@ -228,7 +231,7 @@ describe("Phase 8 Security Fixes", () => {
 
       // Finalize and seal
       await finalizeBpd(program, payer, globalState, claimConfigPDA, [stakePDA]);
-      await sealBpdFinalize(program, payer, globalState, claimConfigPDA);
+      await sealBpdFinalize(context, program, payer, globalState, claimConfigPDA);
 
       // Check pre-trigger state
       let claimConfig = await program.account.claimConfig.fetch(claimConfigPDA);
@@ -328,7 +331,7 @@ describe("Phase 8 Security Fixes", () => {
 
       // Finalize all 3 stakes
       await finalizeBpd(program, payer, globalState, claimConfigPDA, stakes);
-      await sealBpdFinalize(program, payer, globalState, claimConfigPDA);
+      await sealBpdFinalize(context, program, payer, globalState, claimConfigPDA);
 
       // Trigger all in one batch
       await triggerBpd(program, payer, globalState, claimConfigPDA, stakes);
@@ -398,7 +401,7 @@ describe("Phase 8 Security Fixes", () => {
 
       // Finalize all
       await finalizeBpd(program, payer, globalState, claimConfigPDA, stakes);
-      await sealBpdFinalize(program, payer, globalState, claimConfigPDA);
+      await sealBpdFinalize(context, program, payer, globalState, claimConfigPDA);
 
       // Trigger all
       await triggerBpd(program, payer, globalState, claimConfigPDA, stakes);
@@ -546,7 +549,7 @@ describe("Phase 8 Security Fixes", () => {
 
       // Finalize both stakes and seal
       await finalizeBpd(program, payer, globalState, claimConfigPDA, stakes);
-      await sealBpdFinalize(program, payer, globalState, claimConfigPDA);
+      await sealBpdFinalize(context, program, payer, globalState, claimConfigPDA);
 
       // Trigger distribution for only the FIRST stake (partial - 1 of 2)
       await triggerBpd(program, payer, globalState, claimConfigPDA, [stakes[0]]);
@@ -644,7 +647,7 @@ describe("Phase 8 Security Fixes", () => {
 
       // Try to seal without finalizing any stakes - should fail
       try {
-        await sealBpdFinalize(program, payer, globalState, claimConfigPDA);
+        await sealBpdFinalize(context, program, payer, globalState, claimConfigPDA);
         throw new Error("Expected BpdFinalizationIncomplete error");
       } catch (error: any) {
         expect(error.toString()).toContain("BpdFinalizationIncomplete");
@@ -662,7 +665,7 @@ describe("Phase 8 Security Fixes", () => {
       await finalizeBpd(program, payer, setup.globalState, setup.claimConfigPDA, [setup.stakePDA]);
 
       // Seal should now succeed
-      await sealBpdFinalize(program, payer, setup.globalState, setup.claimConfigPDA);
+      await sealBpdFinalize(context, program, payer, setup.globalState, setup.claimConfigPDA);
 
       // Verify sealed
       const claimConfig = await program.account.claimConfig.fetch(setup.claimConfigPDA);

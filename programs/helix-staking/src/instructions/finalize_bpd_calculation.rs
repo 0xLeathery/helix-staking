@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 
 use crate::constants::*;
 use crate::error::HelixError;
+use crate::events::BpdBatchFinalized;
 use crate::state::{ClaimConfig, GlobalState, StakeAccount};
 
 /// Maximum stakes to process per finalize_bpd_calculation call
@@ -65,6 +66,9 @@ pub fn finalize_bpd_calculation<'info>(
 
         // Capture snapshot slot for consistent days_staked calculation across all batches
         claim_config.bpd_snapshot_slot = clock.slot;
+
+        // Phase 8.1: Record timestamp for seal delay enforcement
+        claim_config.bpd_finalize_start_timestamp = clock.unix_timestamp;
 
         // HIGH-2: Set BPD window active (blocks unstake during distribution)
         global_state.set_bpd_window_active(true);
@@ -182,6 +186,18 @@ pub fn finalize_bpd_calculation<'info>(
     claim_config.bpd_total_share_days = claim_config.bpd_total_share_days
         .checked_add(batch_share_days)
         .ok_or(HelixError::Overflow)?;
+
+    // Phase 8.1: Emit transparency event for off-chain monitoring
+    // Count stakes processed in this batch (finalized counter delta)
+    let batch_stakes_processed = claim_config.bpd_stakes_finalized; // Includes this batch
+    emit!(BpdBatchFinalized {
+        claim_period_id: claim_config.claim_period_id,
+        batch_stakes_processed,
+        total_stakes_finalized: claim_config.bpd_stakes_finalized,
+        cumulative_share_days: claim_config.bpd_total_share_days
+            .min(u64::MAX as u128) as u64,
+        timestamp: clock.unix_timestamp,
+    });
 
     // Note: Rate calculation and completion is now done by seal_bpd_finalize (authority-gated)
     // This prevents first-batch-drains-pool attack (CRIT-NEW-1)

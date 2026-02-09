@@ -6,7 +6,7 @@ use crate::constants::*;
 use crate::error::HelixError;
 use crate::events::RewardsClaimed;
 use crate::state::{GlobalState, StakeAccount};
-use crate::instructions::math::{calculate_pending_rewards, calculate_reward_debt};
+use crate::instructions::math::{calculate_pending_rewards, calculate_reward_debt, calculate_loyalty_bonus, mul_div};
 
 #[derive(Accounts)]
 pub struct ClaimRewards<'info> {
@@ -75,9 +75,32 @@ pub fn claim_rewards(ctx: Context<ClaimRewards>) -> Result<()> {
         stake.reward_debt,
     )?;
 
-    // Include BPD bonus if pending
+    // Phase 8.1: Calculate loyalty bonus based on time served
+    let loyalty_bonus = calculate_loyalty_bonus(
+        stake.start_slot,
+        clock.slot,
+        stake.stake_days as u64,
+        global_state.slots_per_day,
+    )?;
+
+    // Apply loyalty multiplier: reward × (1 + loyalty_bonus / PRECISION)
+    let loyalty_adjusted_rewards = if loyalty_bonus > 0 && pending_rewards > 0 {
+        let total_multiplier = (PRECISION as u128)
+            .checked_add(loyalty_bonus as u128)
+            .ok_or(error!(HelixError::Overflow))?;
+        let adjusted = (pending_rewards as u128)
+            .checked_mul(total_multiplier)
+            .ok_or(error!(HelixError::Overflow))?
+            .checked_div(PRECISION as u128)
+            .ok_or(error!(HelixError::DivisionByZero))?;
+        u64::try_from(adjusted).map_err(|_| error!(HelixError::Overflow))?
+    } else {
+        pending_rewards
+    };
+
+    // Include BPD bonus if pending (loyalty does NOT apply to BPD bonus)
     let bpd_bonus = stake.bpd_bonus_pending;
-    let total_rewards = pending_rewards
+    let total_rewards = loyalty_adjusted_rewards
         .checked_add(bpd_bonus)
         .ok_or(HelixError::Overflow)?;
 

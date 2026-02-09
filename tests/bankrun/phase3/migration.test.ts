@@ -368,6 +368,7 @@ describe("StakeAccount Migration", () => {
 
     // Seal BPD finalize
     const claimConfigData = await program.account.claimConfig.fetch(claimConfigPDA);
+    await advanceClock(context, BigInt(216_001));
     await program.methods
       .sealBpdFinalize(claimConfigData.bpdStakesFinalized)
       .accounts({
@@ -474,6 +475,7 @@ describe("StakeAccount Migration", () => {
 
     // Seal BPD finalize
     let claimConfigData = await program.account.claimConfig.fetch(claimConfigPDA);
+    await advanceClock(context, BigInt(216_001));
     await program.methods
       .sealBpdFinalize(claimConfigData.bpdStakesFinalized)
       .accounts({
@@ -612,6 +614,7 @@ describe("StakeAccount Migration", () => {
 
     // No stakes were finalized (stake was created before claim period),
     // so seal should fail with BpdFinalizationIncomplete
+    await advanceClock(context, BigInt(216_001));
     try {
       const claimConfigData = await program.account.claimConfig.fetch(claimConfigPDA);
       await program.methods

@@ -3,6 +3,7 @@ use anchor_lang::prelude::*;
 use crate::constants::*;
 use crate::error::HelixError;
 use crate::events::{ClaimPeriodEnded, BigPayDayDistributed};
+use crate::instructions::math::mul_div;
 use crate::state::{ClaimConfig, GlobalState, StakeAccount};
 
 /// Maximum stakes to process per trigger_big_pay_day call
@@ -52,6 +53,15 @@ pub fn trigger_big_pay_day<'info>(
     // bpd_calculation_complete constraint already verified this is set
     let helix_per_share_day = claim_config.bpd_helix_per_share_day;
     let snapshot_slot = claim_config.bpd_snapshot_slot;
+
+    // Phase 8.1: Compute per-stake BPD whale cap
+    // max_bonus_per_stake = original_total_unclaimed * BPD_MAX_SHARE_PCT / 100
+    // Use bpd_original_unclaimed (set at seal) for consistent cap across all batches
+    let max_bonus_per_stake = mul_div(
+        claim_config.bpd_original_unclaimed,
+        BPD_MAX_SHARE_PCT,
+        100,
+    )?;
 
     // If rate is 0, nothing to distribute - mark complete and return
     if helix_per_share_day == 0 {
@@ -179,7 +189,10 @@ pub fn trigger_big_pay_day<'info>(
             .ok_or(HelixError::DivisionByZero)?;
 
         // MED-1: Use try_from instead of 'as u64' for safe casting
-        let bonus = u64::try_from(bonus_u128).map_err(|_| error!(HelixError::Overflow))?;
+        let raw_bonus = u64::try_from(bonus_u128).map_err(|_| error!(HelixError::Overflow))?;
+
+        // Phase 8.1: Anti-whale BPD cap — no single stake gets more than BPD_MAX_SHARE_PCT of pool
+        let bonus = raw_bonus.min(max_bonus_per_stake);
 
         if bonus == 0 {
             claim_config.bpd_stakes_distributed = claim_config.bpd_stakes_distributed
