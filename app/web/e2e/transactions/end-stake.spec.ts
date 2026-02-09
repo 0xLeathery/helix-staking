@@ -43,7 +43,9 @@ test.describe.serial("End Stake Transaction", () => {
       .getByRole("button", { name: "End Stake" });
     await dialogEndButton.click();
 
-    // On localnet, transaction confirms instantly — should navigate to dashboard
-    await expect(page).toHaveURL(/\/dashboard$/, { timeout: 60_000 });
+    // Wait for transaction to complete — expect success toast or redirect to dashboard
+    // The unstake hook shows a success toast and the UI may redirect or stay on the page
+    const successToast = page.locator('[data-sonner-toast][data-type="success"]').first();
+    await expect(successToast).toBeVisible({ timeout: 60_000 });
   });
 });
