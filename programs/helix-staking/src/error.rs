@@ -82,4 +82,6 @@ pub enum HelixError {
     BpdFinalizationIncomplete,
     #[msg("BPD window is not active")]
     BpdWindowNotActive,
+    #[msg("BPD finalize count mismatch - expected stakes do not match finalized count")]
+    BpdFinalizeCountMismatch,
 }

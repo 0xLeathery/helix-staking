@@ -127,8 +127,8 @@ pub mod helix_staking {
         instructions::free_claim::free_claim(ctx, snapshot_balance, proof)
     }
 
-    pub fn seal_bpd_finalize(ctx: Context<SealBpdFinalize>) -> Result<()> {
-        instructions::seal_bpd_finalize::seal_bpd_finalize(ctx)
+    pub fn seal_bpd_finalize(ctx: Context<SealBpdFinalize>, expected_finalized_count: u32) -> Result<()> {
+        instructions::seal_bpd_finalize::seal_bpd_finalize(ctx, expected_finalized_count)
     }
 
     pub fn migrate_stake(ctx: Context<MigrateStake>) -> Result<()> {

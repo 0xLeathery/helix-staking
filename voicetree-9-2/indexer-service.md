@@ -41,6 +41,7 @@ flowchart LR
 ### 12 Event Tables
 | Table | Key Indexes | Purpose |
 |-------|-------------|---------|
+| `protocol_initialized_events` | - | Protocol initialization (singleton) |
 | `stake_created_events` | user, user+slot | Stake creation records |
 | `stake_ended_events` | user | Unstake records with penalties |
 | `rewards_claimed_events` | user | Reward claim history |
@@ -86,5 +87,11 @@ flowchart LR
 - [[idx-rest-api.md]] -- 10 Fastify endpoints for analytics, stakes, claims, leaderboard
 - [[idx-event-types-and-decoding.md]] -- TypeScript interfaces and Anchor log parsing
 - [[idx-infrastructure.md]] -- Env validation, retry-enabled RPC client, Pino logger
+
+### Reference Documentation
+- [[idx-environment-reference.md]] -- Complete env vars with defaults and validation
+- [[idx-api-reference.md]] -- Detailed endpoint docs with request/response examples
+- [[idx-operations-runbook.md]] -- Troubleshooting, deployment, and monitoring guide
+- [[idx-validation-report.md]] -- Code validation results and enhancement recommendations
 
 [[run_me.md]]

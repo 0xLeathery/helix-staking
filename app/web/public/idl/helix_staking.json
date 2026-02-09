@@ -1343,7 +1343,12 @@
           }
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "expected_finalized_count",
+          "type": "u32"
+        }
+      ]
     },
     {
       "name": "trigger_big_pay_day",
@@ -2197,6 +2202,11 @@
       "code": 6039,
       "name": "BpdWindowNotActive",
       "msg": "BPD window is not active"
+    },
+    {
+      "code": 6040,
+      "name": "BpdFinalizeCountMismatch",
+      "msg": "BPD finalize count mismatch - expected stakes do not match finalized count"
     }
   ],
   "types": [
