@@ -24,15 +24,10 @@ test.describe('Dashboard Page', () => {
   });
 
   test('should display portfolio section', async ({ page }) => {
-    // Without a connected wallet, portfolio shows the no-stakes CTA
-    // or the portfolio summary card - either way, dashboard content loads
-    const portfolioOrCta = page.locator('#main-content');
-    await expect(portfolioOrCta).toBeVisible();
-
-    // Should have either "Portfolio Summary" or "No active stakes" message
-    const hasPortfolio = await page.getByText('Portfolio Summary').isVisible().catch(() => false);
-    const hasNoStakes = await page.getByText('No active stakes').isVisible().catch(() => false);
-    expect(hasPortfolio || hasNoStakes).toBeTruthy();
+    // Dashboard loads portfolio summary heading (always visible, even without wallet)
+    await expect(
+      page.getByRole('heading', { name: 'Portfolio Summary' })
+    ).toBeVisible({ timeout: 15_000 });
   });
 
   test('should display stakes section', async ({ page }) => {
