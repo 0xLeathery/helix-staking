@@ -29,7 +29,7 @@ pub struct SealBpdFinalize<'info> {
     pub claim_config: Account<'info, ClaimConfig>,
 }
 
-pub fn seal_bpd_finalize(ctx: Context<SealBpdFinalize>) -> Result<()> {
+pub fn seal_bpd_finalize(ctx: Context<SealBpdFinalize>, expected_finalized_count: u32) -> Result<()> {
     let clock = Clock::get()?;
     let claim_config = &mut ctx.accounts.claim_config;
 
@@ -43,6 +43,14 @@ pub fn seal_bpd_finalize(ctx: Context<SealBpdFinalize>) -> Result<()> {
     require!(
         claim_config.bpd_stakes_finalized > 0,
         HelixError::BpdFinalizationIncomplete
+    );
+
+    // Completeness guard: authority must acknowledge exact count of finalized stakes.
+    // Catches crank crashes / partial finalization where authority's off-chain
+    // getProgramAccounts count diverges from what was actually processed on-chain.
+    require!(
+        claim_config.bpd_stakes_finalized == expected_finalized_count,
+        HelixError::BpdFinalizeCountMismatch
     );
 
     // H-2 FIX: If no stakes were finalized, set rate to 0 so trigger can clear the window

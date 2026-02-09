@@ -48,9 +48,15 @@ describe("TriggerBigPayDay", () => {
     payer: any,
     globalState: any,
     claimConfigPDA: any,
+    expectedFinalizedCount?: number,
   ) {
+    // If count not provided, fetch from on-chain state
+    if (expectedFinalizedCount === undefined) {
+      const claimConfig = await program.account.claimConfig.fetch(claimConfigPDA);
+      expectedFinalizedCount = claimConfig.bpdStakesFinalized;
+    }
     await program.methods
-      .sealBpdFinalize()
+      .sealBpdFinalize(expectedFinalizedCount)
       .accounts({
         authority: payer.publicKey,
         globalState,
@@ -631,12 +637,12 @@ describe("TriggerBigPayDay", () => {
     // Try to finalize with no eligible stakes - finalize will process but won't count anything
     await finalizeBpd(program, payer, globalState, claimConfigPDA, [stakePDA]);
 
-    // Try to seal - should fail with NoEligibleStakers since nothing was finalized
+    // Try to seal - should fail since no stakes were finalized (bpd_stakes_finalized == 0)
     try {
-      await sealBpdFinalize(program, payer, globalState, claimConfigPDA);
-      throw new Error("Expected NoEligibleStakers error");
+      await sealBpdFinalize(program, payer, globalState, claimConfigPDA, 0);
+      throw new Error("Expected BpdFinalizationIncomplete error");
     } catch (error: any) {
-      expect(error.toString()).to.include("NoEligibleStakers");
+      expect(error.toString()).to.include("BpdFinalizationIncomplete");
     }
 
     // Check that seal didn't mark complete (no eligible stakers)

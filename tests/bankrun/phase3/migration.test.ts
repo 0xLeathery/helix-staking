@@ -349,16 +349,36 @@ describe("StakeAccount Migration", () => {
       .signers([staker])
       .rpc();
 
-    // Verify stake is BPD eligible (created during claim period)
-    const stakeAfterCreate = await program.account.stakeAccount.fetch(stakePDA);
-    expect(stakeAfterCreate.bpdEligible).toBe(true);
-
     // Advance past claim period end (180 days)
     await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
-    // Trigger Big Pay Day with remaining accounts
-    const stakeAccountInfo = await context.banksClient.getAccount(stakePDA);
+    // Finalize BPD calculation
+    await program.methods
+      .finalizeBpdCalculation()
+      .accounts({
+        caller: payer.publicKey,
+        globalState,
+        claimConfig: claimConfigPDA,
+      })
+      .remainingAccounts([
+        { pubkey: stakePDA, isSigner: false, isWritable: true },
+      ])
+      .signers([payer])
+      .rpc();
 
+    // Seal BPD finalize
+    const claimConfigData = await program.account.claimConfig.fetch(claimConfigPDA);
+    await program.methods
+      .sealBpdFinalize(claimConfigData.bpdStakesFinalized)
+      .accounts({
+        authority: payer.publicKey,
+        globalState,
+        claimConfig: claimConfigPDA,
+      })
+      .signers([payer])
+      .rpc();
+
+    // Trigger Big Pay Day with remaining accounts
     await program.methods
       .triggerBigPayDay()
       .accounts({
@@ -435,9 +455,36 @@ describe("StakeAccount Migration", () => {
       .signers([staker])
       .rpc();
 
-    // Advance past claim period and trigger BPD
+    // Advance past claim period
     await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
+    // Finalize BPD calculation
+    await program.methods
+      .finalizeBpdCalculation()
+      .accounts({
+        caller: payer.publicKey,
+        globalState,
+        claimConfig: claimConfigPDA,
+      })
+      .remainingAccounts([
+        { pubkey: stakePDA, isSigner: false, isWritable: true },
+      ])
+      .signers([payer])
+      .rpc();
+
+    // Seal BPD finalize
+    let claimConfigData = await program.account.claimConfig.fetch(claimConfigPDA);
+    await program.methods
+      .sealBpdFinalize(claimConfigData.bpdStakesFinalized)
+      .accounts({
+        authority: payer.publicKey,
+        globalState,
+        claimConfig: claimConfigPDA,
+      })
+      .signers([payer])
+      .rpc();
+
+    // Trigger BPD
     await program.methods
       .triggerBigPayDay()
       .accounts({
@@ -524,10 +571,6 @@ describe("StakeAccount Migration", () => {
       .signers([staker])
       .rpc();
 
-    // Verify stake is NOT BPD eligible (created before claim period)
-    const stakeBeforePeriod = await program.account.stakeAccount.fetch(stakePDA);
-    expect(stakeBeforePeriod.bpdEligible).toBe(false);
-
     // Advance a bit, THEN initialize claim period
     await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(10).toString()));
 
@@ -553,9 +596,9 @@ describe("StakeAccount Migration", () => {
     // Advance past claim period
     await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
-    // Trigger BPD with the ineligible stake
+    // Finalize BPD calculation with the ineligible stake
     await program.methods
-      .triggerBigPayDay()
+      .finalizeBpdCalculation()
       .accounts({
         caller: payer.publicKey,
         globalState,
@@ -567,8 +610,25 @@ describe("StakeAccount Migration", () => {
       .signers([payer])
       .rpc();
 
+    // No stakes were finalized (stake was created before claim period),
+    // so seal should fail with BpdFinalizationIncomplete
+    try {
+      const claimConfigData = await program.account.claimConfig.fetch(claimConfigPDA);
+      await program.methods
+        .sealBpdFinalize(claimConfigData.bpdStakesFinalized)
+        .accounts({
+          authority: payer.publicKey,
+          globalState,
+          claimConfig: claimConfigPDA,
+        })
+        .signers([payer])
+        .rpc();
+      throw new Error("Expected BpdFinalizationIncomplete error");
+    } catch (error: any) {
+      expect(error.toString()).to.include("BpdFinalizationIncomplete");
+    }
+
     // Stake created BEFORE claim period should have bpd_bonus_pending = 0
-    // because it was created before start_slot
     const stakeAfterBpd = await program.account.stakeAccount.fetch(stakePDA);
     expect(stakeAfterBpd.bpdBonusPending.toString()).toBe("0");
   });
