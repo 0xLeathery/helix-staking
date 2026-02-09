@@ -30,5 +30,8 @@ app/web/e2e/.test-wallet.json
 # Lock files (optional - comment out if you want to track)
 # package-lock.json
 
+# Static analysis
+.xray/
+
 # Claude mem context files
 **/CLAUDE.md

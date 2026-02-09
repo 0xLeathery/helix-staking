@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "scripts": {
     "test": "anchor test",
-    "test:bankrun": "vitest run tests/bankrun"
+    "test:bankrun": "vitest run tests/bankrun",
+    "xray": "docker run --rm --volume \"$(pwd):/workspace\" ghcr.io/sec3-product/x-ray:latest /workspace/programs/helix-staking"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.31.0",
