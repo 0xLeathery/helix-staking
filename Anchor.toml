@@ -11,6 +11,9 @@ helix_staking = "E9B7BsxdPS89M66CRGGbsCzQ9LkiGv6aNsra3cNBJha7"
 [programs.devnet]
 helix_staking = "E9B7BsxdPS89M66CRGGbsCzQ9LkiGv6aNsra3cNBJha7"
 
+[programs.mainnet]
+helix_staking = "<MAINNET_PROGRAM_ID>"
+
 [registry]
 url = "https://api.apr.dev"
 

@@ -25,6 +25,16 @@ pub struct AbortBpd<'info> {
     pub authority: Signer<'info>,
 }
 
+/// Permanently cancels BPD distribution for the current claim period.
+///
+/// **Important constraint**: Per-stake `bpd_finalize_period_id` flags are NOT cleared by this
+/// instruction. Re-running `finalize_bpd_calculation` for the same `claim_period_id` will skip
+/// all previously-finalized stakes (due to the duplicate check in `finalize_bpd_calculation`).
+/// This means BPD cannot be restarted for the same claim period after abort.
+///
+/// To run BPD again, a new claim period (with a new `claim_period_id`) must be initialized.
+/// Clearing per-stake flags would require iterating all StakeAccounts, which is architecturally
+/// infeasible on Solana without an off-chain crank.
 pub fn abort_bpd(ctx: Context<AbortBpd>) -> Result<()> {
     let global_state = &mut ctx.accounts.global_state;
     let claim_config = &mut ctx.accounts.claim_config;
