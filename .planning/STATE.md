@@ -194,6 +194,10 @@ Recent decisions affecting current work:
 ### Pending Todos
 
 - Phase 8.1 planned (game theory hardening) — 5 plans in 4 waves, awaiting execution
+- Phase 8.2 planned (operational hardening) — 5 plans in 5 waves, awaiting execution
+  - Sources: Solana Runtime (CONDITIONAL PASS, 3.5/10), MEV & Ordering (PASS, 1.5/10), Deployment & Ops (CONDITIONAL PASS, 6.2/10), User-Facing Security (CONDITIONAL PASS, 6.5/10)
+  - 2 CRITICAL, 8 HIGH, 11 MEDIUM findings after deduplication
+  - Math parity: FULL PASS (all Rust ↔ TypeScript calculations match)
 
 ### Blockers/Concerns
 
@@ -214,6 +218,7 @@ Recent decisions affecting current work:
 - Phase 3.2 inserted after Phase 3: BPD Security Critical Fixes (URGENT) - Security audit identified 2 CRITICAL vulnerabilities in BPD distribution
 - Phase 3.3 inserted after Phase 3.2: Post-Audit Security Hardening (URGENT) - 7-agent security audit identified 1 CRITICAL + 2 HIGH + 8 MEDIUM vulnerabilities requiring fixes before Phase 4
 - Phase 8.1 inserted after Phase 8: Game Theory Hardening - Consolidated findings from game theory team, business-logic audit (3 HIGH/6 MED), X-Ray static analysis (XRAY-3), BPD security audit (centralization risk), and tokenomics review (Gap 6). Adds duration loyalty multiplier, anti-whale mechanics, audit fixes, BPD transparency events.
+- Phase 8.2 inserted after Phase 8.1: Operational Hardening - Consolidated findings from 4 specialist audit teams: Solana Runtime (CU budget, account model, clock), MEV & Ordering (sandwich, BPD ordering, crank MEV), Deployment & Ops (multisig, indexer, RPC, pause), User-Facing Security (secrets, simulation, math parity, HSTS). Adds secret leak fix, CU budget, rate limiting, RPC failover, program pause, indexer pagination, ops docs.
 
 ## Session Continuity
 

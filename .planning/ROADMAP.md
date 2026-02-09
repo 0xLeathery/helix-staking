@@ -24,6 +24,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 7: Leaderboard and Marketing Site** - Whale tracker, leaderboard pages, marketing/landing site, economics explainer
 - [ ] **Phase 8: Testing, Audit, and Mainnet Launch** - Comprehensive tests, devnet validation, security audit, mainnet deployment
 - [ ] **Phase 8.1: Game Theory Hardening** - Duration loyalty multiplier, anti-whale mechanics, audit finding fixes, BPD transparency (INSERTED)
+- [ ] **Phase 8.2: Operational Hardening** - Secret leak fix, CU budget, rate limiting, RPC failover, program pause, indexer pagination, ops docs (INSERTED)
 
 ## Phase Details
 
@@ -254,6 +255,29 @@ Plans:
 - [ ] 08.1-04-PLAN.md -- BPD transparency events + permissionless completeness verification
 - [ ] 08.1-05-PLAN.md -- Bankrun tests for loyalty multiplier, anti-whale, audit fixes, and transparency events
 
+### Phase 8.2: Operational Hardening (INSERTED)
+**Goal**: Harden infrastructure, frontend, and operations for mainnet readiness based on findings from Solana Runtime, MEV & Ordering, Deployment & Operations, and User-Facing Security audit teams
+**Depends on**: Phase 8 (program must be buildable), Phase 8.1 (audit fixes inform scope)
+**Requirements**: DEPL-01 (pre-deployment hardening)
+**Success Criteria** (what must be TRUE):
+  1. No secret keys exposed in client-side bundles (F-01 resolved)
+  2. All frontend transactions include ComputeBudget instructions with CU limits and priority fees
+  3. Transaction simulation results are checked before sending (no silent failures)
+  4. Indexer handles >1000 signatures per poll without data loss
+  5. All APIs have rate limiting (indexer + RPC proxy)
+  6. RPC failover configured with secondary endpoint
+  7. On-chain program pause mechanism exists for emergency response
+  8. migrate_stake is authority-gated (not permissionless)
+  9. Operational runbooks cover pause, rollback, BPD monitoring, and RPC failover
+**Plans**: 5 plans in 5 waves
+
+Plans:
+- [ ] 08.2-01-PLAN.md -- Secret leak fix + HSTS + env hardening + production script cleanup
+- [ ] 08.2-02-PLAN.md -- ComputeBudget instructions + simulation fix + error boundaries
+- [ ] 08.2-03-PLAN.md -- Indexer pagination + rate limiting + RPC failover + authority event indexing
+- [ ] 08.2-04-PLAN.md -- On-chain program pause + migrate_stake authority gate + BPD monitoring
+- [ ] 08.2-05-PLAN.md -- Rollback docs + verification docs + operations runbook updates
+
 ## Progress
 
 **Execution Order:**
@@ -275,3 +299,4 @@ Note: Phase 5 (Indexer) can overlap with Phase 4 (Dashboard) development since i
 | 7. Leaderboard and Marketing Site | 3/3 | Complete | 2026-02-08 |
 | 8. Testing, Audit, and Mainnet Launch | 0/5 | Not started | - |
 | 8.1. Game Theory Hardening | 0/5 | Not started | - |
+| 8.2. Operational Hardening | 0/5 | Not started | - |
