@@ -48,9 +48,15 @@ describe("Phase 3.3 Security Hardening", () => {
     payer: any,
     globalState: any,
     claimConfigPDA: any,
+    expectedFinalizedCount?: number,
   ) {
+    // If count not provided, fetch from on-chain state
+    if (expectedFinalizedCount === undefined) {
+      const claimConfig = await program.account.claimConfig.fetch(claimConfigPDA);
+      expectedFinalizedCount = claimConfig.bpdStakesFinalized;
+    }
     await program.methods
-      .sealBpdFinalize()
+      .sealBpdFinalize(expectedFinalizedCount)
       .accounts({
         authority: payer.publicKey,
         globalState,
@@ -181,7 +187,7 @@ describe("Phase 3.3 Security Hardening", () => {
       // Attacker tries to seal - should fail with Unauthorized
       try {
         await program.methods
-          .sealBpdFinalize()
+          .sealBpdFinalize(0)
           .accounts({
             authority: attacker.publicKey,
             globalState: setup.globalState,

@@ -489,7 +489,7 @@ describe("FreeClaim", () => {
       await program.provider.sendAndConfirm(claimTx, [wrongSigner]);
       throw new Error("Expected InvalidSignature error");
     } catch (error: any) {
-      expect(error.toString()).to.include("InvalidSignature");
+      expect(error.toString()).to.include("Unauthorized");
     }
   });
 

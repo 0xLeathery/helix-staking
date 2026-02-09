@@ -47,9 +47,15 @@ describe("Phase 8 Security Fixes", () => {
     payer: any,
     globalState: any,
     claimConfigPDA: any,
+    expectedFinalizedCount?: number,
   ) {
+    // If count not provided, fetch from on-chain state
+    if (expectedFinalizedCount === undefined) {
+      const claimConfig = await program.account.claimConfig.fetch(claimConfigPDA);
+      expectedFinalizedCount = claimConfig.bpdStakesFinalized;
+    }
     await program.methods
-      .sealBpdFinalize()
+      .sealBpdFinalize(expectedFinalizedCount)
       .accounts({
         authority: payer.publicKey,
         globalState,
@@ -486,6 +492,77 @@ describe("Phase 8 Security Fixes", () => {
         throw new Error("Expected BpdWindowNotActive error");
       } catch (error: any) {
         expect(error.toString()).toContain("BpdWindowNotActive");
+      }
+    });
+
+    it("abort fails after partial distribution has started", async () => {
+      const { context, program, payer } = await setupTest();
+      const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
+
+      // Initialize claim period
+      const snapshotWallet = Keypair.generate();
+      const entries = [{ wallet: snapshotWallet.publicKey, amount: new BN("10000000000"), claimPeriodId: 1 }];
+      const tree = buildMerkleTree(entries);
+      const [claimConfigPDA] = findClaimConfigPDA(program.programId);
+
+      await program.methods
+        .initializeClaimPeriod(Array.from(tree.root), new BN("100000000000000"), 1, 1)
+        .accounts({
+          authority: payer.publicKey,
+          claimConfig: claimConfigPDA,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([payer])
+        .rpc();
+
+      // Create TWO stakers so we can do partial distribution
+      const stakes: any[] = [];
+      for (let i = 0; i < 2; i++) {
+        const staker = Keypair.generate();
+        const fundTx = new Transaction();
+        fundTx.add(SystemProgram.transfer({ fromPubkey: payer.publicKey, toPubkey: staker.publicKey, lamports: 500_000_000 }));
+        await program.provider.sendAndConfirm(fundTx, [payer]);
+
+        const stakerATA = getAssociatedTokenAddressSync(mint, staker.publicKey, false, TOKEN_2022_PROGRAM_ID);
+        const createAtaTx = new Transaction();
+        createAtaTx.add(createAssociatedTokenAccountInstruction(staker.publicKey, stakerATA, staker.publicKey, mint, TOKEN_2022_PROGRAM_ID));
+        await program.provider.sendAndConfirm(createAtaTx, [staker]);
+
+        await mintTokensToUser(program, payer, globalState, mint, mintAuthority, stakerATA, DEFAULT_MIN_STAKE_AMOUNT);
+
+        const globalStateData = await program.account.globalState.fetch(globalState);
+        const [stakePDA] = findStakePDA(program.programId, staker.publicKey, globalStateData.totalStakesCreated);
+        await program.methods
+          .createStake(DEFAULT_MIN_STAKE_AMOUNT, 365)
+          .accounts({ user: staker.publicKey, globalState, stakeAccount: stakePDA, userTokenAccount: stakerATA, mint, tokenProgram: TOKEN_2022_PROGRAM_ID })
+          .signers([staker])
+          .rpc();
+
+        stakes.push(stakePDA);
+      }
+
+      // Advance past claim period
+      await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+
+      // Finalize both stakes and seal
+      await finalizeBpd(program, payer, globalState, claimConfigPDA, stakes);
+      await sealBpdFinalize(program, payer, globalState, claimConfigPDA);
+
+      // Trigger distribution for only the FIRST stake (partial - 1 of 2)
+      await triggerBpd(program, payer, globalState, claimConfigPDA, [stakes[0]]);
+
+      // Verify partial distribution (window still active, distributed < finalized)
+      const claimConfig = await program.account.claimConfig.fetch(claimConfigPDA);
+      expect(claimConfig.bpdStakesDistributed).toBe(1);
+      expect(claimConfig.bpdStakesFinalized).toBe(2);
+      expect(claimConfig.bigPayDayComplete).toBe(false);
+
+      // Try to abort after partial distribution - should fail
+      try {
+        await abortBpd(program, payer, globalState, claimConfigPDA);
+        throw new Error("Expected BpdDistributionAlreadyStarted error");
+      } catch (error: any) {
+        expect(error.toString()).toContain("BpdDistributionAlreadyStarted");
       }
     });
 
