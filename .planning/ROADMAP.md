@@ -23,6 +23,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 6: Analytics and Jupiter Integration** - Rich charts, supply breakdown, APY estimator, swap widget
 - [x] **Phase 7: Leaderboard and Marketing Site** - Whale tracker, leaderboard pages, marketing/landing site, economics explainer
 - [ ] **Phase 8: Testing, Audit, and Mainnet Launch** - Comprehensive tests, devnet validation, security audit, mainnet deployment
+- [ ] **Phase 8.1: Game Theory Hardening** - Duration loyalty multiplier, anti-whale mechanics, audit finding fixes, BPD transparency (INSERTED)
 
 ## Phase Details
 
@@ -232,6 +233,27 @@ Plans:
 - [ ] 08-04-PLAN.md -- Devnet deployment + automated validation script
 - [ ] 08-05-PLAN.md -- Mainnet deployment + Squads multisig + frontend/indexer config
 
+### Phase 8.1: Game Theory Hardening (INSERTED)
+**Goal**: Harden the protocol's economic design against rational-actor exploits, add a duration loyalty multiplier to incentivize long-term staking, implement anti-whale mechanics to prevent dominance, fix all remaining audit findings (7-agent audit HIGH-NEW-1, X-Ray XRAY-3), and add BPD transparency events for community verification
+**Depends on**: Phase 8 (audit findings inform fixes, program must be buildable)
+**Requirements**: STAKE-02 (corrections), CLAIM-02 (corrections), DEPL-01 (pre-deployment hardening)
+**Success Criteria** (what must be TRUE):
+  1. Stakers who have been staked longer earn proportionally higher daily inflation rewards via a duration loyalty multiplier (not just T-share count at creation)
+  2. Anti-whale cap limits maximum BPD share any single stake can receive, preventing outsized extraction
+  3. Anti-whale diminishing returns on T-share bonus for very large stakes (BPB curve flattens above threshold)
+  4. `abort_bpd` correctly resets all BPD state including `bpd_remaining_unclaimed` (HIGH-NEW-1 fixed)
+  5. `initialize` validates `slots_per_day > 0` and `calculate_days_elapsed` uses `checked_div` (XRAY-3 fixed)
+  6. BPD finalization emits batch progress events for off-chain monitoring
+  7. All existing tests pass + new tests cover loyalty multiplier, anti-whale, and audit fixes
+**Plans**: 5 plans in 4 waves
+
+Plans:
+- [ ] 08.1-01-PLAN.md -- Fix audit findings: abort_bpd reset (HIGH-NEW-1), slots_per_day validation (XRAY-3), orphaned finalize period (MED-NEW-2)
+- [ ] 08.1-02-PLAN.md -- Duration loyalty multiplier: time-weighted inflation boost for long-serving stakes
+- [ ] 08.1-03-PLAN.md -- Anti-whale mechanics: BPD share cap + BPB diminishing returns curve
+- [ ] 08.1-04-PLAN.md -- BPD transparency events + permissionless completeness verification
+- [ ] 08.1-05-PLAN.md -- Bankrun tests for loyalty multiplier, anti-whale, audit fixes, and transparency events
+
 ## Progress
 
 **Execution Order:**
@@ -252,3 +274,4 @@ Note: Phase 5 (Indexer) can overlap with Phase 4 (Dashboard) development since i
 | 6. Analytics and Jupiter Integration | 3/3 | Complete | 2026-02-08 |
 | 7. Leaderboard and Marketing Site | 3/3 | Complete | 2026-02-08 |
 | 8. Testing, Audit, and Mainnet Launch | 0/5 | Not started | - |
+| 8.1. Game Theory Hardening | 0/5 | Not started | - |

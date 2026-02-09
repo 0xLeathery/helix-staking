@@ -193,7 +193,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-None yet.
+- Phase 8.1 planned (game theory hardening) — 5 plans in 4 waves, awaiting execution
 
 ### Blockers/Concerns
 
@@ -213,6 +213,7 @@ None yet.
 - Phase 2.1 inserted after Phase 2: Critical Math Fixes (URGENT) - Expert board identified 5 critical issues requiring fixes before Phase 3
 - Phase 3.2 inserted after Phase 3: BPD Security Critical Fixes (URGENT) - Security audit identified 2 CRITICAL vulnerabilities in BPD distribution
 - Phase 3.3 inserted after Phase 3.2: Post-Audit Security Hardening (URGENT) - 7-agent security audit identified 1 CRITICAL + 2 HIGH + 8 MEDIUM vulnerabilities requiring fixes before Phase 4
+- Phase 8.1 inserted after Phase 8: Game Theory Hardening - Consolidated findings from game theory team, business-logic audit (3 HIGH/6 MED), X-Ray static analysis (XRAY-3), BPD security audit (centralization risk), and tokenomics review (Gap 6). Adds duration loyalty multiplier, anti-whale mechanics, audit fixes, BPD transparency events.
 
 ## Session Continuity
 
