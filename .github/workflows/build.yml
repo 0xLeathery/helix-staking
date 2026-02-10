@@ -1,0 +1,53 @@
+name: Verifiable Build & Test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: x86_64-unknown-linux-gnu
+          override: true
+
+      - name: Install Anchor
+        run: |
+          cargo install --git https://github.com/coral-xyz/anchor --tag v0.31.0 anchor-cli --locked
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: |
+          npm install
+          cd programs/helix-staking && npm install
+          cd ../../app/web && npm install
+          cd ../../services/indexer && npm install
+
+      - name: Run Bankrun Tests (Program)
+        run: |
+          cd tests/bankrun
+          npm install
+          npm test
+
+      - name: Run Verifiable Build
+        # Uses Docker to build the program verifiably
+        run: |
+          anchor build --verifiable
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: program-build
+          path: target/verifiable/
