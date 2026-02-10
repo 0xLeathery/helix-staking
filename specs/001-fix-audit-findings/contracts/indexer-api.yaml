@@ -1,0 +1,30 @@
+openapi: 3.0.0
+info:
+  title: SolHEX Indexer API
+  version: 1.0.1
+  description: Updated Indexer API with Rate Limiting and Strict Pagination
+paths:
+  /api/stats/history:
+    get:
+      summary: Get historical stats
+      parameters:
+        - name: limit
+          in: query
+          description: Max records to return (Strictly bounded 1-100)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: History data
+        '429':
+          description: Too Many Requests (Rate Limit Exceeded)
+  /api/health:
+    get:
+      summary: Health check (Lightweight)
+      description: Returns 200 OK without creating heavy RPC clients.
+      responses:
+        '200':
+          description: OK
