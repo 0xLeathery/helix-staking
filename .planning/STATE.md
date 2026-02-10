@@ -9,19 +9,19 @@ See: .planning/PROJECT.md (updated 2026-02-07)
 
 ## Current Position
 
-Phase: 8 of 8 (Testing, Audit, and Mainnet Launch)
-Plan: 3 of 5 in current phase (COMPLETE)
-Status: In Progress
-Last activity: 2026-02-08 -- Plan 08-03 COMPLETE (10/10 security tests passing, 7-agent audit: CONDITIONAL PASS, 0 CRITICALs, 1 new HIGH in emergency-only path)
+Phase: 8.1 of 8.2 (Game Theory Hardening)
+Plan: 5 of 5 in current phase (COMPLETE)
+Status: Phase 8.1 COMPLETE
+Last activity: 2026-02-10 -- Phase 8.1 COMPLETE (all 5 plans, 134/134 bankrun tests passing, 0 regressions)
 
-Progress: [██████░] 60% (3 complete - 08-01 ✓, 08-02 ✓, 08-03 ✓)
+Progress: [████████] 100% (5 complete - 08.1-01 ✓, 08.1-02 ✓, 08.1-03 ✓, 08.1-04 ✓, 08.1-05 ✓)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 35
-- Average duration: ~8.8 min
-- Total execution time: ~5h 15min
+- Total plans completed: 40
+- Average duration: ~8.5 min
+- Total execution time: ~5h 40min
 
 **By Phase:**
 
@@ -38,10 +38,11 @@ Progress: [██████░] 60% (3 complete - 08-01 ✓, 08-02 ✓, 08-03 
 | 6 | 3/3 | ~10min | ~3.3min |
 | 7 | 3/3 | ~16min | ~5.3min |
 | 8 | 3/5 | ~40min | ~13min |
+| 8.1 | 5/5 | ~25min | ~5min |
 
 **Recent Trend:**
-- Last 5 plans: 06-03 ✓, 07-01 ✓, 08-01 ✓, 08-02 ✓, 08-03 ✓
-- Trend: Phase 8 progressing - security fixes tested (10/10), 7-agent audit complete (CONDITIONAL PASS), ready for deployment plans
+- Last 5 plans: 08-02 ✓, 08-03 ✓, 08.1-01→04 ✓, 08.1-05 ✓
+- Trend: Phase 8.1 complete — game theory hardening implemented, 134/134 tests passing, ready for Phase 8.2 or deployment
 
 *Updated after each plan completion*
 
@@ -190,21 +191,35 @@ Recent decisions affecting current work:
 - Security fixes tests created in phase3.3/securityFixes.test.ts covering CRIT-1, HIGH-1, HIGH-2, MED-1 (08-03)
 - 7-agent security audit: CONDITIONAL PASS -- 0 CRITICALs, 1 new HIGH (abort_bpd incomplete reset), all 4 targeted fixes confirmed (08-03)
 - Security audit report: `.planning/phases/08-testing-audit-and-mainnet-launch/08-SECURITY-AUDIT.md` (08-03)
+- Duration loyalty multiplier: linear ramp from 0% to 50% (LOYALTY_MAX_BONUS=500M) over committed term, applied to claim_rewards and unstake pending_rewards only (08.1-01)
+- BPB diminishing returns: 4-tier system -- linear to PRECISION at BPB_THRESHOLD×10, +0.25x to BPB_TIER_2, +0.15x to BPB_TIER_3, hard cap at BPB_MAX_BONUS=1.5x (08.1-02)
+- BPD whale cap: max bonus per stake = bpd_original_unclaimed × BPD_MAX_SHARE_PCT / 100 (5% cap) (08.1-02)
+- BPD transparency: 24h seal delay (BPD_SEAL_DELAY_SECONDS=86400) between finalize and seal, bpd_finalize_start_timestamp set on first batch only, bpd_original_unclaimed stored at seal time (08.1-03)
+- BpdBatchFinalized event emitted during each finalize batch for off-chain monitoring (08.1-04)
+- abort_bpd resets bpd_finalize_start_timestamp and bpd_original_unclaimed to 0 (08.1-04)
+- ClaimConfig expanded from 184 to 200 bytes with bpd_finalize_start_timestamp (i64) and bpd_original_unclaimed (u64) (08.1-03)
+- BpdSealTooEarly error variant added for seal delay enforcement (08.1-03)
+- initialize rejects slots_per_day=0 (XRAY-3 static analysis fix) (08.1-01)
+- free_claim uses checked_div instead of bare division for days_elapsed (08.1-01)
+- Anchor.toml mainnet program ID fixed from placeholder to E9B7BsxdPS89M66CRGGbsCzQ9LkiGv6aNsra3cNBJha7 (08.1-05)
+- Frontend math/constants parity maintained: calculateBpbBonus rewritten with tiers, calculateLoyaltyBonus/applyLoyaltyMultiplier added (08.1-04)
+- Indexer BpdBatchFinalized event table and processor handler added (08.1-04)
+- Phase 8.1 bankrun tests: 18 tests in 2 files (gameTheory.test.ts, auditFixes.test.ts) covering loyalty multiplier, BPD whale cap, BPB diminishing returns, audit fixes, seal delay, event emission, abort reset (08.1-05)
 
 ### Pending Todos
 
-- Phase 8.1 planned (game theory hardening) — 5 plans in 4 waves, awaiting execution
 - Phase 8.2 planned (operational hardening) — 5 plans in 5 waves, awaiting execution
   - Sources: Solana Runtime (CONDITIONAL PASS, 3.5/10), MEV & Ordering (PASS, 1.5/10), Deployment & Ops (CONDITIONAL PASS, 6.2/10), User-Facing Security (CONDITIONAL PASS, 6.5/10)
   - 2 CRITICAL, 8 HIGH, 11 MEDIUM findings after deduplication
   - Math parity: FULL PASS (all Rust ↔ TypeScript calculations match)
+- Phase 8 plans 08-04 (devnet deployment) and 08-05 (mainnet deployment) still pending
 
 ### Blockers/Concerns
 
 **Test Infrastructure:**
 - ✅ RESOLVED: ts-mocha ESM/CJS interop issue fixed by migrating to vitest (08-01)
-- All 94 tests now execute successfully with vitest
-- 4 pre-existing BPD calculation test failures remain (not related to vitest migration)
+- All 134 tests now execute successfully with vitest (134/134 passing after Phase 8.1)
+- 4 pre-existing BPD calculation test failures fixed by Phase 8.1 corrections
 
 **Security Testing (08-03):**
 - ✅ RESOLVED: Solana toolchain located, program rebuilt, IDL regenerated with abort_bpd
@@ -222,10 +237,10 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-02-08
-Stopped at: Plan 08-03 COMPLETE (security tests + audit)
-Resume file: .planning/phases/08-testing-audit-and-mainnet-launch/08-03-SUMMARY.md
-Next: Execute Wave 3 (Plan 08-04: devnet deployment) and Wave 4 (Plan 08-05: mainnet deployment)
+Last session: 2026-02-10
+Stopped at: Phase 8.1 COMPLETE (all 5 plans, 134/134 tests passing)
+Resume file: .planning/phases/08-testing-audit-and-mainnet-launch/
+Next: Execute Phase 8.2 (Operational Hardening) or Phase 8 plans 08-04/08-05 (devnet/mainnet deployment)
 
 ## Phase 1 Notes
 
