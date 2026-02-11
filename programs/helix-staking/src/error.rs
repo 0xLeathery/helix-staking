@@ -100,4 +100,6 @@ pub enum HelixError {
     InvalidPDA,
     #[msg("Invalid bump seed (not canonical)")]
     InvalidBumpSeed,
+    #[msg("Invalid divisor in arithmetic operation")]
+    InvalidDivisor,
 }
