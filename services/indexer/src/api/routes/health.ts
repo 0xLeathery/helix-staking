@@ -2,19 +2,21 @@ import type { FastifyInstance, FastifyPluginCallback } from 'fastify';
 import { sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { checkpoints } from '../../db/schema.js';
-import { createRpcClient } from '../../lib/rpc.js';
-import { env } from '../../lib/env.js';
 import { desc } from 'drizzle-orm';
 
-const LAG_THRESHOLD = 1000; // ~7 minutes of slots
-
+/**
+ * Phase 8.1 (L3/FR-012): Lightweight health check.
+ *
+ * Per contracts/indexer-api.yaml, the health endpoint must NOT create heavy
+ * RPC clients. We only check DB connectivity and report the last indexed slot.
+ * Slot lag calculation is deferred — callers can compare lastSlot against
+ * their own RPC source if needed.
+ */
 export const healthRoutes: FastifyPluginCallback = (
   fastify: FastifyInstance,
   _opts,
   done,
 ) => {
-  const rpc = createRpcClient(env.RPC_URL);
-
   fastify.get('/health', async (_request, reply) => {
     // 1. Check database connectivity
     try {
@@ -31,46 +33,29 @@ export const healthRoutes: FastifyPluginCallback = (
 
     // 2. Get last indexed slot from checkpoints
     let lastSlot = 0;
+    let processedCount = 0;
     try {
       const rows = await db
-        .select({ lastSlot: checkpoints.lastSlot })
+        .select({
+          lastSlot: checkpoints.lastSlot,
+          processedCount: checkpoints.processedCount,
+        })
         .from(checkpoints)
         .orderBy(desc(checkpoints.updatedAt))
         .limit(1);
 
-      if (rows.length > 0 && rows[0].lastSlot !== null) {
-        lastSlot = rows[0].lastSlot;
+      if (rows.length > 0) {
+        lastSlot = rows[0].lastSlot ?? 0;
+        processedCount = rows[0].processedCount ?? 0;
       }
     } catch {
       // Checkpoint table may not exist yet; treat as slot 0
     }
 
-    // 3. Get current finalized slot from RPC
-    let currentSlot = 0;
-    try {
-      currentSlot = await rpc.getSlot('finalized');
-    } catch {
-      // RPC may be down; report with what we have
-    }
-
-    // 4. Calculate lag
-    const lag = currentSlot - lastSlot;
-
-    if (lag > LAG_THRESHOLD) {
-      return reply.status(503).send({
-        status: 'degraded',
-        lag,
-        lastSlot,
-        currentSlot,
-        message: 'Indexer behind',
-      });
-    }
-
     return reply.send({
       status: 'healthy',
-      lag,
       lastSlot,
-      currentSlot,
+      processedCount,
       uptime: process.uptime(),
       timestamp: new Date().toISOString(),
     });

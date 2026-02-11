@@ -19,17 +19,40 @@ pub fn mul_div(a: u64, b: u64, c: u64) -> Result<u64> {
 /// Multiply then divide with round-up for protocol-favorable calculations.
 /// Formula: ((a * b) + (c - 1)) / c
 /// Used for: penalty amounts (should round UP to favor protocol).
+/// 
+/// Implements ceiling division with explicit overflow checks:
+/// - Multiply a * b with overflow check
+/// - Add (c - 1) for rounding with overflow check
+/// - Divide by c with overflow check
+/// - Convert back to u64 with overflow check
 pub fn mul_div_up(a: u64, b: u64, c: u64) -> Result<u64> {
     require!(c > 0, HelixError::DivisionByZero);
-    let numerator = (a as u128)
-        .checked_mul(b as u128)
-        .ok_or(error!(HelixError::Overflow))?
-        .checked_add((c - 1) as u128)
+    
+    // Convert to u128 for overflow-safe multiplication
+    let a_u128 = a as u128;
+    let b_u128 = b as u128;
+    let c_u128 = c as u128;
+    
+    // Multiply with explicit overflow check
+    let product = a_u128
+        .checked_mul(b_u128)
         .ok_or(error!(HelixError::Overflow))?;
+    
+    // Add rounding factor (c - 1) with explicit overflow check
+    // This implements ceiling division: ceil(a*b/c)
+    let rounding = c_u128
+        .checked_sub(1)
+        .ok_or(error!(HelixError::InvalidDivisor))?;
+    let numerator = product
+        .checked_add(rounding)
+        .ok_or(error!(HelixError::Overflow))?;
+    
+    // Divide and convert back to u64
     let result = numerator
-        .checked_div(c as u128)
+        .checked_div(c_u128)
         .ok_or(error!(HelixError::Overflow))?;
-    u64::try_from(result).map_err(|_| error!(HelixError::Overflow))
+    u64::try_from(result)
+        .map_err(|_| error!(HelixError::Overflow))
 }
 
 /// Calculate Longer Pays Better (LPB) bonus multiplier
@@ -123,7 +146,7 @@ pub fn calculate_bpb_bonus(staked_amount: u64) -> Result<u64> {
 
     // Safety cap
     let final_bonus = bonus.min(BPB_MAX_BONUS as u128);
-    Ok(u64::try_from(final_bonus).map_err(|_| error!(HelixError::Overflow))?)
+    u64::try_from(final_bonus).map_err(|_| error!(HelixError::Overflow))
 }
 
 /// Calculate T-shares from staked amount, applying LPB + BPB bonuses and share rate
@@ -339,7 +362,8 @@ pub fn calculate_loyalty_bonus(
     }
 
     let elapsed_slots = current_slot.saturating_sub(start_slot);
-    let days_served = elapsed_slots.checked_div(slots_per_day).unwrap_or(0);
+    // Safe to divide: slots_per_day > 0 validated above
+    let days_served = elapsed_slots / slots_per_day;
 
     // Cap at committed_days (don't exceed max bonus even in grace/late period)
     let capped_days = days_served.min(committed_days);

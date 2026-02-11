@@ -1,5 +1,5 @@
 import { desc } from 'drizzle-orm';
-import { db } from '../db/client.js';
+import { db, type DbClient } from '../db/client.js';
 import {
   protocolInitializedEvents,
   stakeCreatedEvents,
@@ -14,6 +14,9 @@ import {
   bigPayDayDistributedEvents,
   bpdAbortedEvents,
   bpdBatchFinalizedEvents,
+  authorityTransferInitiatedEvents,
+  authorityTransferCancelledEvents,
+  authorityTransferCompletedEvents,
 } from '../db/schema.js';
 import { logger } from '../lib/logger.js';
 
@@ -52,6 +55,10 @@ function toNum(val: any): number {
 /**
  * Route a decoded event to the correct database table with idempotent insert.
  *
+ * Phase 8.1 (H7/FR-008): Accepts optional dbClient for transactional writes.
+ * When called inside db.transaction(), pass the transaction object to ensure
+ * event inserts and checkpoint updates are atomic.
+ *
  * Each insert uses onConflictDoNothing on the signature unique constraint
  * so duplicate processing is silently skipped.
  *
@@ -61,8 +68,13 @@ function toNum(val: any): number {
 export async function processEvent(
   event: { name: string; data: any; slot: number },
   signature: string,
+  dbClient: DbClient = db,
 ): Promise<void> {
   const { name, data, slot } = event;
+
+  // Shadow module-level db so all inserts below use the transactional client
+  // eslint-disable-next-line @typescript-eslint/no-shadow
+  const db = dbClient;
 
   try {
     switch (name) {
@@ -282,6 +294,54 @@ export async function processEvent(
             shareDays: toStr(data.cumulativeShareDays),
           },
           'BPD batch finalized',
+        );
+        break;
+
+      case 'AuthorityTransferInitiated':
+        await db
+          .insert(authorityTransferInitiatedEvents)
+          .values({
+            signature,
+            slot,
+            oldAuthority: toStr(data.oldAuthority),
+            newAuthority: toStr(data.newAuthority),
+          })
+          .onConflictDoNothing();
+        logger.info(
+          { oldAuthority: toStr(data.oldAuthority), newAuthority: toStr(data.newAuthority) },
+          'Authority transfer initiated',
+        );
+        break;
+
+      case 'AuthorityTransferCancelled':
+        await db
+          .insert(authorityTransferCancelledEvents)
+          .values({
+            signature,
+            slot,
+            authority: toStr(data.authority),
+            cancelledNewAuthority: toStr(data.cancelledNewAuthority),
+          })
+          .onConflictDoNothing();
+        logger.info(
+          { authority: toStr(data.authority), cancelled: toStr(data.cancelledNewAuthority) },
+          'Authority transfer cancelled',
+        );
+        break;
+
+      case 'AuthorityTransferCompleted':
+        await db
+          .insert(authorityTransferCompletedEvents)
+          .values({
+            signature,
+            slot,
+            oldAuthority: toStr(data.oldAuthority),
+            newAuthority: toStr(data.newAuthority),
+          })
+          .onConflictDoNothing();
+        logger.info(
+          { oldAuthority: toStr(data.oldAuthority), newAuthority: toStr(data.newAuthority) },
+          'Authority transfer completed',
         );
         break;
 

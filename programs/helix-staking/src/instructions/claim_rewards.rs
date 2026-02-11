@@ -109,8 +109,8 @@ pub fn claim_rewards(ctx: Context<ClaimRewards>) -> Result<()> {
         .checked_add(bpd_bonus)
         .ok_or(HelixError::Overflow)?;
 
-    // Require non-zero total rewards
-    require!(total_rewards > 0, HelixError::NoRewardsToClaim);
+    // Phase 8.1 (C3/FR-006): Prevent zero-amount mint CPI
+    require!(total_rewards > 0, HelixError::ClaimAmountZero);
 
     // CRITICAL: Update reward_debt BEFORE CPI (prevents double-claim)
     // Uses u128 intermediate to prevent overflow
