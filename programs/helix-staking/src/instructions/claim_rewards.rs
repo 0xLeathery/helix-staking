@@ -7,6 +7,7 @@ use crate::error::HelixError;
 use crate::events::RewardsClaimed;
 use crate::state::{GlobalState, StakeAccount};
 use crate::instructions::math::{calculate_pending_rewards, calculate_reward_debt, calculate_loyalty_bonus, mul_div};
+use crate::instructions::crank_distribution::distribute_pending_inflation;
 
 #[derive(Accounts)]
 pub struct ClaimRewards<'info> {
@@ -60,6 +61,10 @@ pub struct ClaimRewards<'info> {
 
 pub fn claim_rewards(ctx: Context<ClaimRewards>) -> Result<()> {
     let clock = Clock::get()?;
+
+    // Ensure share_rate is up-to-date
+    distribute_pending_inflation(&mut ctx.accounts.global_state, &clock)?;
+
     let global_state = &mut ctx.accounts.global_state;
     let stake = &ctx.accounts.stake_account;
 

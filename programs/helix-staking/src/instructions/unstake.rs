@@ -6,6 +6,7 @@ use crate::error::HelixError;
 use crate::events::StakeEnded;
 use crate::state::{GlobalState, StakeAccount};
 use crate::instructions::math::{calculate_early_penalty, calculate_late_penalty, calculate_pending_rewards, calculate_loyalty_bonus, mul_div};
+use crate::instructions::crank_distribution::distribute_pending_inflation;
 
 #[derive(Accounts)]
 pub struct Unstake<'info> {
@@ -55,6 +56,10 @@ pub struct Unstake<'info> {
 
 pub fn unstake(ctx: Context<Unstake>) -> Result<()> {
     let clock = Clock::get()?;
+
+    // Ensure share_rate is up-to-date
+    distribute_pending_inflation(&mut ctx.accounts.global_state, &clock)?;
+
     let global_state = &mut ctx.accounts.global_state;
     let stake = &ctx.accounts.stake_account;
 
