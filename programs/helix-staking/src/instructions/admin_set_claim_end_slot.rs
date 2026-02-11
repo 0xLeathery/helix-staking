@@ -33,11 +33,17 @@ pub fn admin_set_claim_end_slot(
     ctx: Context<AdminSetClaimEndSlot>,
     new_end_slot: u64,
 ) -> Result<()> {
+    let clock = Clock::get()?;
     let claim_config = &mut ctx.accounts.claim_config;
+    let global_state = &ctx.accounts.global_state;
 
-    // Phase 8.1 (C2/FR-002b): Only allow monotonic increases — new value must be > current
+    // A-3 FIX: Allow both increases and bounded decreases.
+    // Floor: cannot set below current_slot + 1 day (prevents locking out active claimers)
+    let min_end_slot = clock.slot
+        .checked_add(global_state.slots_per_day)
+        .ok_or(HelixError::Overflow)?;
     require!(
-        new_end_slot > claim_config.end_slot,
+        new_end_slot >= min_end_slot,
         HelixError::AdminBoundsExceeded
     );
 

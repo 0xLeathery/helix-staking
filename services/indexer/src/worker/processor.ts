@@ -14,6 +14,9 @@ import {
   bigPayDayDistributedEvents,
   bpdAbortedEvents,
   bpdBatchFinalizedEvents,
+  authorityTransferInitiatedEvents,
+  authorityTransferCancelledEvents,
+  authorityTransferCompletedEvents,
 } from '../db/schema.js';
 import { logger } from '../lib/logger.js';
 
@@ -291,6 +294,54 @@ export async function processEvent(
             shareDays: toStr(data.cumulativeShareDays),
           },
           'BPD batch finalized',
+        );
+        break;
+
+      case 'AuthorityTransferInitiated':
+        await db
+          .insert(authorityTransferInitiatedEvents)
+          .values({
+            signature,
+            slot,
+            oldAuthority: toStr(data.oldAuthority),
+            newAuthority: toStr(data.newAuthority),
+          })
+          .onConflictDoNothing();
+        logger.info(
+          { oldAuthority: toStr(data.oldAuthority), newAuthority: toStr(data.newAuthority) },
+          'Authority transfer initiated',
+        );
+        break;
+
+      case 'AuthorityTransferCancelled':
+        await db
+          .insert(authorityTransferCancelledEvents)
+          .values({
+            signature,
+            slot,
+            authority: toStr(data.authority),
+            cancelledNewAuthority: toStr(data.cancelledNewAuthority),
+          })
+          .onConflictDoNothing();
+        logger.info(
+          { authority: toStr(data.authority), cancelled: toStr(data.cancelledNewAuthority) },
+          'Authority transfer cancelled',
+        );
+        break;
+
+      case 'AuthorityTransferCompleted':
+        await db
+          .insert(authorityTransferCompletedEvents)
+          .values({
+            signature,
+            slot,
+            oldAuthority: toStr(data.oldAuthority),
+            newAuthority: toStr(data.newAuthority),
+          })
+          .onConflictDoNothing();
+        logger.info(
+          { oldAuthority: toStr(data.oldAuthority), newAuthority: toStr(data.newAuthority) },
+          'Authority transfer completed',
         );
         break;
 
