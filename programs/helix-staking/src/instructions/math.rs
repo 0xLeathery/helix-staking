@@ -280,7 +280,12 @@ pub fn calculate_pending_rewards(
     // Saturating sub handles case where reward_debt > current_value (shouldn't happen but defensive)
     let pending_128 = current_value.saturating_sub(reward_debt as u128);
 
-    u64::try_from(pending_128).map_err(|_| error!(HelixError::Overflow))
+    // FIXED: Divide by PRECISION to get unscaled token amount
+    let pending_rewards = pending_128
+        .checked_div(PRECISION as u128)
+        .ok_or(error!(HelixError::Overflow))?;
+
+    u64::try_from(pending_rewards).map_err(|_| error!(HelixError::Overflow))
 }
 
 /// Calculate reward_debt = t_shares × share_rate with overflow protection.
@@ -515,3 +520,35 @@ mod tests {
         assert!(overflow_result.is_err());
     }
 }
+
+    #[test]
+    fn test_calculate_pending_rewards() {
+        // PRECISION is 1_000_000_000
+        let prec = PRECISION;
+
+        // Case 1: 1 share, rate increases by 1*PRECISION
+        // t_shares = 1, rate_start = 0, rate_end = 1*PRECISION
+        // This corresponds to 1 token distributed to 1 share
+        // pending should be 1 token (unscaled)
+        let pending = calculate_pending_rewards(1, prec, 0).unwrap();
+        assert_eq!(pending, 1, "Should return unscaled token amount (1)");
+
+        // Case 2: 1 share, rate increases by 0.5 * PRECISION
+        // pending should be 0 (0.5 rounds down)
+        let pending_small = calculate_pending_rewards(1, prec / 2, 0).unwrap();
+        assert_eq!(pending_small, 0, "Should round down small amounts");
+
+        // Case 3: Realistic scenario
+        // t_shares = 1e12, rate increases by 100_000
+        // rate_start = 10_000, rate_end = 110_000.
+        // debt = 1e12 * 10_000 = 1e16.
+        // current = 1e12 * 110_000 = 1.1e17.
+        // diff = 1e17.
+        // pending = 1e17 / 1e9 = 1e8 (100,000,000).
+        let t_shares = 1_000_000_000_000u64;
+        let rate_start = 10_000u64;
+        let rate_end = 110_000u64;
+        let debt = calculate_reward_debt(t_shares, rate_start).unwrap();
+        let pending_large = calculate_pending_rewards(t_shares, rate_end, debt).unwrap();
+        assert_eq!(pending_large, 100_000_000, "Should handle large numbers correctly");
+    }
