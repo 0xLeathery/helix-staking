@@ -4,7 +4,12 @@
   "scripts": {
     "test": "anchor test",
     "test:bankrun": "vitest run tests/bankrun",
-    "xray": "docker run --rm --volume \"$(pwd):/workspace\" ghcr.io/sec3-product/x-ray:latest /workspace/programs/helix-staking"
+    "xray": "docker run --rm --volume \"$(pwd):/workspace\" ghcr.io/sec3-product/x-ray:latest /workspace/programs/helix-staking",
+    "localnet:up": "docker compose -f docker/docker-compose.yml up validator -d && docker compose -f docker/docker-compose.yml logs -f validator",
+    "localnet:up:all": "docker compose -f docker/docker-compose.yml up -d",
+    "localnet:down": "docker compose -f docker/docker-compose.yml down",
+    "localnet:logs": "docker compose -f docker/docker-compose.yml logs -f validator",
+    "localnet:status": "docker compose -f docker/docker-compose.yml ps"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.31.0",

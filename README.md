@@ -78,6 +78,25 @@ npm run db:generate # Generate Drizzle migrations
 2. Deploy: `anchor deploy --provider.cluster <mainnet|devnet>`
 3. Verify: `anchor verify <PROGRAM_ID>`
 
+## Docker Localnet
+
+Run a Solana localnet validator with the Helix Staking program pre-deployed in Docker. No local Solana CLI required.
+
+```bash
+anchor build              # Build program first
+npm run localnet:up       # Start validator with program + bootstrap
+npm run localnet:down     # Stop
+```
+
+The container automatically initializes the protocol (GlobalState, Mint), funds a test wallet with 100 SOL + 10,000 HELIX, and exposes RPC on `localhost:8899`.
+
+For full-stack testing (validator + PostgreSQL for indexer):
+```bash
+npm run localnet:up:all
+```
+
+See [docker/README.md](docker/README.md) for configuration, troubleshooting, and Apple Silicon setup.
+
 ## Security
 
 - All admin instructions require multisig authority (Squads v4)

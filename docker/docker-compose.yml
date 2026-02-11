@@ -1,0 +1,50 @@
+# Helix Localnet: Docker Compose Orchestration
+#
+# Usage:
+#   Validator only:  docker compose up validator
+#   Full stack:      docker compose up
+#   Stop:            docker compose down
+#
+# Program binary is bind-mounted from target/deploy/ — no rebuild needed
+# when the program changes. Only rebuild on Dockerfile/entrypoint changes.
+
+services:
+  validator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    platform: linux/amd64
+    env_file: .env
+    ports:
+      - "${RPC_PORT:-8899}:8899"
+      - "${WS_PORT:-8900}:8900"
+    volumes:
+      - ../target/deploy:/mnt/deploy:ro
+      - ../target/idl:/mnt/idl:ro
+      - ./logs:/mnt/logs:rw
+    environment:
+      - PROGRAM_SO_PATH=/mnt/deploy/helix_staking.so
+      - IDL_PATH=/mnt/idl/helix_staking.json
+      - WALLET_PATH=/app/test-wallet.json
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /tmp/.bootstrap-complete && curl -sf http://127.0.0.1:8899/health"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+      start_period: 15s
+    restart: "no"
+
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-helix_indexer}
+      POSTGRES_USER: ${POSTGRES_USER:-helix}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-helix}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-helix}"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+    restart: "no"
