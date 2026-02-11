@@ -7,6 +7,7 @@ use crate::error::HelixError;
 use crate::events::StakeCreated;
 use crate::state::{GlobalState, StakeAccount, ClaimConfig};
 use crate::instructions::math::{calculate_t_shares, calculate_reward_debt};
+use crate::instructions::crank_distribution::distribute_pending_inflation;
 
 #[derive(Accounts)]
 pub struct CreateStake<'info> {
@@ -56,6 +57,11 @@ pub fn create_stake<'info>(
     amount: u64,
     days: u16,
 ) -> Result<()> {
+    let clock = Clock::get()?;
+
+    // Ensure share_rate is up-to-date (sandwich attack prevention)
+    distribute_pending_inflation(&mut ctx.accounts.global_state, &clock)?;
+
     let global_state = &mut ctx.accounts.global_state;
     let stake_account = &mut ctx.accounts.stake_account;
 
@@ -70,9 +76,6 @@ pub fn create_stake<'info>(
         days >= 1 && days <= MAX_STAKE_DAYS as u16,
         HelixError::InvalidStakeDuration
     );
-
-    // Get current time
-    let clock = Clock::get()?;
 
     // Calculate T-shares with LPB + BPB bonuses
     let t_shares = calculate_t_shares(amount, days as u64, global_state.share_rate)?;
