@@ -146,7 +146,7 @@ pub fn calculate_bpb_bonus(staked_amount: u64) -> Result<u64> {
 
     // Safety cap
     let final_bonus = bonus.min(BPB_MAX_BONUS as u128);
-    Ok(u64::try_from(final_bonus).map_err(|_| error!(HelixError::Overflow))?)
+    u64::try_from(final_bonus).map_err(|_| error!(HelixError::Overflow))
 }
 
 /// Calculate T-shares from staked amount, applying LPB + BPB bonuses and share rate
