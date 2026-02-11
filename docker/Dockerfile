@@ -17,7 +17,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         bzip2 \
     && rm -rf /var/lib/apt/lists/*
 
-# ── Solana CLI v1.18.26 (direct tarball — deterministic, cache-friendly) ─────
+# ── Solana CLI v1.18.26 (original version for reproducible builds) ─────
+# Note: This version ships with rustc 1.79.0-dev which has dependency issues
+# For now, we use the original version but clear problematic crates
 RUN curl -fsSL https://github.com/solana-labs/solana/releases/download/v1.18.26/solana-release-x86_64-unknown-linux-gnu.tar.bz2 \
     | tar -xjC /opt \
     && ln -s /opt/solana-release/bin/* /usr/local/bin/
@@ -34,11 +36,11 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 WORKDIR /app
 
 # Install bootstrap script dependencies (cached unless package.json changes)
-COPY package.json ./
+COPY docker/package.json ./
 RUN npm install --production && npm cache clean --force
 
 # Copy application files
-COPY entrypoint.sh bootstrap.ts test-wallet.json ./
+COPY docker/entrypoint.sh docker/bootstrap.ts docker/test-wallet.json ./
 RUN chmod +x /app/entrypoint.sh
 
 # ── Solana config ────────────────────────────────────────────────────────────
