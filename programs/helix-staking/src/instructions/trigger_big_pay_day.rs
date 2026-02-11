@@ -108,16 +108,11 @@ pub fn trigger_big_pay_day<'info>(
         drop(data); // Release borrow before potential mutation
 
         // === SECURITY: Validate PDA derivation ===
-        let expected_pda = Pubkey::create_program_address(
-            &[
-                STAKE_SEED,
-                stake.user.as_ref(),
-                &stake.stake_id.to_le_bytes(),
-                &[stake.bump],
-            ],
-            &crate::id(),
-        );
-        if expected_pda.is_err() || account_info.key() != expected_pda.unwrap() {
+        // Uses validate_stake_pda which ensures:
+        // - Account key matches canonical PDA
+        // - Bump seed is canonical (prevents seed canonicalization attacks)
+        // This validation is Anchor-equivalent for remaining_accounts.
+        if crate::security::validate_stake_pda(account_info, &stake).is_err() {
             continue;
         }
 
