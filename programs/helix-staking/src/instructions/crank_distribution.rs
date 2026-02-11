@@ -38,10 +38,27 @@ pub struct CrankDistribution<'info> {
 
 pub fn crank_distribution(ctx: Context<CrankDistribution>) -> Result<()> {
     let global_state = &mut ctx.accounts.global_state;
-
-    // Get current time
     let clock = Clock::get()?;
 
+    // Explicit check for manual crank to preserve error behavior
+    let current_day = get_current_day(
+        global_state.init_slot,
+        clock.slot,
+        global_state.slots_per_day,
+    )?;
+
+    require!(
+        current_day > global_state.current_day,
+        HelixError::AlreadyDistributedToday
+    );
+
+    distribute_pending_inflation(global_state, &clock)
+}
+
+/// Helper function to distribute pending inflation if a new day has started.
+/// This can be called safely from other instructions to ensure share_rate is up-to-date.
+/// It is idempotent (does nothing if already distributed for the day).
+pub fn distribute_pending_inflation(global_state: &mut GlobalState, clock: &Clock) -> Result<()> {
     // Calculate current day
     let current_day = get_current_day(
         global_state.init_slot,
@@ -49,11 +66,10 @@ pub fn crank_distribution(ctx: Context<CrankDistribution>) -> Result<()> {
         global_state.slots_per_day,
     )?;
 
-    // Require that we haven't already distributed for this day
-    require!(
-        current_day > global_state.current_day,
-        HelixError::AlreadyDistributedToday
-    );
+    // If already distributed for this day (or later?), do nothing
+    if current_day <= global_state.current_day {
+        return Ok(());
+    }
 
     // Calculate days elapsed since last distribution
     let days_elapsed = current_day
