@@ -27,7 +27,7 @@ A developer wants to spin up a fully self-contained Solana localnet validator in
 
 **Acceptance Scenarios**:
 
-1. **Given** Docker is installed on the host, **When** the developer runs the container start command, **Then** a Solana localnet validator starts and is reachable at the configured RPC endpoint within 30 seconds.
+1. **Given** Docker is installed on the host, **When** the developer runs the container start command, **Then** a Solana localnet validator starts and is reachable at the configured RPC endpoint within 60 seconds on a cold start (no cached images) or within 15 seconds on subsequent starts.
 2. **Given** the validator container is running, **When** the developer queries the cluster version via the RPC endpoint, **Then** a valid Solana version response is returned.
 3. **Given** the validator container is running, **When** the developer stops the container, **Then** all validator processes shut down cleanly within 10 seconds.
 
@@ -116,10 +116,10 @@ A developer wants to start the full local testing stack (Solana validator + Post
 ### Measurable Outcomes
 
 - **SC-001**: A developer with only Docker installed can have a running localnet with the Helix Staking program deployed in under 60 seconds from a cold start (no cached images), and under 15 seconds on subsequent starts.
-- **SC-002**: Existing integration tests pass against the containerized validator without modification to the test code (only RPC URL configuration changes).
+- **SC-002**: RPC-based smoke tests (program account query, instruction submission via `@solana/web3.js`, WebSocket log subscription) pass against the containerized validator. Existing bankrun tests remain unaffected (they use an in-process BanksServer and do not target the Docker RPC endpoint).
 - **SC-003**: The container consumes less than 2 GB of memory during normal test operation.
 - **SC-004**: The full service stack (validator + database) starts successfully with a single command 100% of the time on supported platforms.
-- **SC-005**: Rebuilding the image after a program change takes under 30 seconds due to layer caching.
+- **SC-005**: Rebuilding the image after a Dockerfile or entrypoint script change takes under 30 seconds due to Docker layer caching. Program binary changes require no rebuild (bind-mounted at runtime per FR-006).
 
 ## Assumptions
 

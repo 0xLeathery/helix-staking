@@ -36,7 +36,7 @@
 **⚠️ CRITICAL**: All user stories depend on a buildable Docker image
 
 - [ ] T006 Create `docker/Dockerfile` with `FROM --platform=linux/amd64 ubuntu:22.04`, install Solana v1.18.26 via direct tarball extract to `/opt/solana-release/`, install `tini`, `curl`, Node.js 20.x LTS, and npm dependencies (`@coral-xyz/anchor`, `@solana/web3.js`, `@solana/spl-token`, `tsx`) per research.md Q1, Q2, Q6
-- [ ] T007 Create `docker/package.json` with bootstrap script dependencies (`@coral-xyz/anchor`, `@solana/web3.js`, `@solana/spl-token`, `bn.js`) — installed during Docker build
+- [ ] T007 Create `docker/package.json` with bootstrap script dependencies (`@coral-xyz/anchor`, `@solana/web3.js`, `@solana/spl-token`, `bn.js`, `tsx`) — installed during Docker build
 
 **Checkpoint**: `docker build -f docker/Dockerfile docker/` succeeds. Image contains Solana CLI, Node.js, tini, curl.
 
@@ -50,7 +50,7 @@
 
 ### Implementation for User Story 1
 
-- [ ] T008 [US1] Create `docker/entrypoint.sh` — start `solana-test-validator` in background with flags from research.md Q3 (`--reset`, `--bpf-program`, `--ledger`, `--rpc-port 8899`, `--faucet-port 9900`, `--log`, `--limit-ledger-size 50000000`, `--slots-per-epoch 150`, `--ticks-per-slot 8`), implement `wait_for_ready()` health check loop (curl getHealth, 1s interval, 30 retries, process liveness check per research.md Q5), signal trap for SIGTERM/SIGINT cleanup, and `wait $VALIDATOR_PID` at end
+- [ ] T008 [US1] Create `docker/entrypoint.sh` — start `solana-test-validator` in background with flags from research.md Q3 (`--reset`, `--bpf-program`, `--ledger`, `--rpc-port 8899`, `--faucet-port 9900`, `--log`, `--limit-ledger-size 50000000`, `--slots-per-epoch 150`, `--ticks-per-slot 8`), implement `wait_for_ready()` health check loop (curl getHealth, 2s interval, 45 retries = 90s budget, aligned with Compose HEALTHCHECK 30×2s+15s start_period, process liveness check per research.md Q5), signal trap for SIGTERM/SIGINT cleanup, and `wait $VALIDATOR_PID` at end
 - [ ] T009 [US1] Update `docker/Dockerfile` to COPY `entrypoint.sh` and `test-wallet.json` into image, set `ENTRYPOINT ["tini", "--"]` and `CMD ["/app/entrypoint.sh"]`, add `HEALTHCHECK` directive per research.md Q5, expose ports 8899 and 8900
 - [ ] T010 [US1] Create minimal `docker/docker-compose.yml` with only the `validator` service — build context, platform `linux/amd64`, port mappings (`${RPC_PORT:-8899}:8899`, `${WS_PORT:-8900}:8900`), bind-mount volumes (`../target/deploy:/mnt/deploy:ro`, `../target/idl:/mnt/idl:ro`, `./logs:/mnt/logs:rw`), environment variables, and healthcheck per contracts/docker-compose-contract.md
 - [ ] T011 [US1] Add validator log streaming to `docker/entrypoint.sh` — tee validator output to `/mnt/logs/validator.log` AND container stdout per FR-012
@@ -102,7 +102,7 @@
 ### Implementation for User Story 4
 
 - [ ] T018 [US4] Add `postgres` service to `docker/docker-compose.yml` — `postgres:16-alpine` image, port mapping (`${POSTGRES_PORT:-5432}:5432`), environment variables (`POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`), healthcheck (`pg_isready`) per contracts/docker-compose-contract.md
-- [ ] T019 [US4] Add `localnet:up:all` npm script behavior (if not already in T016) and add `.env` loading to `docker/docker-compose.yml` via `env_file: .env` directive
+- [ ] T019 [US4] Add `.env` loading to `docker/docker-compose.yml` via `env_file: .env` directive so Compose picks up variable overrides from `docker/.env`
 - [ ] T020 [US4] Update `docker/README.md` with full-stack section — how to start both services, indexer connection instructions (`DATABASE_URL`, `RPC_URL`), how to run `npm run db:migrate` against local PostgreSQL
 
 **Checkpoint**: `npm run localnet:up:all` starts both validator and PostgreSQL → both healthchecks pass → indexer can connect to both services → `npm run localnet:down` stops all cleanly
@@ -116,6 +116,8 @@
 - [ ] T021 [P] Add `docker/` section to root `README.md` — brief overview of localnet Docker tooling with link to `docker/README.md`
 - [ ] T022 [P] Verify edge case: container behavior when `helix_staking.so` is missing — confirm entrypoint prints error and exits non-zero (covered by T015 pre-flight check)
 - [ ] T023 Run quickstart.md validation — follow quickstart.md steps exactly on a clean checkout, verify all commands succeed, fix any discrepancies
+- [ ] T024 [P] Validate SC-002: start container, run a lightweight RPC smoke test script (`docker/smoke-test.ts`) that (1) calls `getVersion` to confirm Solana 1.18.x, (2) queries the program account at `E9B7BsxdPS89M66CRGGbsCzQ9LkiGv6aNsra3cNBJha7` and verifies it is executable, (3) submits an `initialize`-idempotent instruction via `@solana/web3.js`, (4) opens a WebSocket subscription on `ws://localhost:8900` and confirms a log event is received. All checks must pass without modifying any existing test code.
+- [ ] T025 [P] Validate SC-001/SC-003: measure cold start time (`time docker compose -f docker/docker-compose.yml up validator`), warm start time (after `down` + `up`), and container memory usage (`docker stats --no-stream`). Verify cold < 60s, warm < 15s, memory < 2 GB
 
 ---
 
