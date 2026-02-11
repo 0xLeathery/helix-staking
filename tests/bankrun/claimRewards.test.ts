@@ -176,9 +176,10 @@ describe("ClaimRewards", () => {
         .signers([payer])
         .rpc();
 
-      throw new Error("Expected NoRewardsToClaim error");
+      throw new Error("Expected ClaimAmountZero error");
     } catch (error: any) {
-      expect(error.toString()).to.include("NoRewardsToClaim");
+      // Phase 8.1: Renamed from NoRewardsToClaim → ClaimAmountZero (C3/FR-006)
+      expect(error.toString()).to.include("ClaimAmountZero");
     }
   });
 

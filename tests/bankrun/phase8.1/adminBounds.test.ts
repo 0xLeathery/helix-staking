@@ -128,9 +128,10 @@ describe("Admin Bounds Tests", () => {
           })
           .signers([payer])
           .rpc();
-        expect.fail("Expected AdminBoundsExceeded error");
+        expect.fail("Expected error for slots_per_day=0");
       } catch (error: any) {
-        expect(error.toString()).toMatch(/AdminBoundsExceeded/);
+        // Value 0 hits the existing InvalidParameter guard before reaching bounds check
+        expect(error.toString()).toMatch(/InvalidParameter|AdminBoundsExceeded/);
       }
     });
 
