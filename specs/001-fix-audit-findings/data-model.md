@@ -7,7 +7,7 @@
 
 ### GlobalState (Modified)
 No new fields, but strict validation on existing ones.
-- **`slots_per_day`**: Immutable or strictly bounded (e.g., +/- 10%) after initialization.
+- **`slots_per_day`**: Bounded to ±10% of `DEFAULT_SLOTS_PER_DAY` (216,000) from `constants.rs`. No new field required; the constant serves as the baseline.
 - **`claim_end_slot`**: Immutable or monotonic increase only.
 
 ### BPDState (Logic Change)

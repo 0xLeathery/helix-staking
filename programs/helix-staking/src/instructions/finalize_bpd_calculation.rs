@@ -57,9 +57,10 @@ pub fn finalize_bpd_calculation<'info>(
 
     // === Calculate unclaimed amount on first batch ===
     let unclaimed_amount = if is_first_batch {
+        // Phase 8.1 (C1/FR-001): Use saturating_sub — speed bonuses can cause
+        // total_claimed to exceed total_claimable, which is by design. Clamp to 0.
         let amount = claim_config.total_claimable
-            .checked_sub(claim_config.total_claimed)
-            .ok_or(HelixError::Underflow)?;
+            .saturating_sub(claim_config.total_claimed);
 
         // Store for pagination
         claim_config.bpd_remaining_unclaimed = amount;

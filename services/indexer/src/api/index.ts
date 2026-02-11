@@ -3,6 +3,7 @@ import cors from '@fastify/cors';
 import { env } from '../lib/env.js';
 import { logger } from '../lib/logger.js';
 import { closePool } from '../db/client.js';
+import { rateLimitPlugin } from './middleware/rate-limit.js';
 import { healthRoutes } from './routes/health.js';
 import { statsRoutes } from './routes/stats.js';
 import { distributionRoutes } from './routes/distributions.js';
@@ -20,6 +21,11 @@ await fastify.register(cors, {
   origin: env.FRONTEND_URL,
   credentials: true,
 });
+
+// ---------------------------------------------------------------------------
+// Phase 8.1 (M5/FR-010/SC-004): Rate limiting — 100 req/s per IP
+// ---------------------------------------------------------------------------
+await fastify.register(rateLimitPlugin, { maxRequests: 100, windowMs: 1_000 });
 
 // ---------------------------------------------------------------------------
 // Route plugins

@@ -16,7 +16,7 @@ This plan addresses P0/P1 audit blockers to prepare SolHEX for mainnet. Key deli
 ## Technical Context
 
 **Language/Version**: Rust 1.75+ (Anchor), TypeScript 5.0+ (Frontend/Indexer)
-**Primary Dependencies**: Anchor 0.31.0, Next.js 15, PostgreSQL 15, @solana/web3.js v1
+**Primary Dependencies**: Anchor 0.31.1, Next.js 15, PostgreSQL 15, @solana/web3.js v1
 **Storage**: PostgreSQL (Indexer), On-chain State (Program)
 **Testing**: Bankrun (Program), Vitest (Frontend/Indexer unit), Playwright (E2E)
 **Target Platform**: Solana Mainnet (SVM), Vercel (Frontend), Node.js (Indexer)
@@ -56,17 +56,19 @@ programs/helix-staking/    # Anchor Program
 ├── src/
 │   ├── lib.rs             # Instructions & Entrypoint
 │   ├── state/             # Account structs
-│   └── utils.rs           # Math helpers (saturating_sub)
+│   └── instructions/math.rs  # Math helpers (saturating_sub)
 
 app/web/                   # Frontend
-├── src/
-│   ├── components/        # Error Boundary, UI fixes
-│   └── hooks/             # Simulation validation
+├── components/            # Error Boundary, UI fixes
+├── lib/hooks/             # Simulation validation
+├── lib/solana/            # Math mirror, constants, PDAs
+├── app/api/rpc/           # RPC proxy route
 
 services/indexer/          # Indexer
-├── src/
-│   ├── poller.ts          # Backward pagination logic
-│   └── db/                # Migrations & Atomic ops
+├── src/worker/poller.ts   # Backward pagination logic
+├── src/worker/processor.ts # Event processing & atomic checkpoints
+├── src/api/routes/        # API endpoints
+├── src/db/                # Schema, client, migrations
 
 .github/workflows/         # CI/CD
 └── build.yml              # Verifiable build pipeline
