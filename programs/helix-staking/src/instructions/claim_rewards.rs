@@ -1,13 +1,14 @@
-use anchor_lang::prelude::*;
-use anchor_lang::system_program::{self, Transfer};
-use anchor_spl::token_2022::{self, MintTo, Token2022};
-use anchor_spl::token_interface::{Mint, TokenAccount};
 use crate::constants::*;
 use crate::error::HelixError;
 use crate::events::RewardsClaimed;
-use crate::state::{GlobalState, StakeAccount};
-use crate::instructions::math::{calculate_pending_rewards, calculate_reward_debt, calculate_loyalty_bonus, mul_div};
 use crate::instructions::crank_distribution::distribute_pending_inflation;
+use crate::instructions::math::{
+    calculate_loyalty_bonus, calculate_pending_rewards, calculate_reward_debt,
+};
+use crate::state::{GlobalState, StakeAccount};
+use anchor_lang::prelude::*;
+use anchor_spl::token_2022::{self, MintTo, Token2022};
+use anchor_spl::token_interface::{Mint, TokenAccount};
 
 #[derive(Accounts)]
 pub struct ClaimRewards<'info> {
@@ -74,11 +75,8 @@ pub fn claim_rewards(ctx: Context<ClaimRewards>) -> Result<()> {
     let user = stake.user;
 
     // Calculate pending rewards
-    let pending_rewards = calculate_pending_rewards(
-        t_shares,
-        global_state.share_rate,
-        stake.reward_debt,
-    )?;
+    let pending_rewards =
+        calculate_pending_rewards(t_shares, global_state.share_rate, stake.reward_debt)?;
 
     // Phase 8.1: Calculate loyalty bonus based on time served
     let loyalty_bonus = calculate_loyalty_bonus(
@@ -123,7 +121,8 @@ pub fn claim_rewards(ctx: Context<ClaimRewards>) -> Result<()> {
     }
 
     // Update GlobalState
-    global_state.total_claims_created = global_state.total_claims_created
+    global_state.total_claims_created = global_state
+        .total_claims_created
         .checked_add(1)
         .ok_or(HelixError::Overflow)?;
 
@@ -150,7 +149,7 @@ pub fn claim_rewards(ctx: Context<ClaimRewards>) -> Result<()> {
         slot: clock.slot,
         user,
         stake_id,
-        amount: total_rewards,  // Includes BPD bonus
+        amount: total_rewards, // Includes BPD bonus
     });
 
     Ok(())

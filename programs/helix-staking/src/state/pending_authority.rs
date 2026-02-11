@@ -11,5 +11,5 @@ pub struct PendingAuthority {
 impl PendingAuthority {
     pub const LEN: usize = 8  // discriminator
         + 32  // new_authority
-        + 1;  // bump
+        + 1; // bump
 }

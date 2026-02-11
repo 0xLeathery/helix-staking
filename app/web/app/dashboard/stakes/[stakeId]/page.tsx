@@ -60,7 +60,7 @@ export default function StakeDetailPage() {
       <div className="max-w-4xl mx-auto text-center space-y-4 py-12">
         <h1 className="text-2xl font-bold text-zinc-100">Stake Not Found</h1>
         <p className="text-zinc-400">
-          The stake you're looking for doesn't exist or has been closed.
+          The stake you&apos;re looking for doesn&apos;t exist or has been closed.
         </p>
         <Button asChild variant="outline">
           <Link href="/dashboard">Back to Dashboard</Link>

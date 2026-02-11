@@ -29,7 +29,10 @@ pub struct SealBpdFinalize<'info> {
     pub claim_config: Account<'info, ClaimConfig>,
 }
 
-pub fn seal_bpd_finalize(ctx: Context<SealBpdFinalize>, expected_finalized_count: u32) -> Result<()> {
+pub fn seal_bpd_finalize(
+    ctx: Context<SealBpdFinalize>,
+    expected_finalized_count: u32,
+) -> Result<()> {
     let clock = Clock::get()?;
     let claim_config = &mut ctx.accounts.claim_config;
 
@@ -51,9 +54,11 @@ pub fn seal_bpd_finalize(ctx: Context<SealBpdFinalize>, expected_finalized_count
         HelixError::BpdFinalizationIncomplete
     );
     require!(
-        clock.unix_timestamp >= claim_config.bpd_finalize_start_timestamp
-            .checked_add(BPD_SEAL_DELAY_SECONDS)
-            .ok_or(error!(HelixError::Overflow))?,
+        clock.unix_timestamp
+            >= claim_config
+                .bpd_finalize_start_timestamp
+                .checked_add(BPD_SEAL_DELAY_SECONDS)
+                .ok_or(error!(HelixError::Overflow))?,
         HelixError::BpdSealTooEarly
     );
 

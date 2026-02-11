@@ -84,7 +84,8 @@ pub fn withdraw_vested(ctx: Context<WithdrawVested>) -> Result<()> {
     require!(available > 0, HelixError::NoVestedTokens);
 
     // Update withdrawn amount BEFORE minting (security: prevents reentrancy)
-    let new_withdrawn = claim_status.withdrawn_amount
+    let new_withdrawn = claim_status
+        .withdrawn_amount
         .checked_add(available)
         .ok_or(HelixError::Overflow)?;
     claim_status.withdrawn_amount = new_withdrawn;

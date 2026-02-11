@@ -33,7 +33,6 @@ pub struct FinalizeBpdCalculation<'info> {
         constraint = !claim_config.big_pay_day_complete @ HelixError::BigPayDayAlreadyTriggered,
     )]
     pub claim_config: Account<'info, ClaimConfig>,
-
     // Remaining accounts: StakeAccounts to scan (read-only)
 }
 
@@ -57,7 +56,8 @@ pub fn finalize_bpd_calculation<'info>(
 
     // === Calculate unclaimed amount on first batch ===
     let unclaimed_amount = if is_first_batch {
-        let amount = claim_config.total_claimable
+        let amount = claim_config
+            .total_claimable
             .checked_sub(claim_config.total_claimed)
             .ok_or(HelixError::Underflow)?;
 
@@ -177,13 +177,15 @@ pub fn finalize_bpd_calculation<'info>(
         stake.try_serialize(&mut &mut account_info.try_borrow_mut_data()?[..])?;
 
         // Increment finalized counter
-        claim_config.bpd_stakes_finalized = claim_config.bpd_stakes_finalized
+        claim_config.bpd_stakes_finalized = claim_config
+            .bpd_stakes_finalized
             .checked_add(1)
             .ok_or(HelixError::Overflow)?;
     }
 
     // === Accumulate to global total ===
-    claim_config.bpd_total_share_days = claim_config.bpd_total_share_days
+    claim_config.bpd_total_share_days = claim_config
+        .bpd_total_share_days
         .checked_add(batch_share_days)
         .ok_or(HelixError::Overflow)?;
 
@@ -194,8 +196,7 @@ pub fn finalize_bpd_calculation<'info>(
         claim_period_id: claim_config.claim_period_id,
         batch_stakes_processed,
         total_stakes_finalized: claim_config.bpd_stakes_finalized,
-        cumulative_share_days: claim_config.bpd_total_share_days
-            .min(u64::MAX as u128) as u64,
+        cumulative_share_days: claim_config.bpd_total_share_days.min(u64::MAX as u128) as u64,
         timestamp: clock.unix_timestamp,
     });
 

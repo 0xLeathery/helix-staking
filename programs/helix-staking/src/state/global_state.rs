@@ -89,5 +89,5 @@ impl GlobalState {
         + 8    // current_day
         + 8    // total_admin_minted
         + 8    // max_admin_mint
-        + 48;  // reserved (6 * u64)
+        + 48; // reserved (6 * u64)
 }

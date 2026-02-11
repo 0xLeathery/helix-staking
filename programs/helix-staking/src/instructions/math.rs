@@ -1,6 +1,6 @@
-use anchor_lang::prelude::*;
 use crate::constants::*;
 use crate::error::HelixError;
+use anchor_lang::prelude::*;
 
 /// Multiply then divide using u128 intermediates to avoid overflow.
 /// Formula: (a * b) / c with u128 precision.
@@ -48,9 +48,7 @@ pub fn calculate_lpb_bonus(stake_days: u64) -> Result<u64> {
     // Formula: (days - 1) * 2 * PRECISION / LPB_MAX_DAYS
     // For 1 day: (1-1) * 2 * PRECISION / LPB_MAX_DAYS = 0
     // For 3641 days: exactly 2 * PRECISION (handled above)
-    let days_minus_one = stake_days
-        .checked_sub(1)
-        .ok_or(HelixError::Underflow)?;
+    let days_minus_one = stake_days.checked_sub(1).ok_or(HelixError::Underflow)?;
 
     let numerator = days_minus_one
         .checked_mul(2)
@@ -98,23 +96,35 @@ pub fn calculate_bpb_bonus(staked_amount: u64) -> Result<u64> {
         let excess = (staked_amount - BPB_THRESHOLD * 10) as u128;
         let tier_range = (BPB_TIER_2 - BPB_THRESHOLD * 10) as u128;
         let tier_bonus = 250_000_000u128; // 0.25x in PRECISION
-        bonus = bonus.checked_add(
-            excess.checked_mul(tier_bonus).ok_or(error!(HelixError::Overflow))?
-                .checked_div(tier_range).ok_or(error!(HelixError::Overflow))?
-        ).ok_or(error!(HelixError::Overflow))?;
+        bonus = bonus
+            .checked_add(
+                excess
+                    .checked_mul(tier_bonus)
+                    .ok_or(error!(HelixError::Overflow))?
+                    .checked_div(tier_range)
+                    .ok_or(error!(HelixError::Overflow))?,
+            )
+            .ok_or(error!(HelixError::Overflow))?;
     } else {
         // Full tier 2 bonus
-        bonus = bonus.checked_add(250_000_000u128).ok_or(error!(HelixError::Overflow))?;
+        bonus = bonus
+            .checked_add(250_000_000u128)
+            .ok_or(error!(HelixError::Overflow))?;
 
         // Tier 3: 15% additional from tier 2 to tier 3
         if staked_amount <= BPB_TIER_3 {
             let excess = (staked_amount - BPB_TIER_2) as u128;
             let tier_range = (BPB_TIER_3 - BPB_TIER_2) as u128;
             let tier_bonus = 150_000_000u128; // 0.15x in PRECISION
-            bonus = bonus.checked_add(
-                excess.checked_mul(tier_bonus).ok_or(error!(HelixError::Overflow))?
-                    .checked_div(tier_range).ok_or(error!(HelixError::Overflow))?
-            ).ok_or(error!(HelixError::Overflow))?;
+            bonus = bonus
+                .checked_add(
+                    excess
+                        .checked_mul(tier_bonus)
+                        .ok_or(error!(HelixError::Overflow))?
+                        .checked_div(tier_range)
+                        .ok_or(error!(HelixError::Overflow))?,
+                )
+                .ok_or(error!(HelixError::Overflow))?;
         } else {
             // Above tier 3: hard cap
             bonus = BPB_MAX_BONUS as u128;
@@ -123,16 +133,12 @@ pub fn calculate_bpb_bonus(staked_amount: u64) -> Result<u64> {
 
     // Safety cap
     let final_bonus = bonus.min(BPB_MAX_BONUS as u128);
-    Ok(u64::try_from(final_bonus).map_err(|_| error!(HelixError::Overflow))?)
+    u64::try_from(final_bonus).map_err(|_| error!(HelixError::Overflow))
 }
 
 /// Calculate T-shares from staked amount, applying LPB + BPB bonuses and share rate
 /// Returns t_shares scaled by PRECISION
-pub fn calculate_t_shares(
-    staked_amount: u64,
-    stake_days: u64,
-    share_rate: u64,
-) -> Result<u64> {
+pub fn calculate_t_shares(staked_amount: u64, stake_days: u64, share_rate: u64) -> Result<u64> {
     require!(share_rate > 0, HelixError::InvalidParameter);
 
     let lpb_bonus = calculate_lpb_bonus(stake_days)?;
@@ -158,8 +164,7 @@ pub fn calculate_t_shares(
         .ok_or(HelixError::Overflow)?;
 
     // Convert back to u64, checking for overflow
-    let t_shares = u64::try_from(t_shares_u128)
-        .map_err(|_| HelixError::Overflow)?;
+    let t_shares = u64::try_from(t_shares_u128).map_err(|_| HelixError::Overflow)?;
 
     Ok(t_shares)
 }
@@ -297,11 +302,7 @@ pub fn calculate_reward_debt(t_shares: u64, share_rate: u64) -> Result<u64> {
 
 /// Get current day from init_slot
 /// Returns day number (0-indexed)
-pub fn get_current_day(
-    init_slot: u64,
-    current_slot: u64,
-    slots_per_day: u64,
-) -> Result<u64> {
+pub fn get_current_day(init_slot: u64, current_slot: u64, slots_per_day: u64) -> Result<u64> {
     let elapsed = current_slot
         .checked_sub(init_slot)
         .ok_or(HelixError::Underflow)?;
@@ -400,17 +401,21 @@ mod tests {
 
         // Monotonically increasing
         let vals = [
-            BPB_THRESHOLD * 10,                 // 1.5B (threshold)
-            300_000_000_000_000_000,             // 3B (mid tier 2)
-            BPB_TIER_2,                          // 5B (tier 2/3 boundary)
-            750_000_000_000_000_000,             // 7.5B (mid tier 3)
-            BPB_TIER_3,                          // 10B (tier 3/4 boundary)
-            2_000_000_000_000_000_000,           // 20B (above tier 3, capped)
+            BPB_THRESHOLD * 10,        // 1.5B (threshold)
+            300_000_000_000_000_000,   // 3B (mid tier 2)
+            BPB_TIER_2,                // 5B (tier 2/3 boundary)
+            750_000_000_000_000_000,   // 7.5B (mid tier 3)
+            BPB_TIER_3,                // 10B (tier 3/4 boundary)
+            2_000_000_000_000_000_000, // 20B (above tier 3, capped)
         ];
         for i in 1..vals.len() {
             let prev = calculate_bpb_bonus(vals[i - 1]).unwrap();
             let curr = calculate_bpb_bonus(vals[i]).unwrap();
-            assert!(curr >= prev, "BPB not monotonically increasing at index {}", i);
+            assert!(
+                curr >= prev,
+                "BPB not monotonically increasing at index {}",
+                i
+            );
         }
     }
 
@@ -423,7 +428,11 @@ mod tests {
 
         // Half-term: half of max bonus (~250_000_000 = ~25%)
         let half = calculate_loyalty_bonus(0, 182 * spd, 365, spd).unwrap();
-        assert!(half > 240_000_000 && half < 260_000_000, "half-term loyalty = {}", half);
+        assert!(
+            half > 240_000_000 && half < 260_000_000,
+            "half-term loyalty = {}",
+            half
+        );
 
         // Full term: max bonus (500_000_000 = 50%)
         let full = calculate_loyalty_bonus(0, 365 * spd, 365, spd).unwrap();
@@ -446,7 +455,7 @@ mod tests {
 
     #[test]
     fn test_early_penalty() {
-        let staked = 1000_00_000_000; // 1000 tokens
+        let staked = 100_000_000_000; // 1000 tokens
         let start = 0;
         let end = 100;
 
@@ -469,7 +478,7 @@ mod tests {
 
     #[test]
     fn test_late_penalty() {
-        let staked = 1000_00_000_000; // 1000 tokens
+        let staked = 100_000_000_000; // 1000 tokens
         let end = 1000;
         let slots_per_day = DEFAULT_SLOTS_PER_DAY;
 

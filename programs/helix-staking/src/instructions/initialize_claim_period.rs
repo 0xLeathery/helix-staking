@@ -49,11 +49,12 @@ pub fn initialize_claim_period(
     let global_state = &ctx.accounts.global_state;
 
     // Calculate end slot (180 days from now)
-    let end_slot = clock.slot
+    let end_slot = clock
+        .slot
         .checked_add(
             CLAIM_PERIOD_DAYS
                 .checked_mul(global_state.slots_per_day)
-                .ok_or(HelixError::Overflow)?
+                .ok_or(HelixError::Overflow)?,
         )
         .ok_or(HelixError::Overflow)?;
 
@@ -66,7 +67,7 @@ pub fn initialize_claim_period(
     claim_config.start_slot = clock.slot;
     claim_config.end_slot = end_slot;
     claim_config.claim_period_id = claim_period_id;
-    claim_config.claim_period_started = true;  // Immutable after this
+    claim_config.claim_period_started = true; // Immutable after this
     claim_config.big_pay_day_complete = false;
     claim_config.bpd_total_distributed = 0;
     claim_config.total_eligible = total_eligible;

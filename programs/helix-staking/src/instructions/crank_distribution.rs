@@ -4,8 +4,8 @@ use anchor_spl::token_interface::{Mint, Token2022};
 use crate::constants::*;
 use crate::error::HelixError;
 use crate::events::InflationDistributed;
-use crate::state::GlobalState;
 use crate::instructions::math::{get_current_day, mul_div};
+use crate::state::GlobalState;
 
 #[derive(Accounts)]
 pub struct CrankDistribution<'info> {
@@ -113,7 +113,8 @@ pub fn distribute_pending_inflation(global_state: &mut GlobalState, clock: &Cloc
     // Formula: share_rate_increase = (daily_inflation * PRECISION) / total_shares
     let share_rate_increase = mul_div(daily_inflation_total, PRECISION, global_state.total_shares)?;
 
-    global_state.share_rate = global_state.share_rate
+    global_state.share_rate = global_state
+        .share_rate
         .checked_add(share_rate_increase)
         .ok_or(HelixError::Overflow)?;
 

@@ -122,7 +122,7 @@ export default async function TokenomicsPage() {
             to T-share holders via share rate increase.
           </p>
           <p className="text-zinc-400 leading-relaxed text-base">
-            Rewards are "lazy" - they accumulate and are only minted when you
+            Rewards are &quot;lazy&quot; - they accumulate and are only minted when you
             claim or unstake. This reduces transaction overhead and allows
             compounding without active management.
           </p>
