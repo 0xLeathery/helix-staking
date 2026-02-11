@@ -1,0 +1,11 @@
+# Validator logs (generated at runtime)
+logs/*.log
+
+# Node modules (installed during Docker build)
+node_modules/
+
+# Local env overrides
+.env.local
+
+# Keep the logs directory placeholder
+!logs/.gitkeep

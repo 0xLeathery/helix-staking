@@ -2,6 +2,7 @@ import { env } from '../lib/env.js';
 import { createRpcClient } from '../lib/rpc.js';
 import { logger } from '../lib/logger.js';
 import { closePool } from '../db/client.js';
+import { db } from '../db/client.js';
 import { getCheckpoint, updateCheckpoint } from './checkpoint.js';
 import { fetchNewSignatures } from './poller.js';
 import { decodeEventsFromSignature } from './decoder.js';
@@ -72,15 +73,18 @@ async function tick(): Promise<void> {
         // Decode events from this transaction
         const events = await decodeEventsFromSignature(rpc, sigInfo.signature);
 
-        // Process each event
-        for (const event of events) {
-          await processEvent(event, sigInfo.signature);
-          totalEvents++;
-        }
-
-        // Update checkpoint after EACH signature for granular crash recovery
+        // Phase 8.1 (H7/FR-008): Atomic event insert + checkpoint update
+        // Wrapping in a transaction ensures we never have events stored
+        // without a corresponding checkpoint update (or vice versa)
         const slot = sigInfo.slot ?? 0;
-        await updateCheckpoint(env.PROGRAM_ID, sigInfo.signature, slot);
+        await db.transaction(async (tx) => {
+          for (const event of events) {
+            await processEvent(event, sigInfo.signature, tx);
+          }
+          await updateCheckpoint(env.PROGRAM_ID, sigInfo.signature, slot, tx);
+        });
+
+        totalEvents += events.length;
         processedCount++;
       } catch (error) {
         // Individual signature failure does NOT abort the batch

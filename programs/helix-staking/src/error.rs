@@ -92,4 +92,16 @@ pub enum HelixError {
     AuthorityTransferBlockedDuringBpd,
     #[msg("BPD seal attempted before observation window elapsed")]
     BpdSealTooEarly,
+    #[msg("Admin parameter change exceeds safe bounds (±10% of default)")]
+    AdminBoundsExceeded,
+    #[msg("Claim amount is zero — nothing to distribute")]
+    ClaimAmountZero,
+    #[msg("Invalid PDA derivation")]
+    InvalidPDA,
+    #[msg("Invalid bump seed (not canonical)")]
+    InvalidBumpSeed,
+    #[msg("Invalid divisor in arithmetic operation")]
+    InvalidDivisor,
+    #[msg("Slots per day must be greater than 0")]
+    InvalidSlotsPerDay,
 }

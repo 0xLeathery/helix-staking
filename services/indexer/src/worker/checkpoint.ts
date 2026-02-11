@@ -1,5 +1,5 @@
 import { eq, sql } from 'drizzle-orm';
-import { db } from '../db/client.js';
+import { db, type DbClient } from '../db/client.js';
 import { checkpoints } from '../db/schema.js';
 
 /**
@@ -32,6 +32,10 @@ export async function getCheckpoint(
 /**
  * Upsert a checkpoint for the given program.
  *
+ * Phase 8.1 (H7/FR-008): Accepts optional dbClient for transactional writes.
+ * When called inside db.transaction(), pass the transaction object to ensure
+ * checkpoint update is atomic with event inserts.
+ *
  * Inserts a new row or updates the existing one (keyed on programId).
  * Also increments the processed transaction counter.
  */
@@ -39,8 +43,9 @@ export async function updateCheckpoint(
   programId: string,
   signature: string,
   slot: number,
+  dbClient: DbClient = db,
 ): Promise<void> {
-  await db
+  await dbClient
     .insert(checkpoints)
     .values({
       programId,

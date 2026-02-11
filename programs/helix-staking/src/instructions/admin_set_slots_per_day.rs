@@ -27,6 +27,19 @@ pub fn admin_set_slots_per_day(
     new_slots_per_day: u64,
 ) -> Result<()> {
     require!(new_slots_per_day > 0, HelixError::InvalidParameter);
+
+    // A-4 FIX: Use a reasonable ceiling (10× default) to prevent extreme values
+    // while still allowing devnet/testing values (e.g. slots_per_day = 10).
+    // The floor is 1 (checked above). The ceiling prevents accidental
+    // values that would break day calculations (e.g. u64::MAX).
+    let upper_bound = DEFAULT_SLOTS_PER_DAY
+        .checked_mul(10)
+        .ok_or(HelixError::Overflow)?;
+    require!(
+        new_slots_per_day <= upper_bound,
+        HelixError::AdminBoundsExceeded
+    );
+
     ctx.accounts.global_state.slots_per_day = new_slots_per_day;
     Ok(())
 }

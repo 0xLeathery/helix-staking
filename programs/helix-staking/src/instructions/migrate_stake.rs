@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 
 use crate::constants::*;
+use crate::error::HelixError;
 use crate::state::StakeAccount;
 
 #[derive(Accounts)]
@@ -16,6 +17,9 @@ pub struct MigrateStake<'info> {
             &stake_account.stake_id.to_le_bytes()
         ],
         bump = stake_account.bump,
+        // A-5 FIX: Only the stake owner can trigger migration (prevents
+        // anonymous wallets from paying rent for someone else's account)
+        constraint = stake_account.user == payer.key() @ HelixError::UnauthorizedStakeAccess,
         realloc = StakeAccount::LEN,
         realloc::payer = payer,
         realloc::zero = false,
