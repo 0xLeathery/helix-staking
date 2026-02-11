@@ -357,7 +357,8 @@ pub fn calculate_loyalty_bonus(
     }
 
     let elapsed_slots = current_slot.saturating_sub(start_slot);
-    let days_served = elapsed_slots.checked_div(slots_per_day).unwrap_or(0);
+    // Safe to divide: slots_per_day > 0 validated above
+    let days_served = elapsed_slots / slots_per_day;
 
     // Cap at committed_days (don't exceed max bonus even in grace/late period)
     let capped_days = days_served.min(committed_days);
