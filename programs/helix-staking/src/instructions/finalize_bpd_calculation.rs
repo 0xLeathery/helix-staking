@@ -55,6 +55,9 @@ pub fn finalize_bpd_calculation<'info>(
         && claim_config.bpd_total_share_days == 0
         && claim_config.bpd_snapshot_slot == 0;
 
+    // Snapshot pre-loop finalized count for per-batch delta in event
+    let finalized_before = claim_config.bpd_stakes_finalized;
+
     // === Calculate unclaimed amount on first batch ===
     let unclaimed_amount = if is_first_batch {
         // Phase 8.1 (C1/FR-001): Use saturating_sub — speed bonuses can cause
@@ -125,16 +128,11 @@ pub fn finalize_bpd_calculation<'info>(
         }
 
         // === SECURITY: Validate PDA derivation ===
-        let expected_pda = Pubkey::create_program_address(
-            &[
-                STAKE_SEED,
-                stake.user.as_ref(),
-                &stake.stake_id.to_le_bytes(),
-                &[stake.bump],
-            ],
-            &crate::id(),
-        );
-        if expected_pda.is_err() || account_info.key() != expected_pda.unwrap() {
+        // Uses validate_stake_pda which ensures:
+        // - Account key matches canonical PDA
+        // - Bump seed is canonical (prevents seed canonicalization attacks)
+        // This validation is Anchor-equivalent for remaining_accounts.
+        if crate::security::validate_stake_pda(account_info, &stake).is_err() {
             continue;
         }
 
@@ -189,8 +187,10 @@ pub fn finalize_bpd_calculation<'info>(
         .ok_or(HelixError::Overflow)?;
 
     // Phase 8.1: Emit transparency event for off-chain monitoring
-    // Count stakes processed in this batch (finalized counter delta)
-    let batch_stakes_processed = claim_config.bpd_stakes_finalized; // Includes this batch
+    // A-2 FIX: Report per-batch delta (not cumulative) for batch_stakes_processed
+    let batch_stakes_processed = claim_config.bpd_stakes_finalized
+        .checked_sub(finalized_before)
+        .unwrap_or(0);
     emit!(BpdBatchFinalized {
         claim_period_id: claim_config.claim_period_id,
         batch_stakes_processed,
