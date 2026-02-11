@@ -47,14 +47,13 @@ npm run localnet:logs
 
 ## Running Tests Against Localnet
 
-Point your tests at the container RPC URL:
+The existing bankrun test suite uses an in-process BanksServer and does **not** connect to an external RPC endpoint. Those tests continue to work unchanged via `npx vitest run tests/bankrun` (no Docker needed).
+
+To verify the Docker container is working, use the smoke test or ad-hoc RPC calls:
 
 ```bash
-# Set environment variable
-export ANCHOR_PROVIDER_URL=http://localhost:8899
-
-# Run existing tests (if compatible with live validator)
-npx vitest run tests/bankrun
+# Run the RPC smoke test against the containerized validator
+npx tsx docker/smoke-test.ts
 ```
 
 Or send ad-hoc transactions:
