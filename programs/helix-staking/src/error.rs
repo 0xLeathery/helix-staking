@@ -96,4 +96,8 @@ pub enum HelixError {
     AdminBoundsExceeded,
     #[msg("Claim amount is zero — nothing to distribute")]
     ClaimAmountZero,
+    #[msg("Invalid PDA derivation")]
+    InvalidPDA,
+    #[msg("Invalid bump seed (not canonical)")]
+    InvalidBumpSeed,
 }
