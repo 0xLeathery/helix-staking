@@ -202,7 +202,8 @@ pub fn unstake(ctx: Context<Unstake>) -> Result<()> {
         return_amount,
         penalty_amount: penalty,
         penalty_type,
-        rewards_claimed: loyalty_adjusted_rewards.checked_add(bpd_bonus).unwrap_or(loyalty_adjusted_rewards),
+        rewards_claimed: loyalty_adjusted_rewards.checked_add(bpd_bonus)
+            .ok_or(HelixError::Overflow)?,
     });
 
     Ok(())

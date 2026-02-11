@@ -126,6 +126,29 @@ export interface BpdAborted {
   stakesDistributed: number;
 }
 
+export interface BpdBatchFinalized {
+  claimPeriodId: number;
+  batchStakesProcessed: number;
+  totalStakesFinalized: number;
+  cumulativeShareDays: string;
+  timestamp: string;
+}
+
+export interface AuthorityTransferInitiated {
+  oldAuthority: string;
+  newAuthority: string;
+}
+
+export interface AuthorityTransferCancelled {
+  authority: string;
+  cancelledNewAuthority: string;
+}
+
+export interface AuthorityTransferCompleted {
+  oldAuthority: string;
+  newAuthority: string;
+}
+
 /** All event name strings */
 export const EVENT_NAMES = [
   'ProtocolInitialized',
@@ -140,6 +163,10 @@ export const EVENT_NAMES = [
   'ClaimPeriodEnded',
   'BigPayDayDistributed',
   'BpdAborted',
+  'BpdBatchFinalized',
+  'AuthorityTransferInitiated',
+  'AuthorityTransferCancelled',
+  'AuthorityTransferCompleted',
 ] as const;
 
 export type EventName = (typeof EVENT_NAMES)[number];
@@ -158,6 +185,10 @@ export interface EventDataMap {
   ClaimPeriodEnded: ClaimPeriodEnded;
   BigPayDayDistributed: BigPayDayDistributed;
   BpdAborted: BpdAborted;
+  BpdBatchFinalized: BpdBatchFinalized;
+  AuthorityTransferInitiated: AuthorityTransferInitiated;
+  AuthorityTransferCancelled: AuthorityTransferCancelled;
+  AuthorityTransferCompleted: AuthorityTransferCompleted;
 }
 
 /** Discriminated union type for any indexed event */

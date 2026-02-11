@@ -35,8 +35,9 @@ pub struct CreateStake<'info> {
 
     #[account(
         mut,
-        constraint = user_token_account.mint == global_state.mint @ HelixError::InvalidParameter,
-        constraint = user_token_account.owner == user.key() @ HelixError::InvalidParameter,
+        associated_token::mint = mint,
+        associated_token::authority = user,
+        associated_token::token_program = token_program,
     )]
     pub user_token_account: InterfaceAccount<'info, TokenAccount>,
 

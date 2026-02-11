@@ -224,6 +224,42 @@ export const bpdBatchFinalizedEvents = pgTable('bpd_batch_finalized_events', {
 });
 
 // ---------------------------------------------------------------------------
+// 14. AuthorityTransferInitiated
+// ---------------------------------------------------------------------------
+export const authorityTransferInitiatedEvents = pgTable(
+  'authority_transfer_initiated_events',
+  {
+    ...sharedColumns,
+    oldAuthority: text('old_authority').notNull(),
+    newAuthority: text('new_authority').notNull(),
+  },
+);
+
+// ---------------------------------------------------------------------------
+// 15. AuthorityTransferCancelled
+// ---------------------------------------------------------------------------
+export const authorityTransferCancelledEvents = pgTable(
+  'authority_transfer_cancelled_events',
+  {
+    ...sharedColumns,
+    authority: text('authority').notNull(),
+    cancelledNewAuthority: text('cancelled_new_authority').notNull(),
+  },
+);
+
+// ---------------------------------------------------------------------------
+// 16. AuthorityTransferCompleted
+// ---------------------------------------------------------------------------
+export const authorityTransferCompletedEvents = pgTable(
+  'authority_transfer_completed_events',
+  {
+    ...sharedColumns,
+    oldAuthority: text('old_authority').notNull(),
+    newAuthority: text('new_authority').notNull(),
+  },
+);
+
+// ---------------------------------------------------------------------------
 // Operational: Checkpoints (polling state)
 // ---------------------------------------------------------------------------
 export const checkpoints = pgTable('checkpoints', {
