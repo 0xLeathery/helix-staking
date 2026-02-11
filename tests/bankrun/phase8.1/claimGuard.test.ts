@@ -153,31 +153,33 @@ describe("Claim Guard Tests (C3 Fix — Zero-Amount Prevention)", () => {
 
   it("claim_rewards succeeds after inflation accrues", async () => {
     // Verify that the guard doesn't block legitimate claims.
-    // After share_rate increases via distribute_inflation, pending_rewards > 0.
+    // After share_rate increases via crankDistribution, pending_rewards > 0.
     const { context, program, payer } = await setupTest();
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
     const [globalStatePDA] = findGlobalStatePDA(program.programId);
     const [mintAuthorityPDA] = findMintAuthorityPDA(program.programId);
     const [mintPDA] = findMintPDA(program.programId);
 
-    // Create a staker
+    // Use a larger stake so rewards are non-zero after inflation
+    const largeStake = new BN("10000000000"); // 100 tokens
     const { staker, stakerATA, stakePDA } = await createFundedStaker(
       program,
       payer,
       globalState,
       mint,
       mintAuthority,
-      DEFAULT_MIN_STAKE_AMOUNT,
+      largeStake,
       365,
     );
 
-    // Advance 1 day and distribute inflation (increases share_rate)
-    await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.toString()));
+    // Advance 5 days and distribute inflation (ensures measurable share_rate increase)
+    const fiveDays = BigInt(DEFAULT_SLOTS_PER_DAY.muln(5).toString());
+    await advanceClock(context, fiveDays);
 
     await program.methods
-      .distributeInflation()
+      .crankDistribution()
       .accounts({
-        caller: payer.publicKey,
+        cranker: payer.publicKey,
         globalState,
         mint,
         mintAuthority: mintAuthorityPDA,
@@ -214,23 +216,26 @@ describe("Claim Guard Tests (C3 Fix — Zero-Amount Prevention)", () => {
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
     const [mintAuthorityPDA] = findMintAuthorityPDA(program.programId);
 
+    // Use a larger stake so first claim has non-zero rewards
+    const largeStake = new BN("10000000000"); // 100 tokens
     const { staker, stakerATA, stakePDA } = await createFundedStaker(
       program,
       payer,
       globalState,
       mint,
       mintAuthority,
-      DEFAULT_MIN_STAKE_AMOUNT,
+      largeStake,
       365,
     );
 
-    // Advance + distribute inflation
-    await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.toString()));
+    // Advance 5 days + distribute inflation
+    const fiveDays = BigInt(DEFAULT_SLOTS_PER_DAY.muln(5).toString());
+    await advanceClock(context, fiveDays);
 
     await program.methods
-      .distributeInflation()
+      .crankDistribution()
       .accounts({
-        caller: payer.publicKey,
+        cranker: payer.publicKey,
         globalState,
         mint,
         mintAuthority: mintAuthorityPDA,
@@ -254,6 +259,9 @@ describe("Claim Guard Tests (C3 Fix — Zero-Amount Prevention)", () => {
       })
       .signers([staker])
       .rpc();
+
+    // Advance 1 slot to avoid bankrun duplicate transaction detection
+    await advanceClock(context, BigInt(1));
 
     // Second claim immediately — should fail with ClaimAmountZero
     try {

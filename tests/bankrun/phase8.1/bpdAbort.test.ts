@@ -173,7 +173,7 @@ describe("BPD Abort Idempotency Tests", () => {
 
     // Verify BPD window is now active
     const stateBeforeAbort = await program.account.globalState.fetch(globalState);
-    expect(stateBeforeAbort.flags & 1).toBe(1); // bpd_window_active flag
+    expect(stateBeforeAbort.reserved[0].toNumber() & 1).toBe(1); // bpd_window_active flag
 
     // First abort — should succeed
     await program.methods
@@ -188,7 +188,10 @@ describe("BPD Abort Idempotency Tests", () => {
 
     // Verify BPD window is now inactive
     const stateAfterAbort = await program.account.globalState.fetch(globalState);
-    expect(stateAfterAbort.flags & 1).toBe(0);
+    expect(stateAfterAbort.reserved[0].toNumber() & 1).toBe(0);
+
+    // Advance 1 slot to avoid bankrun duplicate transaction detection
+    await advanceClock(context, BigInt(1));
 
     // Second abort — should be a no-op (idempotent), NOT throw an error
     await program.methods
@@ -203,7 +206,7 @@ describe("BPD Abort Idempotency Tests", () => {
 
     // Still inactive — no error thrown
     const stateAfterSecondAbort = await program.account.globalState.fetch(globalState);
-    expect(stateAfterSecondAbort.flags & 1).toBe(0);
+    expect(stateAfterSecondAbort.reserved[0].toNumber() & 1).toBe(0);
   });
 
   it("abort_bpd on fresh protocol (no active BPD) is a no-op", async () => {
@@ -251,6 +254,6 @@ describe("BPD Abort Idempotency Tests", () => {
 
     // Verify state unchanged
     const state = await program.account.globalState.fetch(globalStatePDA);
-    expect(state.flags & 1).toBe(0);
+    expect(state.reserved[0].toNumber() & 1).toBe(0);
   });
 });
