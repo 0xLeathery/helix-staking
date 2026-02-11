@@ -43,6 +43,14 @@ pub fn trigger_big_pay_day<'info>(
     let claim_config = &mut ctx.accounts.claim_config;
     let global_state = &mut ctx.accounts.global_state;
 
+    // === Validate preconditions ===
+    // slots_per_day is set during initialize and should never be 0,
+    // but validate to make arithmetic safe
+    require!(
+        global_state.slots_per_day > 0,
+        HelixError::InvalidSlotsPerDay
+    );
+
     // === Verify claim period has ended ===
     require!(
         clock.slot > claim_config.end_slot,
@@ -145,10 +153,10 @@ pub fn trigger_big_pay_day<'info>(
 
         // Calculate days staked during claim period using snapshot slot
         let stake_end = std::cmp::min(snapshot_slot, stake.end_slot);
+        // Safe to divide: slots_per_day > 0 validated at function start
         let days_staked = stake_end
             .saturating_sub(stake.start_slot)
-            .checked_div(global_state.slots_per_day)
-            .unwrap_or(0);
+            / global_state.slots_per_day;
 
         if days_staked == 0 {
             continue; // Must have at least 1 day

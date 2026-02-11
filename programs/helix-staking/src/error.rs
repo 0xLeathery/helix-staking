@@ -102,4 +102,6 @@ pub enum HelixError {
     InvalidBumpSeed,
     #[msg("Invalid divisor in arithmetic operation")]
     InvalidDivisor,
+    #[msg("Slots per day must be greater than 0")]
+    InvalidSlotsPerDay,
 }
