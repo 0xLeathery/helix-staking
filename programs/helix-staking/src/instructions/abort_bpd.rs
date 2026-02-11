@@ -39,11 +39,12 @@ pub fn abort_bpd(ctx: Context<AbortBpd>) -> Result<()> {
     let global_state = &mut ctx.accounts.global_state;
     let claim_config = &mut ctx.accounts.claim_config;
 
-    // Can only abort if BPD window is active
-    require!(
-        global_state.is_bpd_window_active(),
-        HelixError::BpdWindowNotActive
-    );
+    // Phase 8.1 (FR-015): Idempotent abort — if BPD window is already inactive,
+    // treat as a successful no-op instead of failing. This prevents errors when
+    // authority retries the abort instruction.
+    if !global_state.is_bpd_window_active() {
+        return Ok(());
+    }
 
     // Only allow abort before trigger distribution has started
     // After distribution begins, per-stake state cannot be cleanly reverted

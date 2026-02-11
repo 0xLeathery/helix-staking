@@ -1,5 +1,5 @@
 import { desc } from 'drizzle-orm';
-import { db } from '../db/client.js';
+import { db, type DbClient } from '../db/client.js';
 import {
   protocolInitializedEvents,
   stakeCreatedEvents,
@@ -52,6 +52,10 @@ function toNum(val: any): number {
 /**
  * Route a decoded event to the correct database table with idempotent insert.
  *
+ * Phase 8.1 (H7/FR-008): Accepts optional dbClient for transactional writes.
+ * When called inside db.transaction(), pass the transaction object to ensure
+ * event inserts and checkpoint updates are atomic.
+ *
  * Each insert uses onConflictDoNothing on the signature unique constraint
  * so duplicate processing is silently skipped.
  *
@@ -61,8 +65,13 @@ function toNum(val: any): number {
 export async function processEvent(
   event: { name: string; data: any; slot: number },
   signature: string,
+  dbClient: DbClient = db,
 ): Promise<void> {
   const { name, data, slot } = event;
+
+  // Shadow module-level db so all inserts below use the transactional client
+  // eslint-disable-next-line @typescript-eslint/no-shadow
+  const db = dbClient;
 
   try {
     switch (name) {

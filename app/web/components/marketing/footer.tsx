@@ -1,5 +1,25 @@
 import Link from "next/link";
 
+/**
+ * Phase 8.1 (M9/FR-014): Cluster-aware external links.
+ *
+ * Determines the Solana cluster from NEXT_PUBLIC_RPC_URL and generates
+ * correct Solana Explorer / Solscan URLs accordingly.
+ */
+const PROGRAM_ID = "E9B7BsxdPS89M66CRGGbsCzQ9LkiGv6aNsra3cNBJha7";
+
+function getCluster(): "mainnet-beta" | "devnet" {
+  const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL ?? "";
+  if (rpcUrl.includes("devnet")) return "devnet";
+  return "mainnet-beta";
+}
+
+function getExplorerUrl(address: string): string {
+  const cluster = getCluster();
+  const suffix = cluster === "devnet" ? "?cluster=devnet" : "";
+  return `https://explorer.solana.com/address/${address}${suffix}`;
+}
+
 export function MarketingFooter() {
   return (
     <footer className="bg-zinc-950 border-t border-zinc-800">
@@ -50,7 +70,9 @@ export function MarketingFooter() {
             <ul className="space-y-2">
               <li>
                 <a
-                  href="#"
+                  href="https://docs.helixstaking.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-sm text-zinc-400 hover:text-zinc-100 transition-colors"
                 >
                   Documentation
@@ -58,10 +80,12 @@ export function MarketingFooter() {
               </li>
               <li>
                 <a
-                  href="#"
+                  href={getExplorerUrl(PROGRAM_ID)}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-sm text-zinc-400 hover:text-zinc-100 transition-colors"
                 >
-                  GitHub
+                  Program on Explorer
                 </a>
               </li>
             </ul>

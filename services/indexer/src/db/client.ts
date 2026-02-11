@@ -39,6 +39,10 @@ export const db = new Proxy({} as ReturnType<typeof drizzle<typeof schema>>, {
   },
 });
 
+/** Phase 8.1 (H7/FR-008): Type for db or transaction - both share the same query API */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type DbClient = Pick<typeof db, 'insert' | 'select' | 'update' | 'delete' | 'execute'>;
+
 /** Gracefully close the database pool */
 export async function closePool(): Promise<void> {
   if (_pool) {

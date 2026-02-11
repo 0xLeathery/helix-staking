@@ -140,6 +140,9 @@ pub fn free_claim(
         .checked_add(bonus_amount)
         .ok_or(HelixError::Overflow)?;
 
+    // Phase 8.1 (C3/FR-006): Prevent zero-amount mint CPI
+    require!(total_amount > 0, HelixError::ClaimAmountZero);
+
     // === Split into immediate (10%) and vesting (90%) ===
     // ADDL-2 FIX: Use mul_div to avoid overflow for large claims
     let immediate_amount = mul_div(total_amount, IMMEDIATE_RELEASE_BPS, BPS_SCALER)?;

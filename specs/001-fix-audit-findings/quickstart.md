@@ -3,7 +3,7 @@
 ## Prerequisites
 - Rust 1.75+
 - Node.js 20+
-- Anchor 0.31.0
+- Anchor 0.31.1
 - Docker (for verifiable build test)
 
 ## 1. Program Security Tests (Bankrun)

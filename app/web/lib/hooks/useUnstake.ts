@@ -6,6 +6,7 @@ import { PublicKey, Transaction } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 import { useProgram } from "./useProgram";
 import { deriveGlobalState, deriveMint, deriveMintAuthority } from "@/lib/solana/pdas";
+import { simulateTransactionOrThrow, SimulationError, getSimulationErrorMessage } from "./useTransactionSimulation";
 import { toast } from "sonner";
 
 interface UnstakeParams {
@@ -66,21 +67,15 @@ export function useUnstake() {
       tx.recentBlockhash = blockhash;
       tx.feePayer = publicKey;
 
-      // SIMULATE transaction before sending (security requirement)
+      // Phase 8.1 (C5/FR-005): Properly check simulation.value.err
+      // Old try/catch only caught RPC errors, not on-chain program failures
       try {
-        await connection.simulateTransaction(tx);
+        await simulateTransactionOrThrow(connection, tx);
       } catch (error: any) {
-        // Parse error for user-friendly message
-        const errorMessage = error?.message || error?.toString() || "Unknown error";
-
-        if (errorMessage.includes("UnstakeBlockedDuringBpd")) {
-          throw new Error(
-            "Unstaking is temporarily unavailable during Big Pay Day calculation. This ensures accurate bonus distribution. Please try again in a few minutes."
-          );
+        if (error instanceof SimulationError) {
+          throw new Error(getSimulationErrorMessage(error));
         }
-
-        // Generic error
-        throw new Error(`Transaction simulation failed: ${errorMessage}`);
+        throw new Error(`Transaction simulation failed: ${error?.message || "Unknown error"}`);
       }
 
       // Send transaction

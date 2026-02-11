@@ -92,4 +92,8 @@ pub enum HelixError {
     AuthorityTransferBlockedDuringBpd,
     #[msg("BPD seal attempted before observation window elapsed")]
     BpdSealTooEarly,
+    #[msg("Admin parameter change exceeds safe bounds (±10% of default)")]
+    AdminBoundsExceeded,
+    #[msg("Claim amount is zero — nothing to distribute")]
+    ClaimAmountZero,
 }

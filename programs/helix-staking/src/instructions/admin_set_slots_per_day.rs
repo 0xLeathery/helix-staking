@@ -27,6 +27,15 @@ pub fn admin_set_slots_per_day(
     new_slots_per_day: u64,
 ) -> Result<()> {
     require!(new_slots_per_day > 0, HelixError::InvalidParameter);
+
+    // Phase 8.1 (C3/FR-002a): Enforce ±10% bounds relative to DEFAULT_SLOTS_PER_DAY
+    let lower_bound = DEFAULT_SLOTS_PER_DAY * 90 / 100; // 194,400
+    let upper_bound = DEFAULT_SLOTS_PER_DAY * 110 / 100; // 237,600
+    require!(
+        new_slots_per_day >= lower_bound && new_slots_per_day <= upper_bound,
+        HelixError::AdminBoundsExceeded
+    );
+
     ctx.accounts.global_state.slots_per_day = new_slots_per_day;
     Ok(())
 }
