@@ -1,0 +1,121 @@
+name: Security & Code Quality Checks
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'programs/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - '.github/workflows/security-checks.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'programs/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+
+env:
+  RUST_BACKTRACE: 1
+  CARGO_TERM_COLOR: always
+
+jobs:
+  clippy:
+    name: Clippy Linter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: 'programs'
+
+      - name: Run Clippy
+        run: cargo clippy --package helix-staking -- -D warnings
+        continue-on-error: false
+
+      - name: Clippy Success
+        if: success()
+        run: echo "✅ Clippy checks passed!"
+
+  audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: 'programs'
+
+      - name: Install Cargo Audit
+        run: cargo install cargo-audit
+
+      - name: Run Cargo Audit
+        run: cargo audit deny unmaintained
+        continue-on-error: false
+
+      - name: Audit Success
+        if: success()
+        run: echo "✅ Security audit passed!"
+
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: 'programs'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Program
+        run: cargo build --package helix-staking
+
+      - name: Run Tests
+        run: npx vitest run tests/bankrun --exclude="tests/bankrun/tests"
+
+      - name: Tests Success
+        if: success()
+        run: echo "✅ All tests passed!"
+
+  summary:
+    name: Security Check Summary
+    needs: [clippy, audit, test]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Check Results
+        run: |
+          echo "::group::Security Check Results"
+          echo "Clippy: ${{ needs.clippy.result }}"
+          echo "Audit:  ${{ needs.audit.result }}"
+          echo "Tests:  ${{ needs.test.result }}"
+          echo "::endgroup::"
+
+      - name: Fail if any check failed
+        if: |
+          needs.clippy.result == 'failure' ||
+          needs.audit.result == 'failure' ||
+          needs.test.result == 'failure'
+        run: exit 1
+
+      - name: All Checks Passed
+        if: success()
+        run: echo "✅ All security checks passed!"
