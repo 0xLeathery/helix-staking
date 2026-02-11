@@ -44,6 +44,14 @@ pub fn finalize_bpd_calculation<'info>(
     let claim_config = &mut ctx.accounts.claim_config;
     let global_state = &mut ctx.accounts.global_state;
 
+    // === Validate preconditions ===
+    // slots_per_day is set during initialize and should never be 0,
+    // but validate to make arithmetic safe
+    require!(
+        global_state.slots_per_day > 0,
+        HelixError::InvalidSlotsPerDay
+    );
+
     // === Verify claim period has ended ===
     require!(
         clock.slot > claim_config.end_slot,
@@ -151,10 +159,10 @@ pub fn finalize_bpd_calculation<'info>(
 
         // Calculate days staked during claim period using snapshot slot
         let stake_end = std::cmp::min(snapshot_slot, stake.end_slot);
+        // Safe to divide: slots_per_day > 0 validated at function start
         let days_staked = stake_end
             .saturating_sub(stake.start_slot)
-            .checked_div(global_state.slots_per_day)
-            .unwrap_or(0);
+            / global_state.slots_per_day;
 
         if days_staked == 0 {
             continue;
@@ -188,9 +196,10 @@ pub fn finalize_bpd_calculation<'info>(
 
     // Phase 8.1: Emit transparency event for off-chain monitoring
     // A-2 FIX: Report per-batch delta (not cumulative) for batch_stakes_processed
+    // Safe: bpd_stakes_finalized >= finalized_before (only incremented above)
     let batch_stakes_processed = claim_config.bpd_stakes_finalized
         .checked_sub(finalized_before)
-        .unwrap_or(0);
+        .ok_or(HelixError::Underflow)?;
     emit!(BpdBatchFinalized {
         claim_period_id: claim_config.claim_period_id,
         batch_stakes_processed,
