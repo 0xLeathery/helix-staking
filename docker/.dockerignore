@@ -1,0 +1,6 @@
+# Runtime artifacts — not needed during image build
+logs/
+node_modules/
+.env.local
+.env
+*.md
