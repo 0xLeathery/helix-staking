@@ -111,7 +111,7 @@ export function formatBps(bps: number): string {
 
 /**
  * Format days into human-readable duration.
- * Examples: 1 -> "1 day", 365 -> "365 days", 1825 -> "5.0 years"
+ * Examples: 1 -> "1 day", 365 -> "1 year", 1825 -> "5 years"
  */
 export function formatDays(days: number): string {
   if (days === 1) {
