@@ -96,7 +96,7 @@ pub fn calculate_lpb_bonus(stake_days: u64) -> Result<u64> {
 ///
 /// Tier 1: 0 → BPB_THRESHOLD×10 (1.5B tokens): Linear 0 → 1.0x (PRECISION) — backward compatible
 /// Tier 2: 1.5B → BPB_TIER_2 (5B tokens):       Linear 1.0x → 1.25x (25% slope)
-/// Tier 3: BPB_TIER_2 → BPB_TIER_3 (10B tokens): Linear 1.25x → 1.4x (15% slope)
+/// Tier 3: BPB_TIER_2 → BPB_TIER_3 (10B tokens): Linear 1.25x → 1.5x (25% total increase)
 /// Tier 4: Above BPB_TIER_3:                      Hard cap at BPB_MAX_BONUS (1.5x)
 pub fn calculate_bpb_bonus(staked_amount: u64) -> Result<u64> {
     if staked_amount == 0 {
@@ -129,11 +129,11 @@ pub fn calculate_bpb_bonus(staked_amount: u64) -> Result<u64> {
         // Full tier 2 bonus
         bonus = bonus.checked_add(250_000_000u128).ok_or(error!(HelixError::Overflow))?;
 
-        // Tier 3: 15% additional from tier 2 to tier 3
+        // Tier 3: 25% additional from tier 2 to tier 3 (reaches 1.5x at BPB_TIER_3)
         if staked_amount <= BPB_TIER_3 {
             let excess = (staked_amount - BPB_TIER_2) as u128;
             let tier_range = (BPB_TIER_3 - BPB_TIER_2) as u128;
-            let tier_bonus = 150_000_000u128; // 0.15x in PRECISION
+            let tier_bonus = 250_000_000u128; // 0.25x in PRECISION (to reach 1.5x)
             bonus = bonus.checked_add(
                 excess.checked_mul(tier_bonus).ok_or(error!(HelixError::Overflow))?
                     .checked_div(tier_range).ok_or(error!(HelixError::Overflow))?
@@ -419,9 +419,9 @@ mod tests {
         let at_tier2 = calculate_bpb_bonus(BPB_TIER_2).unwrap();
         assert_eq!(at_tier2, PRECISION + 250_000_000);
 
-        // At BPB_TIER_3 (10B): ~1.4x
+        // At BPB_TIER_3 (10B): ~1.5x
         let at_tier3 = calculate_bpb_bonus(BPB_TIER_3).unwrap();
-        assert_eq!(at_tier3, PRECISION + 250_000_000 + 150_000_000);
+        assert_eq!(at_tier3, BPB_MAX_BONUS); // Reaches 1.5x
 
         // Above tier 3 (20B): hard cap at BPB_MAX_BONUS (1.5x)
         let above_tier3 = calculate_bpb_bonus(2_000_000_000_000_000_000).unwrap();
@@ -542,6 +542,47 @@ mod tests {
         // Overflow case: u64::MAX × 2 should fail with RewardDebtOverflow
         let overflow_result = calculate_reward_debt(u64::MAX, 2);
         assert!(overflow_result.is_err());
+    }
+
+    #[test]
+    fn test_bpb_continuity_detailed() {
+        // 1. Tier 1 -> Tier 2 (1.5B tokens)
+        let t1_boundary = BPB_THRESHOLD * 10;
+        let val_t1_below = calculate_bpb_bonus(t1_boundary - 10).unwrap();
+        let val_t1_at = calculate_bpb_bonus(t1_boundary).unwrap();
+        let val_t1_above = calculate_bpb_bonus(t1_boundary + 10).unwrap();
+
+        // 1.0x at boundary
+        assert_eq!(val_t1_at, PRECISION);
+        // Continuous transition
+        assert!(val_t1_at >= val_t1_below);
+        assert!(val_t1_above >= val_t1_at);
+        // Diff should be minimal
+        assert!(val_t1_above - val_t1_below < 100);
+
+        // 2. Tier 2 -> Tier 3 (5B tokens)
+        let t2_boundary = BPB_TIER_2;
+        let val_t2_at = calculate_bpb_bonus(t2_boundary).unwrap();
+        let val_t2_above = calculate_bpb_bonus(t2_boundary + 1).unwrap();
+
+        // 1.25x at boundary
+        assert_eq!(val_t2_at, PRECISION + 250_000_000);
+        // Continuous transition (slope change only)
+        // immediate next value should be close
+        assert!(val_t2_above >= val_t2_at);
+        assert!(val_t2_above - val_t2_at < 100);
+
+        // 3. Tier 3 -> Cap (10B tokens)
+        let t3_boundary = BPB_TIER_3;
+        let val_t3_at = calculate_bpb_bonus(t3_boundary).unwrap();
+        let val_t3_above = calculate_bpb_bonus(t3_boundary + 1).unwrap();
+
+        // 1.5x at boundary
+        assert_eq!(val_t3_at, BPB_MAX_BONUS); // Reaches 1.5x
+
+        // Transition to cap check
+        // We assert continuity here because "Ensuring continuity ... is important"
+        assert!(val_t3_above - val_t3_at < 100, "Discontinuity at Tier 3 boundary: {} vs {}", val_t3_at, val_t3_above);
     }
 }
 
