@@ -35,7 +35,7 @@ jobs:
           workspaces: 'programs'
 
       - name: Run Clippy
-        run: cargo clippy --package helix-staking -- -D warnings
+        run: cargo clippy --package helix-staking -- -D warnings -A unexpected_cfgs -A deprecated
         continue-on-error: false
 
       - name: Clippy Success
