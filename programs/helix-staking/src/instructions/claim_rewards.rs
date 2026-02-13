@@ -1,12 +1,12 @@
 use anchor_lang::prelude::*;
-use anchor_lang::system_program::{self, Transfer};
+use anchor_lang::system_program;
 use anchor_spl::token_2022::{self, MintTo, Token2022};
 use anchor_spl::token_interface::{Mint, TokenAccount};
 use crate::constants::*;
 use crate::error::HelixError;
 use crate::events::RewardsClaimed;
 use crate::state::{GlobalState, StakeAccount};
-use crate::instructions::math::{calculate_pending_rewards, calculate_reward_debt, calculate_loyalty_bonus, mul_div};
+use crate::instructions::math::{calculate_pending_rewards, calculate_reward_debt, calculate_loyalty_bonus};
 use crate::instructions::crank_distribution::distribute_pending_inflation;
 
 #[derive(Accounts)]
