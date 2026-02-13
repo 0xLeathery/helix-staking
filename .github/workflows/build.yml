@@ -19,6 +19,11 @@ jobs:
           target: x86_64-unknown-linux-gnu
           override: true
 
+      - name: Install Solana Tool Suite
+        uses: solana-program/actions/install-solana@v1
+        with:
+          version: v1.18.17
+
       - name: Install Anchor
         run: |
           cargo install --git https://github.com/coral-xyz/anchor --tag v0.31.1 anchor-cli --locked
