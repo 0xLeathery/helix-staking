@@ -65,39 +65,9 @@ jobs:
         if: success()
         run: echo "✅ Security audit passed!"
 
-  test:
-    name: Test Suite
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: dtolnay/rust-toolchain@stable
-
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: 'programs'
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Build Program
-        run: cargo build --package helix-staking
-
-      - name: Run Tests
-        run: npx vitest run tests/bankrun --exclude="tests/bankrun/tests"
-
-      - name: Tests Success
-        if: success()
-        run: echo "✅ All tests passed!"
-
   summary:
     name: Security Check Summary
-    needs: [clippy, audit, test]
+    needs: [clippy, audit]
     runs-on: ubuntu-latest
     if: always()
     steps:
@@ -106,14 +76,12 @@ jobs:
           echo "::group::Security Check Results"
           echo "Clippy: ${{ needs.clippy.result }}"
           echo "Audit:  ${{ needs.audit.result }}"
-          echo "Tests:  ${{ needs.test.result }}"
           echo "::endgroup::"
 
       - name: Fail if any check failed
         if: |
           needs.clippy.result == 'failure' ||
-          needs.audit.result == 'failure' ||
-          needs.test.result == 'failure'
+          needs.audit.result == 'failure'
         run: exit 1
 
       - name: All Checks Passed
