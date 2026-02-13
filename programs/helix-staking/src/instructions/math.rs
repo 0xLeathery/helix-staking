@@ -576,3 +576,45 @@ mod tests {
         let pending_large = calculate_pending_rewards(t_shares, rate_end, debt).unwrap();
         assert_eq!(pending_large, 100_000_000, "Should handle large numbers correctly");
     }
+
+    #[test]
+    fn test_calculate_t_shares() {
+        let prec = PRECISION;
+
+        // 1. Basic case: 1 day (no LPB), small amount (no BPB), share rate 1.0 (PRECISION)
+        // multiplier = 1.0
+        let basic = calculate_t_shares(1000, 1, prec).unwrap();
+        assert_eq!(basic, 1000);
+
+        // 2. LPB Only: Max days (2x bonus), small amount (no BPB), share rate 1.0
+        // multiplier = 1.0 + 2.0 = 3.0
+        let lpb_only = calculate_t_shares(1000, LPB_MAX_DAYS, prec).unwrap();
+        assert_eq!(lpb_only, 3000);
+
+        // 3. BPB Only: 1 day (no LPB), threshold amount (1x bonus), share rate 1.0
+        // multiplier = 1.0 + 1.0 = 2.0
+        // staked = BPB_THRESHOLD * 10 (1.5B tokens)
+        let staked_bpb = BPB_THRESHOLD * 10;
+        let bpb_only = calculate_t_shares(staked_bpb, 1, prec).unwrap();
+        assert_eq!(bpb_only, staked_bpb * 2);
+
+        // 4. Both Bonuses: Max days (2x), threshold amount (1x), share rate 1.0
+        // multiplier = 1.0 + 2.0 + 1.0 = 4.0
+        let both = calculate_t_shares(staked_bpb, LPB_MAX_DAYS, prec).unwrap();
+        assert_eq!(both, staked_bpb * 4);
+
+        // 5. Higher Share Rate: 1 day, small amount, share rate 2.0
+        // multiplier = 1.0
+        // t_shares = 1000 * 1.0 / 2.0 = 500
+        let higher_rate = calculate_t_shares(1000, 1, prec * 2).unwrap();
+        assert_eq!(higher_rate, 500);
+
+        // 6. Edge Case: 0 Share Rate -> Error
+        let zero_rate = calculate_t_shares(1000, 1, 0);
+        assert!(zero_rate.is_err());
+        assert_eq!(zero_rate.unwrap_err(), error!(HelixError::InvalidParameter));
+
+        // 7. Edge Case: 0 Amount -> 0 t_shares
+        let zero_amount = calculate_t_shares(0, 1, prec).unwrap();
+        assert_eq!(zero_amount, 0);
+    }
