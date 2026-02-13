@@ -38,7 +38,7 @@ jobs:
       - name: Run Bankrun Tests (Program)
         run: |
           cd tests/bankrun
-          npm install
+          npm install --legacy-peer-deps
           npm test
 
       - name: Run Verifiable Build
