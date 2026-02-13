@@ -497,6 +497,56 @@ mod tests {
     }
 
     #[test]
+    fn test_early_penalty_minimum() {
+        let staked = 1000_000_000; // 1000 tokens (PRECISION scale is 1e6 for brevity here, but math works regardless)
+        let start = 0;
+        let total_duration = 10000;
+        let end = start + total_duration;
+
+        // Case 1: Exactly 50% served
+        // served_fraction_bps = 5000 (50%)
+        // penalty_bps = 10000 - 5000 = 5000 (50%)
+        // MIN_PENALTY_BPS is 5000
+        // Result should be exactly 50%
+        let mid_point = start + (total_duration / 2);
+        let penalty_50 = calculate_early_penalty(staked, start, mid_point, end).unwrap();
+        assert_eq!(penalty_50, staked / 2);
+
+        // Case 2: 49.99% served (Just under 50%)
+        // served_fraction_bps = 4999
+        // penalty_bps = 10000 - 4999 = 5001 (> 50%)
+        // Result should be calculated penalty (50.01%)
+        let just_under_50 = start + 4999;
+        let penalty_under_50 = calculate_early_penalty(staked, start, just_under_50, end).unwrap();
+        let expected_under = mul_div_up(staked, 5001, BPS_SCALER).unwrap();
+        assert_eq!(penalty_under_50, expected_under);
+        assert!(penalty_under_50 > staked / 2);
+
+        // Case 3: 50.01% served (Just over 50%)
+        // served_fraction_bps = 5001
+        // penalty_bps = 10000 - 5001 = 4999 (< 50%)
+        // Result should be clamped to MIN_PENALTY_BPS (50%)
+        let just_over_50 = start + 5001;
+        let penalty_over_50 = calculate_early_penalty(staked, start, just_over_50, end).unwrap();
+        assert_eq!(penalty_over_50, staked / 2);
+
+        // Case 4: 99% served
+        // served_fraction_bps = 9900
+        // penalty_bps = 100 = 1%
+        // Result should be clamped to MIN_PENALTY_BPS (50%)
+        let nearly_done = start + 9900;
+        let penalty_99 = calculate_early_penalty(staked, start, nearly_done, end).unwrap();
+        assert_eq!(penalty_99, staked / 2);
+
+        // Case 5: Rounding check
+        // Staked amount that doesn't divide evenly
+        let odd_staked = 1001;
+        // 50% of 1001 is 500.5 -> should round up to 501
+        let penalty_odd = calculate_early_penalty(odd_staked, start, nearly_done, end).unwrap();
+        assert_eq!(penalty_odd, 501);
+    }
+
+    #[test]
     fn test_late_penalty() {
         let staked = 1000_00_000_000; // 1000 tokens
         let end = 1000;
