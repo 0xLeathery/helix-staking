@@ -518,6 +518,56 @@ mod tests {
     }
 
     #[test]
+    fn test_late_penalty_grace_period() {
+        let staked = 10_000_000; // 10M units
+        let end = 1000;
+        let slots_per_day = DEFAULT_SLOTS_PER_DAY; // 216,000
+
+        // 1. Exactly end of grace period (14 days late) -> 0 penalty
+        let grace_end_slot = end + (GRACE_PERIOD_DAYS * slots_per_day);
+        let penalty_at_grace_end = calculate_late_penalty(staked, end, grace_end_slot, slots_per_day).unwrap();
+        assert_eq!(penalty_at_grace_end, 0, "Grace period end should have 0 penalty");
+
+        // 2. Just before 15 days late (14 days + almost 1 day) -> 0 penalty
+        // late_days calculation is floor(slots_late / slots_per_day)
+        // So (14 * 216000 + 215999) / 216000 = 14.
+        let just_before_15 = grace_end_slot + slots_per_day - 1;
+        let penalty_before_15 = calculate_late_penalty(staked, end, just_before_15, slots_per_day).unwrap();
+        assert_eq!(penalty_before_15, 0, "Inside 15th day should still be 14 'late days' -> 0 penalty");
+
+        // 3. Exactly 15 days late (1 day penalty)
+        // late_days = 15. penalty_days = 15 - 14 = 1.
+        // penalty_bps = 1 * 10000 / 351 = 28 (floored)
+        // penalty = ceil(10_000_000 * 28 / 10000) = 28000
+        let day_15_slot = end + (15 * slots_per_day);
+        let penalty_day_15 = calculate_late_penalty(staked, end, day_15_slot, slots_per_day).unwrap();
+
+        // Calculate expected manually
+        let expected_bps = 1 * BPS_SCALER / LATE_PENALTY_WINDOW_DAYS; // 28
+        let expected_penalty = mul_div_up(staked, expected_bps, BPS_SCALER).unwrap();
+
+        assert_eq!(penalty_day_15, expected_penalty, "Day 15 should have 1 day penalty");
+        assert!(penalty_day_15 > 0, "Day 15 penalty should be > 0");
+
+        // 4. Midway (approx 6 months late)
+        // Let's say 190 days late. penalty_days = 190 - 14 = 176.
+        let day_190_slot = end + (190 * slots_per_day);
+        let penalty_day_190 = calculate_late_penalty(staked, end, day_190_slot, slots_per_day).unwrap();
+
+        let expected_bps_190 = 176 * BPS_SCALER / LATE_PENALTY_WINDOW_DAYS;
+        let expected_penalty_190 = mul_div_up(staked, expected_bps_190, BPS_SCALER).unwrap();
+
+        assert_eq!(penalty_day_190, expected_penalty_190);
+
+        // 5. End of penalty window (351 days late + 14 grace = 365 days total)
+        let day_365_slot = end + (365 * slots_per_day);
+        let penalty_day_365 = calculate_late_penalty(staked, end, day_365_slot, slots_per_day).unwrap();
+
+        // Should be 100%
+        assert_eq!(penalty_day_365, staked, "Day 365 should be 100% penalty");
+    }
+
+    #[test]
     fn test_calculate_reward_debt() {
         // Normal case: small values that fit in u64
         let result = calculate_reward_debt(1000, 10000).unwrap();
