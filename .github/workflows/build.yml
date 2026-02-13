@@ -31,15 +31,12 @@ jobs:
       - name: Install Dependencies
         run: |
           npm install
-          cd programs/helix-staking && npm install
-          cd ../../app/web && npm install
+          cd app/web && npm install
           cd ../../services/indexer && npm install
 
       - name: Run Bankrun Tests (Program)
         run: |
-          cd tests/bankrun
-          npm install
-          npm test
+          npm run test:bankrun
 
       - name: Run Verifiable Build
         # Uses Docker to build the program verifiably

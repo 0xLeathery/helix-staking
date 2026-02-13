@@ -23,7 +23,7 @@ pub const PRECISION: u64 = 1_000_000_000; // 1e9 fixed-point scaling
 // Bonus curve parameters (from HEX deep dive)
 pub const MAX_STAKE_DAYS: u64 = 5555;     // Maximum stake duration
 pub const LPB_MAX_DAYS: u64 = 3641;       // 10 years for full 2x LPB bonus
-pub const BPB_THRESHOLD: u64 = 150_000_000_00_000_000; // 150M tokens (8 decimals)
+pub const BPB_THRESHOLD: u64 = 15_000_000_000_000_000; // 150M tokens (8 decimals)
 
 // Penalty parameters
 pub const MIN_PENALTY_BPS: u64 = 5000;     // 50% minimum early unstake penalty
