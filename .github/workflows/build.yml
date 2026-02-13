@@ -35,11 +35,11 @@ jobs:
           cd ../../app/web && npm install
           cd ../../services/indexer && npm install
 
+      - name: Build Program
+        run: cargo build --package helix-staking
+
       - name: Run Bankrun Tests (Program)
-        run: |
-          cd tests/bankrun
-          npm install
-          npm test
+        run: npm run test:bankrun
 
       - name: Run Verifiable Build
         # Uses Docker to build the program verifiably
