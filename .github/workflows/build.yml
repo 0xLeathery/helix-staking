@@ -30,10 +30,10 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          npm install
-          cd programs/helix-staking && npm install
-          cd ../../app/web && npm install
-          cd ../../services/indexer && npm install
+          npm install --legacy-peer-deps
+          cd programs/helix-staking && npm install --legacy-peer-deps
+          cd ../../app/web && npm install --legacy-peer-deps
+          cd ../../services/indexer && npm install --legacy-peer-deps
 
       - name: Run Bankrun Tests (Program)
         run: |
