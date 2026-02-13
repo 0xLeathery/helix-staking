@@ -37,9 +37,7 @@ jobs:
 
       - name: Run Bankrun Tests (Program)
         run: |
-          cd tests/bankrun
-          npm install
-          npm test
+          npm run test:bankrun
 
       - name: Run Verifiable Build
         # Uses Docker to build the program verifiably
