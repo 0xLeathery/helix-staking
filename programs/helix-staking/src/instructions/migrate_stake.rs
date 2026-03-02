@@ -29,6 +29,14 @@ pub struct MigrateStake<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn migrate_stake(_ctx: Context<MigrateStake>) -> Result<()> {
+pub fn migrate_stake(ctx: Context<MigrateStake>) -> Result<()> {
+    // OPS-07: Reject calls when stake is already at the current layout version.
+    // This prevents unnecessary invocations and reduces the attack surface of
+    // the realloc path. Migration is only meaningful when the on-chain data_len
+    // is smaller than the current LEN.
+    require!(
+        ctx.accounts.stake_account.to_account_info().data_len() < StakeAccount::LEN,
+        HelixError::AlreadyMigrated
+    );
     Ok(())
 }

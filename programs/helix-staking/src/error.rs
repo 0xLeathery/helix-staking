@@ -106,4 +106,6 @@ pub enum HelixError {
     InvalidSlotsPerDay,
     #[msg("Program is currently paused")]
     ProgramPaused,
+    #[msg("Stake account is already at current layout version")]
+    AlreadyMigrated,
 }
