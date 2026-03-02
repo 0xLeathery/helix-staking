@@ -55,6 +55,25 @@ async function fetcher<T>(path: string): Promise<T> {
   return res.json();
 }
 
+async function mutator<T>(path: string, method: string, body?: unknown): Promise<T> {
+  const res = await fetch(`${INDEXER_URL}${path}`, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to ${method} ${path}: ${res.statusText}`);
+  }
+  return res.json();
+}
+
+export interface PushPreferences {
+  notifyMaturity: boolean;
+  notifyLatePenalty: boolean;
+  notifyRewards: boolean;
+  notifyBpd: boolean;
+}
+
 export interface BadgeEligibility {
   badgeType: string;
   name: string;
@@ -87,4 +106,17 @@ export const api = {
   },
   getBadges: (wallet: string) =>
     fetcher<{ wallet: string; badges: BadgeEligibility[] }>(`/api/badges?wallet=${wallet}`),
+  subscribePush: (wallet: string, subscription: PushSubscriptionJSON) =>
+    mutator<{ ok: true }>('/api/push/subscribe', 'POST', { wallet, subscription }),
+  unsubscribePush: (endpoint: string) =>
+    mutator<{ ok: true }>('/api/push/unsubscribe', 'DELETE', { endpoint }),
+  getPushPreferences: (endpoint: string) =>
+    fetcher<PushPreferences>(
+      `/api/push/preferences?endpoint=${encodeURIComponent(endpoint)}`
+    ),
+  setPushPreferences: (
+    endpoint: string,
+    preferences: Partial<PushPreferences>
+  ) =>
+    mutator<{ ok: true }>('/api/push/preferences', 'PUT', { endpoint, preferences }),
 };
