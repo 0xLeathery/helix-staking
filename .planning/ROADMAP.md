@@ -30,7 +30,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 11: NFT Badges** - Bubblegum V2 soulbound cNFTs, indexer eligibility tracking, badge gallery UI (completed 2026-03-02)
 - [x] **Phase 12: Push Notifications** - PWA manifest, service worker, VAPID push, notification preferences UI (completed 2026-03-02)
 - [x] **Phase 13: Test Coverage** - anchor-litesvm migration, 80%+ coverage across program/indexer/frontend, Playwright E2E (completed 2026-03-02)
-- [ ] **Phase 14: Deployment Documentation & Env Guards** - Add missing env vars to .env.local.example, add runtime guards for non-null assertions (gap closure from v1.1 audit)
+- [x] **Phase 14: Deployment Documentation & Env Guards** - Add missing env vars to .env.local.example, add runtime guards for non-null assertions (gap closure from v1.1 audit) (completed 2026-03-02)
 
 ## Phase Details
 
@@ -430,4 +430,4 @@ v1.1 execution order: 9 -> 10 -> 11 -> 12 (can overlap with 10/11) -> 13
 | 11. NFT Badges | 4/4 | Complete    | 2026-03-02 |
 | 12. Push Notifications | 4/4 | Complete    | 2026-03-02 |
 | 13. Test Coverage | 6/6 | Complete    | 2026-03-02 |
-| 14. Deployment Docs & Env Guards | 0/1 | In Progress | — |
+| 14. Deployment Docs & Env Guards | 1/1 | Complete   | 2026-03-02 |
