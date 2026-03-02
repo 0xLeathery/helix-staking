@@ -18,7 +18,7 @@ import {
 
 describe("Initialize", () => {
   it("initializes protocol with correct GlobalState parameters", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
 
     const [globalStatePDA] = findGlobalStatePDA(program.programId);
     const [mintAuthorityPDA] = findMintAuthorityPDA(program.programId);
@@ -81,7 +81,7 @@ describe("Initialize", () => {
   });
 
   it("creates Token-2022 mint with correct configuration", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
 
     const [globalStatePDA] = findGlobalStatePDA(program.programId);
     const [mintAuthorityPDA] = findMintAuthorityPDA(program.programId);
@@ -101,8 +101,8 @@ describe("Initialize", () => {
       .signers([payer])
       .rpc();
 
-    // Fetch the mint account using Bankrun's banksClient
-    const mintAccountInfo = await context.banksClient.getAccount(mintPDA);
+    // Fetch the mint account using LiteSVM's client
+    const mintAccountInfo = client.getAccount(mintPDA);
 
     // Verify mint account exists
     expect(mintAccountInfo).not.toBeNull();
@@ -136,7 +136,7 @@ describe("Initialize", () => {
   });
 
   it("rejects double initialization", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
 
     const [globalStatePDA] = findGlobalStatePDA(program.programId);
     const [mintAuthorityPDA] = findMintAuthorityPDA(program.programId);
@@ -177,17 +177,17 @@ describe("Initialize", () => {
     }
   });
 
-  it("clock mocking works with Bankrun", async () => {
-    const { context, provider, program, payer } = await setupTest();
+  it("clock mocking works with LiteSVM", async () => {
+    const { client, provider, program, payer } = setupTest();
 
     // Get current clock
-    const initialClock = await context.banksClient.getClock();
+    const initialClock = client.getClock();
     const initialSlot = initialClock.slot;
     const initialTimestamp = initialClock.unixTimestamp;
 
     // Advance clock by 1 day (216,000 slots)
     const slotsPerDay = BigInt(216_000);
-    const newClock = await advanceClock(context, slotsPerDay);
+    const newClock = await advanceClock(client, slotsPerDay);
 
     // Verify slot advanced correctly
     expect(newClock.slot).toBe(initialSlot + slotsPerDay);

@@ -44,7 +44,7 @@ describe("TriggerBigPayDay", () => {
   }
 
   async function sealBpdFinalize(
-    context: any,
+    client: any,
     program: any,
     payer: any,
     globalState: any,
@@ -57,7 +57,7 @@ describe("TriggerBigPayDay", () => {
       expectedFinalizedCount = claimConfig.bpdStakesFinalized;
     }
     // Advance clock past 24-hour seal delay
-    await advanceClock(context, BigInt(216_001));
+    await advanceClock(client, BigInt(216_001));
     await program.methods
       .sealBpdFinalize(expectedFinalizedCount)
       .accounts({
@@ -72,7 +72,7 @@ describe("TriggerBigPayDay", () => {
   async function setupClaimPeriodWithStaker(
     program: any,
     payer: any,
-    context: any,
+    client: any,
     stakeAfterPeriod: boolean = false
   ) {
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
@@ -147,17 +147,17 @@ describe("TriggerBigPayDay", () => {
   }
 
   it("distributes unclaimed tokens to eligible stakers", async () => {
-    const { context, provider, program, payer } = await setupTest();
-    const setup = await setupClaimPeriodWithStaker(program, payer, context);
+    const { client, provider, program, payer } = setupTest();
+    const setup = await setupClaimPeriodWithStaker(program, payer, client);
 
     // Advance past claim period (180 days)
-    await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+    await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
     // Finalize BPD calculation
     await finalizeBpd(program, payer, setup.globalState, setup.claimConfigPDA, [setup.stakePDA]);
 
     // Seal BPD finalize
-    await sealBpdFinalize(context, program, payer, setup.globalState, setup.claimConfigPDA);
+    await sealBpdFinalize(client, program, payer, setup.globalState, setup.claimConfigPDA);
 
     // Trigger BPD
     await program.methods
@@ -184,8 +184,8 @@ describe("TriggerBigPayDay", () => {
   });
 
   it("is permissionless (anyone can trigger)", async () => {
-    const { context, provider, program, payer } = await setupTest();
-    const setup = await setupClaimPeriodWithStaker(program, payer, context);
+    const { client, provider, program, payer } = setupTest();
+    const setup = await setupClaimPeriodWithStaker(program, payer, client);
 
     // Create random caller (not authority)
     const randomCaller = Keypair.generate();
@@ -198,13 +198,13 @@ describe("TriggerBigPayDay", () => {
     await program.provider.sendAndConfirm(fundTx, [payer]);
 
     // Advance past claim period
-    await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+    await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
     // Finalize with payer first
     await finalizeBpd(program, payer, setup.globalState, setup.claimConfigPDA, [setup.stakePDA]);
 
     // Seal BPD finalize
-    await sealBpdFinalize(context, program, payer, setup.globalState, setup.claimConfigPDA);
+    await sealBpdFinalize(client, program, payer, setup.globalState, setup.claimConfigPDA);
 
     // Random caller should be able to trigger BPD
     await program.methods
@@ -226,7 +226,7 @@ describe("TriggerBigPayDay", () => {
   });
 
   it("uses T-share-days weighting", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
     // Initialize claim period
@@ -289,13 +289,13 @@ describe("TriggerBigPayDay", () => {
       .rpc();
 
     // Advance past claim period
-    await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+    await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
     // Finalize BPD calculation
     await finalizeBpd(program, payer, globalState, claimConfigPDA, [stakePDA_A, stakePDA_B]);
 
     // Seal BPD finalize
-    await sealBpdFinalize(context, program, payer, globalState, claimConfigPDA);
+    await sealBpdFinalize(client, program, payer, globalState, claimConfigPDA);
 
     // Trigger BPD with both stakes
     await program.methods
@@ -321,7 +321,7 @@ describe("TriggerBigPayDay", () => {
   });
 
   it("only counts stakes created during claim period", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
     // Create staker BEFORE claim period
@@ -346,7 +346,7 @@ describe("TriggerBigPayDay", () => {
       .rpc();
 
     // NOW initialize claim period
-    await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(5).toString()));
+    await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(5).toString()));
 
     const snapshotWallet = Keypair.generate();
     const entries = [{ wallet: snapshotWallet.publicKey, amount: new BN("10000000000"), claimPeriodId: 1 }];
@@ -385,13 +385,13 @@ describe("TriggerBigPayDay", () => {
       .rpc();
 
     // Advance past claim period
-    await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+    await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
     // Finalize BPD calculation
     await finalizeBpd(program, payer, globalState, claimConfigPDA, [stakePDA_before, stakePDA_during]);
 
     // Seal BPD finalize
-    await sealBpdFinalize(context, program, payer, globalState, claimConfigPDA);
+    await sealBpdFinalize(client, program, payer, globalState, claimConfigPDA);
 
     // Trigger BPD with both stakes
     await program.methods
@@ -418,7 +418,7 @@ describe("TriggerBigPayDay", () => {
   });
 
   it("prevents last-minute staking attack", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
     // Initialize claim period
@@ -438,7 +438,7 @@ describe("TriggerBigPayDay", () => {
       .rpc();
 
     // Advance to just before claim period ends (day 179)
-    await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(179).toString()));
+    await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(179).toString()));
 
     // Create last-minute stake
     const lastMinuteStaker = Keypair.generate();
@@ -462,13 +462,13 @@ describe("TriggerBigPayDay", () => {
       .rpc();
 
     // Advance just past end (need at least 1 day to have any share-days)
-    await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(2).toString()));
+    await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(2).toString()));
 
     // Finalize BPD calculation
     await finalizeBpd(program, payer, globalState, claimConfigPDA, [stakePDA]);
 
     // Seal BPD finalize
-    await sealBpdFinalize(context, program, payer, globalState, claimConfigPDA);
+    await sealBpdFinalize(client, program, payer, globalState, claimConfigPDA);
 
     // Trigger BPD
     await program.methods
@@ -493,11 +493,11 @@ describe("TriggerBigPayDay", () => {
   });
 
   it("rejects trigger before claim period ends", async () => {
-    const { context, provider, program, payer } = await setupTest();
-    const setup = await setupClaimPeriodWithStaker(program, payer, context);
+    const { client, provider, program, payer } = setupTest();
+    const setup = await setupClaimPeriodWithStaker(program, payer, client);
 
     // Only advance 100 days (still during claim period)
-    await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(100).toString()));
+    await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(100).toString()));
 
     // Try to finalize before claim period ends - should fail
     try {
@@ -509,11 +509,11 @@ describe("TriggerBigPayDay", () => {
   });
 
   it("rejects trigger when finalize not complete", async () => {
-    const { context, provider, program, payer } = await setupTest();
-    const setup = await setupClaimPeriodWithStaker(program, payer, context);
+    const { client, provider, program, payer } = setupTest();
+    const setup = await setupClaimPeriodWithStaker(program, payer, client);
 
     // Advance past claim period
-    await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+    await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
     // DO NOT call finalize - try to trigger directly
     try {
@@ -537,17 +537,17 @@ describe("TriggerBigPayDay", () => {
   });
 
   it("rejects double trigger", async () => {
-    const { context, provider, program, payer } = await setupTest();
-    const setup = await setupClaimPeriodWithStaker(program, payer, context);
+    const { client, provider, program, payer } = setupTest();
+    const setup = await setupClaimPeriodWithStaker(program, payer, client);
 
     // Advance past claim period
-    await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+    await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
     // Finalize once
     await finalizeBpd(program, payer, setup.globalState, setup.claimConfigPDA, [setup.stakePDA]);
 
     // Seal BPD finalize
-    await sealBpdFinalize(context, program, payer, setup.globalState, setup.claimConfigPDA);
+    await sealBpdFinalize(client, program, payer, setup.globalState, setup.claimConfigPDA);
 
     // First trigger succeeds
     await program.methods
@@ -591,7 +591,7 @@ describe("TriggerBigPayDay", () => {
   });
 
   it("handles no eligible stakers gracefully", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
     // Create stake BEFORE claim period
@@ -616,7 +616,7 @@ describe("TriggerBigPayDay", () => {
       .rpc();
 
     // Advance some time
-    await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(10).toString()));
+    await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(10).toString()));
 
     // NOW initialize claim period (stake was created before)
     const snapshotWallet = Keypair.generate();
@@ -635,14 +635,14 @@ describe("TriggerBigPayDay", () => {
       .rpc();
 
     // Advance past claim period
-    await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+    await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
     // Try to finalize with no eligible stakes - finalize will process but won't count anything
     await finalizeBpd(program, payer, globalState, claimConfigPDA, [stakePDA]);
 
     // Try to seal - should fail since no stakes were finalized (bpd_stakes_finalized == 0)
     try {
-      await sealBpdFinalize(context, program, payer, globalState, claimConfigPDA, 0);
+      await sealBpdFinalize(client, program, payer, globalState, claimConfigPDA, 0);
       throw new Error("Expected BpdFinalizationIncomplete error");
     } catch (error: any) {
       expect(error.toString()).to.include("BpdFinalizationIncomplete");
@@ -658,17 +658,17 @@ describe("TriggerBigPayDay", () => {
   });
 
   it("prevents same stake from receiving BPD multiple times across batches", async () => {
-    const { context, provider, program, payer } = await setupTest();
-    const setup = await setupClaimPeriodWithStaker(program, payer, context);
+    const { client, provider, program, payer } = setupTest();
+    const setup = await setupClaimPeriodWithStaker(program, payer, client);
 
     // Advance past claim period
-    await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+    await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
     // Finalize BPD calculation
     await finalizeBpd(program, payer, setup.globalState, setup.claimConfigPDA, [setup.stakePDA]);
 
     // Seal BPD finalize
-    await sealBpdFinalize(context, program, payer, setup.globalState, setup.claimConfigPDA);
+    await sealBpdFinalize(client, program, payer, setup.globalState, setup.claimConfigPDA);
 
     // First trigger - stake should receive BPD
     await program.methods
@@ -696,17 +696,17 @@ describe("TriggerBigPayDay", () => {
   });
 
   it("prevents duplicate stakes within same batch", async () => {
-    const { context, provider, program, payer } = await setupTest();
-    const setup = await setupClaimPeriodWithStaker(program, payer, context);
+    const { client, provider, program, payer } = setupTest();
+    const setup = await setupClaimPeriodWithStaker(program, payer, client);
 
     // Advance past claim period
-    await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+    await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
     // Finalize BPD calculation
     await finalizeBpd(program, payer, setup.globalState, setup.claimConfigPDA, [setup.stakePDA]);
 
     // Seal BPD finalize
-    await sealBpdFinalize(context, program, payer, setup.globalState, setup.claimConfigPDA);
+    await sealBpdFinalize(client, program, payer, setup.globalState, setup.claimConfigPDA);
 
     // Trigger with same stake multiple times in remaining_accounts
     // Note: Solana may reject duplicate writable accounts, but test the duplicate prevention logic
@@ -733,17 +733,17 @@ describe("TriggerBigPayDay", () => {
   });
 
   it("rejects double finalize", async () => {
-    const { context, provider, program, payer } = await setupTest();
-    const setup = await setupClaimPeriodWithStaker(program, payer, context);
+    const { client, provider, program, payer } = setupTest();
+    const setup = await setupClaimPeriodWithStaker(program, payer, client);
 
     // Advance past claim period
-    await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+    await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
     // First finalize succeeds
     await finalizeBpd(program, payer, setup.globalState, setup.claimConfigPDA, [setup.stakePDA]);
 
     // Seal BPD finalize
-    await sealBpdFinalize(context, program, payer, setup.globalState, setup.claimConfigPDA);
+    await sealBpdFinalize(client, program, payer, setup.globalState, setup.claimConfigPDA);
 
     // Second finalize should fail (after seal sets bpd_calculation_complete = true)
     try {
@@ -761,7 +761,7 @@ describe("TriggerBigPayDay", () => {
   });
 
   it("ensures cross-batch rate fairness", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
     // Initialize claim period
@@ -843,13 +843,13 @@ describe("TriggerBigPayDay", () => {
       .rpc();
 
     // Advance past claim period
-    await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+    await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
     // Finalize with ALL 3 stakes
     await finalizeBpd(program, payer, globalState, claimConfigPDA, [stakePDA_A, stakePDA_B, stakePDA_C]);
 
     // Seal BPD finalize
-    await sealBpdFinalize(context, program, payer, globalState, claimConfigPDA);
+    await sealBpdFinalize(client, program, payer, globalState, claimConfigPDA);
 
     // Trigger batch 1 with only stake A
     await program.methods

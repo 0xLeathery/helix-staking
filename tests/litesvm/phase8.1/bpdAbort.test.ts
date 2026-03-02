@@ -107,7 +107,7 @@ async function createFundedStaker(
 
 describe("BPD Abort Idempotency Tests", () => {
   it("abort_bpd succeeds when BPD window is active, then second abort is a no-op", async () => {
-    const { context, program, payer } = await setupTest();
+    const { client, program, payer } = setupTest();
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
     const [globalStatePDA] = findGlobalStatePDA(program.programId);
     const [claimConfigPDA] = findClaimConfigPDA(program.programId);
@@ -151,7 +151,7 @@ describe("BPD Abort Idempotency Tests", () => {
     );
 
     // Advance past claim period end
-    await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.toNumber() * 200));
+    await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.toNumber() * 200));
 
     // Start BPD finalization (first batch)
     const remainingAccounts = [{
@@ -191,7 +191,7 @@ describe("BPD Abort Idempotency Tests", () => {
     expect(stateAfterAbort.reserved[0].toNumber() & 1).toBe(0);
 
     // Advance 1 slot to avoid bankrun duplicate transaction detection
-    await advanceClock(context, BigInt(1));
+    await advanceClock(client, BigInt(1));
 
     // Second abort — should be a no-op (idempotent), NOT throw an error
     await program.methods
@@ -210,7 +210,7 @@ describe("BPD Abort Idempotency Tests", () => {
   });
 
   it("abort_bpd on fresh protocol (no active BPD) is a no-op", async () => {
-    const { program, payer } = await setupTest();
+    const { program, payer } = setupTest();
     await initializeProtocol(program, payer);
     const [globalStatePDA] = findGlobalStatePDA(program.programId);
     const [claimConfigPDA] = findClaimConfigPDA(program.programId);

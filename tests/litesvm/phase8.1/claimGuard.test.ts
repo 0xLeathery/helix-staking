@@ -111,7 +111,7 @@ describe("Claim Guard Tests (C3 Fix — Zero-Amount Prevention)", () => {
     // pending_rewards = t_shares * share_rate / PRECISION - reward_debt = 0
     // bpd_bonus_pending = 0 (default)
     // Total = 0 → ClaimAmountZero
-    const { program, payer } = await setupTest();
+    const { program, payer } = setupTest();
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
     const [globalStatePDA] = findGlobalStatePDA(program.programId);
     const [mintAuthorityPDA] = findMintAuthorityPDA(program.programId);
@@ -154,7 +154,7 @@ describe("Claim Guard Tests (C3 Fix — Zero-Amount Prevention)", () => {
   it("claim_rewards succeeds after inflation accrues", async () => {
     // Verify that the guard doesn't block legitimate claims.
     // After share_rate increases via crankDistribution, pending_rewards > 0.
-    const { context, program, payer } = await setupTest();
+    const { client, program, payer } = setupTest();
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
     const [globalStatePDA] = findGlobalStatePDA(program.programId);
     const [mintAuthorityPDA] = findMintAuthorityPDA(program.programId);
@@ -174,7 +174,7 @@ describe("Claim Guard Tests (C3 Fix — Zero-Amount Prevention)", () => {
 
     // Advance 5 days and distribute inflation (ensures measurable share_rate increase)
     const fiveDays = BigInt(DEFAULT_SLOTS_PER_DAY.muln(5).toString());
-    await advanceClock(context, fiveDays);
+    await advanceClock(client, fiveDays);
 
     await program.methods
       .crankDistribution()
@@ -212,7 +212,7 @@ describe("Claim Guard Tests (C3 Fix — Zero-Amount Prevention)", () => {
   it("claim_rewards rejects again after double-claim (rewards already claimed)", async () => {
     // After a successful claim, reward_debt is updated. Immediately claiming again
     // should yield 0 rewards → ClaimAmountZero.
-    const { context, program, payer } = await setupTest();
+    const { client, program, payer } = setupTest();
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
     const [mintAuthorityPDA] = findMintAuthorityPDA(program.programId);
 
@@ -230,7 +230,7 @@ describe("Claim Guard Tests (C3 Fix — Zero-Amount Prevention)", () => {
 
     // Advance 5 days + distribute inflation
     const fiveDays = BigInt(DEFAULT_SLOTS_PER_DAY.muln(5).toString());
-    await advanceClock(context, fiveDays);
+    await advanceClock(client, fiveDays);
 
     await program.methods
       .crankDistribution()
@@ -261,7 +261,7 @@ describe("Claim Guard Tests (C3 Fix — Zero-Amount Prevention)", () => {
       .rpc();
 
     // Advance 1 slot to avoid bankrun duplicate transaction detection
-    await advanceClock(context, BigInt(1));
+    await advanceClock(client, BigInt(1));
 
     // Second claim immediately — should fail with ClaimAmountZero
     try {

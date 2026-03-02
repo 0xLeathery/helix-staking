@@ -29,7 +29,7 @@ function findPendingAuthorityPDA(programId: PublicKey): [PublicKey, number] {
 
 describe("AuthorityTransfer", () => {
   it("authority can initiate transfer", async () => {
-    const { context, program, payer } = await setupTest();
+    const { client, program, payer } = setupTest();
     const { globalState } = await initializeProtocol(program, payer);
     const [pendingAuthorityPDA] = findPendingAuthorityPDA(program.programId);
 
@@ -51,7 +51,7 @@ describe("AuthorityTransfer", () => {
   });
 
   it("new authority can accept transfer", async () => {
-    const { context, program, payer } = await setupTest();
+    const { client, program, payer } = setupTest();
     const { globalState } = await initializeProtocol(program, payer);
     const [pendingAuthorityPDA] = findPendingAuthorityPDA(program.programId);
 
@@ -94,7 +94,7 @@ describe("AuthorityTransfer", () => {
   });
 
   it("non-authority cannot initiate transfer", async () => {
-    const { context, program, payer } = await setupTest();
+    const { client, program, payer } = setupTest();
     const { globalState } = await initializeProtocol(program, payer);
     const [pendingAuthorityPDA] = findPendingAuthorityPDA(program.programId);
 
@@ -128,7 +128,7 @@ describe("AuthorityTransfer", () => {
   });
 
   it("wrong key cannot accept transfer", async () => {
-    const { context, program, payer } = await setupTest();
+    const { client, program, payer } = setupTest();
     const { globalState } = await initializeProtocol(program, payer);
     const [pendingAuthorityPDA] = findPendingAuthorityPDA(program.programId);
 
@@ -173,7 +173,7 @@ describe("AuthorityTransfer", () => {
   });
 
   it("authority can cancel by re-initiating to different key", async () => {
-    const { context, program, payer } = await setupTest();
+    const { client, program, payer } = setupTest();
     const { globalState } = await initializeProtocol(program, payer);
     const [pendingAuthorityPDA] = findPendingAuthorityPDA(program.programId);
 
@@ -228,12 +228,12 @@ describe("AuthorityTransfer", () => {
 
     const tx = new Transaction().add(ix);
     tx.feePayer = payer.publicKey;
-    tx.recentBlockhash = (await context.banksClient.getLatestBlockhash())[0];
+    tx.recentBlockhash = client.latestBlockhash();
     tx.sign(payer);
-    const meta = await context.banksClient.processTransaction(tx);
+    const meta = client.sendTransaction(tx);
 
     // Check logs for cancel event data marker
-    const logs = meta.logMessages || [];
+    const logs = (meta as any).logs ? (meta as any).logs() : [];
     // Anchor events are emitted as "Program data: <base64>" in logs
     // Check that we see both event names in the log output
     const hasProgramData = logs.filter((l: string) => l.includes("Program data:"));
@@ -246,7 +246,7 @@ describe("AuthorityTransfer", () => {
   });
 
   it("after accept, old authority loses access (admin_mint fails)", async () => {
-    const { context, program, payer } = await setupTest();
+    const { client, program, payer } = setupTest();
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
     const [pendingAuthorityPDA] = findPendingAuthorityPDA(program.programId);
 
@@ -310,7 +310,7 @@ describe("AuthorityTransfer", () => {
   });
 
   it("cannot accept authority during BPD window", async () => {
-    const { context, program, payer } = await setupTest();
+    const { client, program, payer } = setupTest();
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
     const [pendingAuthorityPDA] = findPendingAuthorityPDA(program.programId);
     const [claimConfigPDA] = findClaimConfigPDA(program.programId);
@@ -382,7 +382,7 @@ describe("AuthorityTransfer", () => {
       .rpc();
 
     // Advance past claim period end (180+ days)
-    await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+    await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
     // Finalize BPD - this activates the BPD window
     await program.methods
@@ -432,7 +432,7 @@ describe("AuthorityTransfer", () => {
 
     // Complete BPD: seal + trigger to clear the window
     const claimConfig = await program.account.claimConfig.fetch(claimConfigPDA);
-    await advanceClock(context, BigInt(216_001));
+    await advanceClock(client, BigInt(216_001));
     await program.methods
       .sealBpdFinalize(claimConfig.bpdStakesFinalized)
       .accounts({
@@ -489,7 +489,7 @@ describe("AuthorityTransfer", () => {
   });
 
   it("after accept, new authority has access (admin_mint succeeds)", async () => {
-    const { context, program, payer } = await setupTest();
+    const { client, program, payer } = setupTest();
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
     const [pendingAuthorityPDA] = findPendingAuthorityPDA(program.programId);
 

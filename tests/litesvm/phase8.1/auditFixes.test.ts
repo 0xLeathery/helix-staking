@@ -126,7 +126,7 @@ async function finalizeBpd(
 
 // Helper: Seal BPD finalize WITH clock advancement
 async function sealBpdFinalizeWithDelay(
-  context: any,
+  client: any,
   program: any,
   payer: any,
   globalState: any,
@@ -138,7 +138,7 @@ async function sealBpdFinalizeWithDelay(
     expectedFinalizedCount = claimConfig.bpdStakesFinalized;
   }
   // Advance clock past 24-hour seal delay
-  await advanceClock(context, SEAL_DELAY_SLOTS + BigInt(1));
+  await advanceClock(client, SEAL_DELAY_SLOTS + BigInt(1));
   await program.methods
     .sealBpdFinalize(expectedFinalizedCount)
     .accounts({
@@ -154,7 +154,7 @@ async function sealBpdFinalizeWithDelay(
 async function setupClaimPeriodWithStaker(
   program: any,
   payer: any,
-  context: any,
+  client: any,
 ) {
   const { globalState, mint, mintAuthority } = await initializeProtocol(
     program,
@@ -216,7 +216,7 @@ describe("Phase 8.1: Audit Fixes & BPD Transparency", () => {
   // ========================================================================
   describe("Audit Fixes", () => {
     it("initialize rejects slots_per_day=0 (XRAY-3)", async () => {
-      const { context, program, payer } = await setupTest();
+      const { client, program, payer } = setupTest();
       const [globalStatePDA] = findGlobalStatePDA(program.programId);
       const [mintAuthorityPDA] = findMintAuthorityPDA(program.programId);
       const [mintPDA] = findMintPDA(program.programId);
@@ -243,12 +243,12 @@ describe("Phase 8.1: Audit Fixes & BPD Transparency", () => {
     });
 
     it("abort_bpd resets all BPD state including Phase 8.1 fields", async () => {
-      const { context, program, payer } = await setupTest();
-      const setup = await setupClaimPeriodWithStaker(program, payer, context);
+      const { client, program, payer } = setupTest();
+      const setup = await setupClaimPeriodWithStaker(program, payer, client);
 
       // Advance past claim period
       await advanceClock(
-        context,
+        client,
         BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()),
       );
 
@@ -311,7 +311,7 @@ describe("Phase 8.1: Audit Fixes & BPD Transparency", () => {
       // After abort, per-stake bpd_finalize_period_id flags remain set, so
       // re-finalization skips already-finalized stakes. We verify that a fresh
       // staker (not in the first finalize batch) can be finalized and distributed.
-      const { context, program, payer } = await setupTest();
+      const { client, program, payer } = setupTest();
       const { globalState, mint, mintAuthority } = await initializeProtocol(
         program,
         payer,
@@ -356,7 +356,7 @@ describe("Phase 8.1: Audit Fixes & BPD Transparency", () => {
 
       // Advance past claim period
       await advanceClock(
-        context,
+        client,
         BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()),
       );
 
@@ -393,7 +393,7 @@ describe("Phase 8.1: Audit Fixes & BPD Transparency", () => {
 
       // Seal (with delay)
       await sealBpdFinalizeWithDelay(
-        context, program, payer, globalState, claimConfigPDA,
+        client, program, payer, globalState, claimConfigPDA,
       );
 
       // Trigger BPD distribution with staker2 only
@@ -426,12 +426,12 @@ describe("Phase 8.1: Audit Fixes & BPD Transparency", () => {
   // ========================================================================
   describe("BPD Transparency: Seal Delay", () => {
     it("seal_bpd_finalize rejects before 24h delay period", async () => {
-      const { context, program, payer } = await setupTest();
-      const setup = await setupClaimPeriodWithStaker(program, payer, context);
+      const { client, program, payer } = setupTest();
+      const setup = await setupClaimPeriodWithStaker(program, payer, client);
 
       // Advance past claim period
       await advanceClock(
-        context,
+        client,
         BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()),
       );
 
@@ -468,12 +468,12 @@ describe("Phase 8.1: Audit Fixes & BPD Transparency", () => {
     });
 
     it("seal_bpd_finalize succeeds after 24h delay period", async () => {
-      const { context, program, payer } = await setupTest();
-      const setup = await setupClaimPeriodWithStaker(program, payer, context);
+      const { client, program, payer } = setupTest();
+      const setup = await setupClaimPeriodWithStaker(program, payer, client);
 
       // Advance past claim period
       await advanceClock(
-        context,
+        client,
         BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()),
       );
 
@@ -487,7 +487,7 @@ describe("Phase 8.1: Audit Fixes & BPD Transparency", () => {
       );
 
       // Advance 24 hours + 1 second worth of slots
-      await advanceClock(context, SEAL_DELAY_SLOTS + BigInt(1));
+      await advanceClock(client, SEAL_DELAY_SLOTS + BigInt(1));
 
       // Seal should succeed
       const claimConfig = await program.account.claimConfig.fetch(
@@ -511,7 +511,7 @@ describe("Phase 8.1: Audit Fixes & BPD Transparency", () => {
     });
 
     it("bpd_finalize_start_timestamp set on first batch only", async () => {
-      const { context, program, payer } = await setupTest();
+      const { client, program, payer } = setupTest();
       const { globalState, mint, mintAuthority } = await initializeProtocol(
         program,
         payer,
@@ -566,7 +566,7 @@ describe("Phase 8.1: Audit Fixes & BPD Transparency", () => {
 
       // Advance past claim period
       await advanceClock(
-        context,
+        client,
         BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()),
       );
 
@@ -583,7 +583,7 @@ describe("Phase 8.1: Audit Fixes & BPD Transparency", () => {
 
       // Advance time significantly
       await advanceClock(
-        context,
+        client,
         BigInt(DEFAULT_SLOTS_PER_DAY.muln(5).toString()),
       );
 
@@ -605,12 +605,12 @@ describe("Phase 8.1: Audit Fixes & BPD Transparency", () => {
   // ========================================================================
   describe("BPD Transparency: Event Emission", () => {
     it("BpdBatchFinalized event emitted during finalize", async () => {
-      const { context, program, payer } = await setupTest();
-      const setup = await setupClaimPeriodWithStaker(program, payer, context);
+      const { client, program, payer } = setupTest();
+      const setup = await setupClaimPeriodWithStaker(program, payer, client);
 
       // Advance past claim period
       await advanceClock(
-        context,
+        client,
         BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()),
       );
 
@@ -643,12 +643,12 @@ describe("Phase 8.1: Audit Fixes & BPD Transparency", () => {
   // ========================================================================
   describe("BPD Original Unclaimed Tracking", () => {
     it("bpd_original_unclaimed stored at seal time", async () => {
-      const { context, program, payer } = await setupTest();
-      const setup = await setupClaimPeriodWithStaker(program, payer, context);
+      const { client, program, payer } = setupTest();
+      const setup = await setupClaimPeriodWithStaker(program, payer, client);
 
       // Advance past claim period
       await advanceClock(
-        context,
+        client,
         BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()),
       );
 
@@ -671,7 +671,7 @@ describe("Phase 8.1: Audit Fixes & BPD Transparency", () => {
 
       // Seal (with delay)
       await sealBpdFinalizeWithDelay(
-        context,
+        client,
         program,
         payer,
         setup.globalState,

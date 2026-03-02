@@ -17,7 +17,7 @@ import {
 
 describe("ClaimRewards", () => {
   it("claims pending rewards correctly after distribution", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
 
     // Initialize protocol
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
@@ -69,7 +69,7 @@ describe("ClaimRewards", () => {
 
     // Advance 1 day
     const slotsPerDay = BigInt(DEFAULT_SLOTS_PER_DAY.toString());
-    await advanceClock(context, slotsPerDay);
+    await advanceClock(client, slotsPerDay);
 
     // Crank distribution
     await program.methods
@@ -85,7 +85,7 @@ describe("ClaimRewards", () => {
       .rpc();
 
     // Claim rewards
-    const balanceBefore = await getTokenBalance(context.banksClient, userATA);
+    const balanceBefore = await getTokenBalance(client, userATA);
 
     await program.methods
       .claimRewards()
@@ -101,7 +101,7 @@ describe("ClaimRewards", () => {
       .signers([payer])
       .rpc();
 
-    const balanceAfter = await getTokenBalance(context.banksClient, userATA);
+    const balanceAfter = await getTokenBalance(client, userATA);
     const rewardsClaimed = new BN(balanceAfter.toString()).sub(new BN(balanceBefore.toString()));
 
     // Should receive some rewards
@@ -113,7 +113,7 @@ describe("ClaimRewards", () => {
   });
 
   it("rejects claim when no rewards pending", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
 
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
@@ -184,7 +184,7 @@ describe("ClaimRewards", () => {
   });
 
   it("updates reward_debt to prevent double-claiming", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
 
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
@@ -233,7 +233,7 @@ describe("ClaimRewards", () => {
 
     // Advance 1 day and crank
     const slotsPerDay = BigInt(DEFAULT_SLOTS_PER_DAY.toString());
-    await advanceClock(context, slotsPerDay);
+    await advanceClock(client, slotsPerDay);
 
     await program.methods
       .crankDistribution()
@@ -286,7 +286,7 @@ describe("ClaimRewards", () => {
   });
 
   it("accumulates rewards over multiple distribution days", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
 
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
@@ -335,7 +335,7 @@ describe("ClaimRewards", () => {
 
     // Advance 5 days
     const slotsPerDay = BigInt(DEFAULT_SLOTS_PER_DAY.toString());
-    await advanceClock(context, slotsPerDay * BigInt(5));
+    await advanceClock(client, slotsPerDay * BigInt(5));
 
     // Crank once (processes all 5 days)
     await program.methods
@@ -351,7 +351,7 @@ describe("ClaimRewards", () => {
       .rpc();
 
     // Claim rewards
-    const balanceBefore = await getTokenBalance(context.banksClient, userATA);
+    const balanceBefore = await getTokenBalance(client, userATA);
 
     await program.methods
       .claimRewards()
@@ -367,7 +367,7 @@ describe("ClaimRewards", () => {
       .signers([payer])
       .rpc();
 
-    const balanceAfter = await getTokenBalance(context.banksClient, userATA);
+    const balanceAfter = await getTokenBalance(client, userATA);
     const rewardsClaimed = new BN(balanceAfter.toString()).sub(new BN(balanceBefore.toString()));
 
     // Should receive rewards for multiple days
@@ -375,7 +375,7 @@ describe("ClaimRewards", () => {
   });
 
   it("correctly distributes to multiple stakers proportionally", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
 
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
@@ -427,22 +427,7 @@ describe("ClaimRewards", () => {
     const userB = Keypair.generate();
 
     // Fund user B with SOL
-    await context.banksClient.processTransaction(
-      (() => {
-        const tx = new (require("@solana/web3.js").Transaction)();
-        tx.add(
-          require("@solana/web3.js").SystemProgram.transfer({
-            fromPubkey: payer.publicKey,
-            toPubkey: userB.publicKey,
-            lamports: 1_000_000_000,
-          })
-        );
-        tx.recentBlockhash = context.lastBlockhash;
-        tx.feePayer = payer.publicKey;
-        tx.sign(payer);
-        return tx;
-      })()
-    );
+    client.airdrop(userB.publicKey, BigInt(1_000_000_000));
 
     const userB_ATA = getAssociatedTokenAddressSync(
       mint,
@@ -488,7 +473,7 @@ describe("ClaimRewards", () => {
 
     // Advance 1 day and crank
     const slotsPerDay = BigInt(DEFAULT_SLOTS_PER_DAY.toString());
-    await advanceClock(context, slotsPerDay);
+    await advanceClock(client, slotsPerDay);
 
     await program.methods
       .crankDistribution()
@@ -503,7 +488,7 @@ describe("ClaimRewards", () => {
       .rpc();
 
     // Claim rewards for user A
-    const balanceA_Before = await getTokenBalance(context.banksClient, userATA);
+    const balanceA_Before = await getTokenBalance(client, userATA);
 
     await program.methods
       .claimRewards()
@@ -519,11 +504,11 @@ describe("ClaimRewards", () => {
       .signers([payer])
       .rpc();
 
-    const balanceA_After = await getTokenBalance(context.banksClient, userATA);
+    const balanceA_After = await getTokenBalance(client, userATA);
     const rewardsA = new BN(balanceA_After.toString()).sub(new BN(balanceA_Before.toString()));
 
     // Claim rewards for user B
-    const balanceB_Before = await getTokenBalance(context.banksClient, userB_ATA);
+    const balanceB_Before = await getTokenBalance(client, userB_ATA);
 
     await program.methods
       .claimRewards()
@@ -539,7 +524,7 @@ describe("ClaimRewards", () => {
       .signers([userB])
       .rpc();
 
-    const balanceB_After = await getTokenBalance(context.banksClient, userB_ATA);
+    const balanceB_After = await getTokenBalance(client, userB_ATA);
     const rewardsB = new BN(balanceB_After.toString()).sub(new BN(balanceB_Before.toString()));
 
     // User B should get approximately 3x rewards of User A (30 vs 10 tokens)
@@ -550,7 +535,7 @@ describe("ClaimRewards", () => {
   });
 
   it("rejects claim on inactive stake", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
 
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
@@ -599,7 +584,7 @@ describe("ClaimRewards", () => {
 
     // Advance to maturity and unstake
     const slotsPerDay = BigInt(DEFAULT_SLOTS_PER_DAY.toString());
-    await advanceClock(context, slotsPerDay);
+    await advanceClock(client, slotsPerDay);
 
     await program.methods
       .unstake()
@@ -638,7 +623,7 @@ describe("ClaimRewards", () => {
   });
 
   it("share_rate increase makes future stakes more expensive", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
 
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
@@ -690,7 +675,7 @@ describe("ClaimRewards", () => {
 
     // Advance days and crank to increase share_rate
     const slotsPerDay = BigInt(DEFAULT_SLOTS_PER_DAY.toString());
-    await advanceClock(context, slotsPerDay * BigInt(5));
+    await advanceClock(client, slotsPerDay * BigInt(5));
 
     await program.methods
       .crankDistribution()

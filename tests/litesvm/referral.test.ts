@@ -55,7 +55,7 @@ async function createATA(
 
 describe("Referral System", () => {
   it("Test 1: Referee receives +10% T-share bonus compared to non-referred stake", async () => {
-    const { context, program, payer } = await setupTest();
+    const { client, program, payer } = setupTest();
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
     // Create control staker (no referral)
@@ -138,7 +138,7 @@ describe("Referral System", () => {
   });
 
   it("Test 2: Referrer receives +5% token bonus minted to their account", async () => {
-    const { context, program, payer } = await setupTest();
+    const { client, program, payer } = setupTest();
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
     const referrer = Keypair.generate();
@@ -153,7 +153,7 @@ describe("Referral System", () => {
     // Give referrer initial balance so we can track the change
     await mintTokensToUser(program, payer, globalState, mint, mintAuthority, referrerATA, new BN(1));
 
-    const referrerBalanceBefore = await getTokenBalance(context.banksClient, referrerATA);
+    const referrerBalanceBefore = await getTokenBalance(client, referrerATA);
 
     const [referralStakePDA] = findStakePDA(program.programId, referee.publicKey, 0);
     const [referralRecordPDA] = findReferralRecordPDA(
@@ -179,7 +179,7 @@ describe("Referral System", () => {
       .signers([referee])
       .rpc();
 
-    const referrerBalanceAfter = await getTokenBalance(context.banksClient, referrerATA);
+    const referrerBalanceAfter = await getTokenBalance(client, referrerATA);
     const referrerGain = referrerBalanceAfter - referrerBalanceBefore;
 
     // Expected: amount * 500 / 10000 = amount * 5%
@@ -193,7 +193,7 @@ describe("Referral System", () => {
   });
 
   it("Test 3: Self-referral attempt fails with SelfReferral error", async () => {
-    const { program, payer } = await setupTest();
+    const { program, payer } = setupTest();
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
     const user = Keypair.generate();
@@ -244,7 +244,7 @@ describe("Referral System", () => {
   });
 
   it("Test 4: Duplicate referral from same referrer to same referee fails", async () => {
-    const { program, payer } = await setupTest();
+    const { program, payer } = setupTest();
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
     const referrer = Keypair.generate();
@@ -320,7 +320,7 @@ describe("Referral System", () => {
   });
 
   it("Test 5: Different referrers can each refer the same referee (independent PDAs)", async () => {
-    const { program, payer } = await setupTest();
+    const { program, payer } = setupTest();
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
     const referrerA = Keypair.generate();
@@ -399,7 +399,7 @@ describe("Referral System", () => {
   });
 
   it("Test 6: ReferralRecord is populated correctly after successful referral", async () => {
-    const { context, program, payer } = await setupTest();
+    const { client, program, payer } = setupTest();
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
     const referrer = Keypair.generate();
@@ -422,7 +422,7 @@ describe("Referral System", () => {
     const [mintAuthorityPDA] = findMintAuthorityPDA(program.programId);
 
     // Get clock slot before transaction
-    const clockBefore = await context.banksClient.getClock();
+    const clockBefore = client.getClock();
 
     await program.methods
       .createStakeWithReferral(stakeAmount, 100, referrer.publicKey)

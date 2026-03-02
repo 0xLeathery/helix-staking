@@ -122,7 +122,7 @@ async function crankDistribution(
 // Helper: Claim rewards and return claimed amount
 async function claimAndMeasure(
   program: any,
-  context: any,
+  client: any,
   staker: any,
   globalState: any,
   stakePDA: any,
@@ -130,7 +130,7 @@ async function claimAndMeasure(
   mint: any,
   mintAuthority: any,
 ) {
-  const balanceBefore = await getTokenBalance(context.banksClient, stakerATA);
+  const balanceBefore = await getTokenBalance(client, stakerATA);
   await program.methods
     .claimRewards()
     .accounts({
@@ -144,7 +144,7 @@ async function claimAndMeasure(
     })
     .signers([staker])
     .rpc();
-  const balanceAfter = await getTokenBalance(context.banksClient, stakerATA);
+  const balanceAfter = await getTokenBalance(client, stakerATA);
   return new BN(balanceAfter.toString()).sub(new BN(balanceBefore.toString()));
 }
 
@@ -175,7 +175,7 @@ async function finalizeBpd(
 
 // Helper: Seal BPD finalize (with clock advancement for delay)
 async function sealBpdFinalize(
-  context: any,
+  client: any,
   program: any,
   payer: any,
   globalState: any,
@@ -187,7 +187,7 @@ async function sealBpdFinalize(
     expectedFinalizedCount = claimConfig.bpdStakesFinalized;
   }
   // Advance clock past 24-hour seal delay
-  await advanceClock(context, BigInt(216_001));
+  await advanceClock(client, BigInt(216_001));
   await program.methods
     .sealBpdFinalize(expectedFinalizedCount)
     .accounts({
@@ -230,7 +230,7 @@ describe("Phase 8.1: Game Theory Hardening", () => {
   // ========================================================================
   describe("Duration Loyalty Multiplier", () => {
     it("freshly created stake gets 0% loyalty bonus on claim", async () => {
-      const { context, program, payer } = await setupTest();
+      const { client, program, payer } = setupTest();
       const { globalState, mint, mintAuthority } = await initializeProtocol(
         program,
         payer,
@@ -252,7 +252,7 @@ describe("Phase 8.1: Game Theory Hardening", () => {
       // Advance 2 days and crank — 365-day stakes need ≥2 days for
       // share_rate_increase to round above 0 (daily_inflation * PRECISION / total_shares ≈ 0.76/day)
       await advanceClock(
-        context,
+        client,
         BigInt(DEFAULT_SLOTS_PER_DAY.muln(2).toString()),
       );
       await crankDistribution(program, payer, globalState, mint, mintAuthority);
@@ -260,7 +260,7 @@ describe("Phase 8.1: Game Theory Hardening", () => {
       // Claim
       const claimed = await claimAndMeasure(
         program,
-        context,
+        client,
         staker,
         globalState,
         stakePDA,
@@ -278,7 +278,7 @@ describe("Phase 8.1: Game Theory Hardening", () => {
     });
 
     it("half-term stake gets ~25% loyalty bonus on claim", async () => {
-      const { context, program, payer } = await setupTest();
+      const { client, program, payer } = setupTest();
       const { globalState, mint, mintAuthority } = await initializeProtocol(
         program,
         payer,
@@ -291,7 +291,7 @@ describe("Phase 8.1: Game Theory Hardening", () => {
 
       // Advance to half-term (day 182) in one jump, crank once
       await advanceClock(
-        context,
+        client,
         BigInt(DEFAULT_SLOTS_PER_DAY.muln(182).toString()),
       );
       await crankDistribution(program, payer, globalState, mint, mintAuthority);
@@ -299,7 +299,7 @@ describe("Phase 8.1: Game Theory Hardening", () => {
       // Claim at half-term — should include ~25% loyalty bonus
       // loyalty = (182/365) × 50% ≈ 24.9%
       const claimed = await claimAndMeasure(
-        program, context, staker, globalState, stakePDA, stakerATA, mint, mintAuthority,
+        program, client, staker, globalState, stakePDA, stakerATA, mint, mintAuthority,
       );
 
       expect(claimed.gtn(0)).toBe(true);
@@ -310,7 +310,7 @@ describe("Phase 8.1: Game Theory Hardening", () => {
     });
 
     it("full-term stake gets 50% loyalty bonus on claim", async () => {
-      const { context, program, payer } = await setupTest();
+      const { client, program, payer } = setupTest();
       const { globalState, mint, mintAuthority } = await initializeProtocol(
         program,
         payer,
@@ -322,12 +322,12 @@ describe("Phase 8.1: Game Theory Hardening", () => {
       );
 
       // Advance full 365 days in one jump, crank once (handles multi-day gap)
-      await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(365).toString()));
+      await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(365).toString()));
       await crankDistribution(program, payer, globalState, mint, mintAuthority);
 
       // Claim at full maturity — should include 50% loyalty bonus
       const claimed = await claimAndMeasure(
-        program, context, staker, globalState, stakePDA, stakerATA, mint, mintAuthority,
+        program, client, staker, globalState, stakePDA, stakerATA, mint, mintAuthority,
       );
 
       expect(claimed.gtn(0)).toBe(true);
@@ -338,7 +338,7 @@ describe("Phase 8.1: Game Theory Hardening", () => {
     });
 
     it("loyalty bonus caps at max in grace period", async () => {
-      const { context, program, payer } = await setupTest();
+      const { client, program, payer } = setupTest();
       const { globalState, mint, mintAuthority } = await initializeProtocol(
         program,
         payer,
@@ -353,12 +353,12 @@ describe("Phase 8.1: Game Theory Hardening", () => {
         );
 
       // Advance 365 days in one jump, crank once
-      await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(365).toString()));
+      await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(365).toString()));
       await crankDistribution(program, payer, globalState, mint, mintAuthority);
 
       // Claim A at exactly day 365
       const claimedA = await claimAndMeasure(
-        program, context, stakerA, globalState, pdaA, ataA, mint, mintAuthority,
+        program, client, stakerA, globalState, pdaA, ataA, mint, mintAuthority,
       );
 
       // Create staker B with same params
@@ -368,11 +368,11 @@ describe("Phase 8.1: Game Theory Hardening", () => {
         );
 
       // Advance another 375 days (full term + 10 grace) in one jump, crank once
-      await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(375).toString()));
+      await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(375).toString()));
       await crankDistribution(program, payer, globalState, mint, mintAuthority);
 
       const claimedB = await claimAndMeasure(
-        program, context, stakerB, globalState, pdaB, ataB, mint, mintAuthority,
+        program, client, stakerB, globalState, pdaB, ataB, mint, mintAuthority,
       );
 
       // B got more days of rewards (375 vs 365) but the loyalty bonus
@@ -383,7 +383,7 @@ describe("Phase 8.1: Game Theory Hardening", () => {
     });
 
     it("loyalty bonus applied to auto-claimed rewards during unstake", async () => {
-      const { context, program, payer } = await setupTest();
+      const { client, program, payer } = setupTest();
       const { globalState, mint, mintAuthority } = await initializeProtocol(
         program,
         payer,
@@ -395,11 +395,11 @@ describe("Phase 8.1: Game Theory Hardening", () => {
       );
 
       // Advance full 30 days in one jump, crank once (handles multi-day gap)
-      await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(30).toString()));
+      await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(30).toString()));
       await crankDistribution(program, payer, globalState, mint, mintAuthority);
 
       // Unstake at full maturity — payout includes principal + loyalty-boosted rewards
-      const balanceBefore = await getTokenBalance(context.banksClient, stakerATA);
+      const balanceBefore = await getTokenBalance(client, stakerATA);
 
       await program.methods
         .unstake()
@@ -415,7 +415,7 @@ describe("Phase 8.1: Game Theory Hardening", () => {
         .signers([staker])
         .rpc();
 
-      const balanceAfter = await getTokenBalance(context.banksClient, stakerATA);
+      const balanceAfter = await getTokenBalance(client, stakerATA);
       const payout = new BN(balanceAfter.toString()).sub(
         new BN(balanceBefore.toString()),
       );
@@ -434,7 +434,7 @@ describe("Phase 8.1: Game Theory Hardening", () => {
   // ========================================================================
   describe("Anti-Whale: BPD Share Cap", () => {
     it("whale stake capped at 5% of BPD pool", async () => {
-      const { context, program, payer } = await setupTest();
+      const { client, program, payer } = setupTest();
       const { globalState, mint, mintAuthority } = await initializeProtocol(
         program,
         payer,
@@ -488,14 +488,14 @@ describe("Phase 8.1: Game Theory Hardening", () => {
 
       // Advance past claim period (180 days)
       await advanceClock(
-        context,
+        client,
         BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()),
       );
 
       // Finalize, seal, trigger
       await finalizeBpd(program, payer, globalState, claimConfigPDA, allPDAs);
       await sealBpdFinalize(
-        context, program, payer, globalState, claimConfigPDA,
+        client, program, payer, globalState, claimConfigPDA,
       );
 
       // Fetch original unclaimed to determine cap
@@ -523,7 +523,7 @@ describe("Phase 8.1: Game Theory Hardening", () => {
     });
 
     it("small stakes below cap receive full calculated BPD", async () => {
-      const { context, program, payer } = await setupTest();
+      const { client, program, payer } = setupTest();
       const { globalState, mint, mintAuthority } = await initializeProtocol(
         program,
         payer,
@@ -571,14 +571,14 @@ describe("Phase 8.1: Game Theory Hardening", () => {
 
       // Advance past claim period
       await advanceClock(
-        context,
+        client,
         BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()),
       );
 
       // Finalize, seal, trigger
       await finalizeBpd(program, payer, globalState, claimConfigPDA, stakePDAs);
       await sealBpdFinalize(
-        context, program, payer, globalState, claimConfigPDA,
+        client, program, payer, globalState, claimConfigPDA,
       );
       await triggerBpd(program, payer, globalState, claimConfigPDA, stakePDAs);
 
@@ -610,7 +610,7 @@ describe("Phase 8.1: Game Theory Hardening", () => {
   // ========================================================================
   describe("Anti-Whale: BPB Diminishing Returns", () => {
     it("BPB unchanged for small stakes (linear tier 1)", async () => {
-      const { context, program, payer } = await setupTest();
+      const { client, program, payer } = setupTest();
       const { globalState, mint, mintAuthority } = await initializeProtocol(
         program,
         payer,
@@ -630,7 +630,7 @@ describe("Phase 8.1: Game Theory Hardening", () => {
     });
 
     it("BPB produces monotonically increasing T-shares for larger stakes", async () => {
-      const { context, program, payer } = await setupTest();
+      const { client, program, payer } = setupTest();
       const { globalState, mint, mintAuthority } = await initializeProtocol(
         program,
         payer,
@@ -664,7 +664,7 @@ describe("Phase 8.1: Game Theory Hardening", () => {
     });
 
     it("BPB bonus grows with stake size (super-linear T-shares in tier 1)", async () => {
-      const { context, program, payer } = await setupTest();
+      const { client, program, payer } = setupTest();
       const { globalState, mint, mintAuthority } = await initializeProtocol(
         program,
         payer,

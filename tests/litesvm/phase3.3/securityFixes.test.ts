@@ -43,7 +43,7 @@ describe("Phase 8 Security Fixes", () => {
 
   // Helper: Seal BPD finalize (authority-gated)
   async function sealBpdFinalize(
-    context: any,
+    client: any,
     program: any,
     payer: any,
     globalState: any,
@@ -56,7 +56,7 @@ describe("Phase 8 Security Fixes", () => {
       expectedFinalizedCount = claimConfig.bpdStakesFinalized;
     }
     // Advance clock past 24-hour seal delay
-    await advanceClock(context, BigInt(216_001));
+    await advanceClock(client, BigInt(216_001));
     await program.methods
       .sealBpdFinalize(expectedFinalizedCount)
       .accounts({
@@ -113,7 +113,7 @@ describe("Phase 8 Security Fixes", () => {
   async function setupClaimPeriodWithStaker(
     program: any,
     payer: any,
-    context: any,
+    client: any,
   ) {
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
@@ -185,7 +185,7 @@ describe("Phase 8 Security Fixes", () => {
 
   describe("CRIT-1: Zero-bonus stake counter desync fix", () => {
     it("zero-bonus stake increments counter without distributing tokens", async () => {
-      const { context, program, payer } = await setupTest();
+      const { client, program, payer } = setupTest();
       const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
       // Initialize claim period
@@ -227,11 +227,11 @@ describe("Phase 8 Security Fixes", () => {
         .rpc();
 
       // Advance past claim period
-      await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+      await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
       // Finalize and seal
       await finalizeBpd(program, payer, globalState, claimConfigPDA, [stakePDA]);
-      await sealBpdFinalize(context, program, payer, globalState, claimConfigPDA);
+      await sealBpdFinalize(client, program, payer, globalState, claimConfigPDA);
 
       // Check pre-trigger state
       let claimConfig = await program.account.claimConfig.fetch(claimConfigPDA);
@@ -256,7 +256,7 @@ describe("Phase 8 Security Fixes", () => {
     });
 
     it("mixed zero-bonus and normal stakes complete correctly", async () => {
-      const { context, program, payer } = await setupTest();
+      const { client, program, payer } = setupTest();
       const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
       const snapshotWallet = Keypair.generate();
@@ -327,11 +327,11 @@ describe("Phase 8 Security Fixes", () => {
       }
 
       // Advance past claim period
-      await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+      await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
       // Finalize all 3 stakes
       await finalizeBpd(program, payer, globalState, claimConfigPDA, stakes);
-      await sealBpdFinalize(context, program, payer, globalState, claimConfigPDA);
+      await sealBpdFinalize(client, program, payer, globalState, claimConfigPDA);
 
       // Trigger all in one batch
       await triggerBpd(program, payer, globalState, claimConfigPDA, stakes);
@@ -351,7 +351,7 @@ describe("Phase 8 Security Fixes", () => {
     });
 
     it("many zero-bonus stakes do not block completion", async () => {
-      const { context, program, payer } = await setupTest();
+      const { client, program, payer } = setupTest();
       const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
       const snapshotWallet = Keypair.generate();
@@ -397,11 +397,11 @@ describe("Phase 8 Security Fixes", () => {
       }
 
       // Advance past claim period
-      await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+      await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
       // Finalize all
       await finalizeBpd(program, payer, globalState, claimConfigPDA, stakes);
-      await sealBpdFinalize(context, program, payer, globalState, claimConfigPDA);
+      await sealBpdFinalize(client, program, payer, globalState, claimConfigPDA);
 
       // Trigger all
       await triggerBpd(program, payer, globalState, claimConfigPDA, stakes);
@@ -415,11 +415,11 @@ describe("Phase 8 Security Fixes", () => {
 
   describe("HIGH-1: Emergency BPD abort mechanism", () => {
     it("authority can abort stuck BPD window", async () => {
-      const { context, program, payer } = await setupTest();
-      const setup = await setupClaimPeriodWithStaker(program, payer, context);
+      const { client, program, payer } = setupTest();
+      const setup = await setupClaimPeriodWithStaker(program, payer, client);
 
       // Advance past claim period
-      await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+      await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
       // Finalize (which activates BPD window)
       await finalizeBpd(program, payer, setup.globalState, setup.claimConfigPDA, [setup.stakePDA]);
@@ -444,11 +444,11 @@ describe("Phase 8 Security Fixes", () => {
     });
 
     it("non-authority cannot abort BPD", async () => {
-      const { context, program, payer } = await setupTest();
-      const setup = await setupClaimPeriodWithStaker(program, payer, context);
+      const { client, program, payer } = setupTest();
+      const setup = await setupClaimPeriodWithStaker(program, payer, client);
 
       // Advance and finalize
-      await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+      await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
       await finalizeBpd(program, payer, setup.globalState, setup.claimConfigPDA, [setup.stakePDA]);
 
       // Create non-authority attacker
@@ -471,7 +471,7 @@ describe("Phase 8 Security Fixes", () => {
     });
 
     it("abort fails when BPD window is not active", async () => {
-      const { context, program, payer } = await setupTest();
+      const { client, program, payer } = setupTest();
       const { globalState } = await initializeProtocol(program, payer);
 
       const snapshotWallet = Keypair.generate();
@@ -499,7 +499,7 @@ describe("Phase 8 Security Fixes", () => {
     });
 
     it("abort fails after partial distribution has started", async () => {
-      const { context, program, payer } = await setupTest();
+      const { client, program, payer } = setupTest();
       const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
       // Initialize claim period
@@ -545,11 +545,11 @@ describe("Phase 8 Security Fixes", () => {
       }
 
       // Advance past claim period
-      await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+      await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
       // Finalize both stakes and seal
       await finalizeBpd(program, payer, globalState, claimConfigPDA, stakes);
-      await sealBpdFinalize(context, program, payer, globalState, claimConfigPDA);
+      await sealBpdFinalize(client, program, payer, globalState, claimConfigPDA);
 
       // Trigger distribution for only the FIRST stake (partial - 1 of 2)
       await triggerBpd(program, payer, globalState, claimConfigPDA, [stakes[0]]);
@@ -570,11 +570,11 @@ describe("Phase 8 Security Fixes", () => {
     });
 
     it("unstake works after abort clears BPD window", async () => {
-      const { context, program, payer } = await setupTest();
-      const setup = await setupClaimPeriodWithStaker(program, payer, context);
+      const { client, program, payer } = setupTest();
+      const setup = await setupClaimPeriodWithStaker(program, payer, client);
 
       // Advance and finalize
-      await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+      await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
       await finalizeBpd(program, payer, setup.globalState, setup.claimConfigPDA, [setup.stakePDA]);
 
       // Try unstake - should fail with BPD window active
@@ -600,6 +600,9 @@ describe("Phase 8 Security Fixes", () => {
       // Authority aborts
       await abortBpd(program, payer, setup.globalState, setup.claimConfigPDA);
 
+      // Expire blockhash so the retry unstake tx isn't rejected as AlreadyProcessed
+      client.expireBlockhash();
+
       // Now unstake should succeed
       await program.methods
         .unstake()
@@ -623,7 +626,7 @@ describe("Phase 8 Security Fixes", () => {
 
   describe("HIGH-2: Seal requires finalized stakes", () => {
     it("seal rejects if no stakes finalized", async () => {
-      const { context, program, payer } = await setupTest();
+      const { client, program, payer } = setupTest();
       const { globalState } = await initializeProtocol(program, payer);
 
       // Initialize claim period with no stakes
@@ -643,11 +646,11 @@ describe("Phase 8 Security Fixes", () => {
         .rpc();
 
       // Advance past claim period
-      await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+      await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
       // Try to seal without finalizing any stakes - should fail
       try {
-        await sealBpdFinalize(context, program, payer, globalState, claimConfigPDA);
+        await sealBpdFinalize(client, program, payer, globalState, claimConfigPDA);
         throw new Error("Expected BpdFinalizationIncomplete error");
       } catch (error: any) {
         expect(error.toString()).toContain("BpdFinalizationIncomplete");
@@ -655,17 +658,17 @@ describe("Phase 8 Security Fixes", () => {
     });
 
     it("seal succeeds after at least one stake finalized", async () => {
-      const { context, program, payer } = await setupTest();
-      const setup = await setupClaimPeriodWithStaker(program, payer, context);
+      const { client, program, payer } = setupTest();
+      const setup = await setupClaimPeriodWithStaker(program, payer, client);
 
       // Advance past claim period
-      await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+      await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
       // Finalize one stake
       await finalizeBpd(program, payer, setup.globalState, setup.claimConfigPDA, [setup.stakePDA]);
 
       // Seal should now succeed
-      await sealBpdFinalize(context, program, payer, setup.globalState, setup.claimConfigPDA);
+      await sealBpdFinalize(client, program, payer, setup.globalState, setup.claimConfigPDA);
 
       // Verify sealed
       const claimConfig = await program.account.claimConfig.fetch(setup.claimConfigPDA);
@@ -675,7 +678,7 @@ describe("Phase 8 Security Fixes", () => {
 
   describe("MED-1: Zero-amount finalize clears BPD window", () => {
     it("zero-eligible stakes clears BPD window without seal", async () => {
-      const { context, program, payer } = await setupTest();
+      const { client, program, payer } = setupTest();
       const { globalState } = await initializeProtocol(program, payer);
 
       // Initialize claim period with ZERO totalClaimable (nothing unclaimed for BPD)
@@ -696,7 +699,7 @@ describe("Phase 8 Security Fixes", () => {
         .rpc();
 
       // Advance past claim period
-      await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+      await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
       // Call finalize with no remaining accounts - zero-amount path triggers immediately
       await program.methods

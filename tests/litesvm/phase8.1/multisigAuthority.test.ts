@@ -22,7 +22,7 @@ import {
 
 describe("Multisig Authority Tests", () => {
   it("authority can execute admin_set_slots_per_day", async () => {
-    const { program, payer } = await setupTest();
+    const { program, payer } = setupTest();
     await initializeProtocol(program, payer);
     const [globalStatePDA] = findGlobalStatePDA(program.programId);
 
@@ -44,7 +44,7 @@ describe("Multisig Authority Tests", () => {
   });
 
   it("non-authority is rejected by admin_set_slots_per_day", async () => {
-    const { program, payer, context } = await setupTest();
+    const { program, payer } = setupTest();
     await initializeProtocol(program, payer);
     const [globalStatePDA] = findGlobalStatePDA(program.programId);
 
@@ -81,7 +81,7 @@ describe("Multisig Authority Tests", () => {
   });
 
   it("admin_set_slots_per_day rejects out-of-bounds values", async () => {
-    const { program, payer } = await setupTest();
+    const { program, payer } = setupTest();
     await initializeProtocol(program, payer);
     const [globalStatePDA] = findGlobalStatePDA(program.programId);
 

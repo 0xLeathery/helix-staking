@@ -44,7 +44,7 @@ describe("Phase 3.3 Security Hardening", () => {
 
   // Helper: Seal BPD finalize (authority-gated)
   async function sealBpdFinalize(
-    context: any,
+    client: any,
     program: any,
     payer: any,
     globalState: any,
@@ -57,7 +57,7 @@ describe("Phase 3.3 Security Hardening", () => {
       expectedFinalizedCount = claimConfig.bpdStakesFinalized;
     }
     // Advance clock past 24-hour seal delay
-    await advanceClock(context, BigInt(216_001));
+    await advanceClock(client, BigInt(216_001));
     await program.methods
       .sealBpdFinalize(expectedFinalizedCount)
       .accounts({
@@ -96,7 +96,7 @@ describe("Phase 3.3 Security Hardening", () => {
   async function setupClaimPeriodWithStaker(
     program: any,
     payer: any,
-    context: any,
+    client: any,
   ) {
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
@@ -168,11 +168,11 @@ describe("Phase 3.3 Security Hardening", () => {
 
   describe("CRIT-NEW-1: seal_bpd_finalize security", () => {
     it("rejects non-authority signer", async () => {
-      const { context, program, payer } = await setupTest();
-      const setup = await setupClaimPeriodWithStaker(program, payer, context);
+      const { client, program, payer } = setupTest();
+      const setup = await setupClaimPeriodWithStaker(program, payer, client);
 
       // Advance past claim period
-      await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+      await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
       // Finalize first
       await finalizeBpd(program, payer, setup.globalState, setup.claimConfigPDA, [setup.stakePDA]);
@@ -188,7 +188,7 @@ describe("Phase 3.3 Security Hardening", () => {
       await program.provider.sendAndConfirm(fundTx, [payer]);
 
       // Attacker tries to seal - should fail with Unauthorized
-      await advanceClock(context, BigInt(216_001));
+      await advanceClock(client, BigInt(216_001));
       try {
         await program.methods
           .sealBpdFinalize(0)
@@ -207,7 +207,7 @@ describe("Phase 3.3 Security Hardening", () => {
     });
 
     it("rejects seal if no stakes finalized", async () => {
-      const { context, program, payer } = await setupTest();
+      const { client, program, payer } = setupTest();
       const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
       // Initialize claim period but create NO stakes
@@ -227,11 +227,11 @@ describe("Phase 3.3 Security Hardening", () => {
         .rpc();
 
       // Advance past claim period
-      await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+      await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
       // Try to seal without finalize - should fail with BpdFinalizationIncomplete (HIGH-2 fix)
       try {
-        await sealBpdFinalize(context, program, payer, globalState, claimConfigPDA);
+        await sealBpdFinalize(client, program, payer, globalState, claimConfigPDA);
         throw new Error("Expected BpdFinalizationIncomplete error");
       } catch (error: any) {
         expect(error.toString()).to.include("BpdFinalizationIncomplete");
@@ -239,27 +239,27 @@ describe("Phase 3.3 Security Hardening", () => {
     });
 
     it("rejects double seal", async () => {
-      const { context, program, payer } = await setupTest();
-      const setup = await setupClaimPeriodWithStaker(program, payer, context);
+      const { client, program, payer } = setupTest();
+      const setup = await setupClaimPeriodWithStaker(program, payer, client);
 
       // Advance past claim period
-      await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+      await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
       // Finalize and seal
       await finalizeBpd(program, payer, setup.globalState, setup.claimConfigPDA, [setup.stakePDA]);
-      await sealBpdFinalize(context, program, payer, setup.globalState, setup.claimConfigPDA);
+      await sealBpdFinalize(client, program, payer, setup.globalState, setup.claimConfigPDA);
 
       // Verify seal succeeded
       let claimConfig = await program.account.claimConfig.fetch(setup.claimConfigPDA);
       expect(claimConfig.bpdCalculationComplete).toBe(true);
 
       // Advance clock to make transaction unique (avoid bankrun replay detection)
-      await advanceClock(context, BigInt(1));
+      await advanceClock(client, BigInt(1));
 
       // Try to seal again - should fail
       let didFail = false;
       try {
-        await sealBpdFinalize(context, program, payer, setup.globalState, setup.claimConfigPDA);
+        await sealBpdFinalize(client, program, payer, setup.globalState, setup.claimConfigPDA);
       } catch (error: any) {
         didFail = true;
         // Just verify it threw an error - the error format in bankrun can vary
@@ -272,18 +272,18 @@ describe("Phase 3.3 Security Hardening", () => {
     });
 
     it("finalize rejects calls after seal", async () => {
-      const { context, program, payer } = await setupTest();
-      const setup = await setupClaimPeriodWithStaker(program, payer, context);
+      const { client, program, payer } = setupTest();
+      const setup = await setupClaimPeriodWithStaker(program, payer, client);
 
       // Advance past claim period
-      await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+      await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
       // Finalize and seal
       await finalizeBpd(program, payer, setup.globalState, setup.claimConfigPDA, [setup.stakePDA]);
-      await sealBpdFinalize(context, program, payer, setup.globalState, setup.claimConfigPDA);
+      await sealBpdFinalize(client, program, payer, setup.globalState, setup.claimConfigPDA);
 
       // Advance clock to make transaction unique (avoid bankrun replay detection)
-      await advanceClock(context, BigInt(1));
+      await advanceClock(client, BigInt(1));
 
       // Try to finalize again after seal - should fail
       let didFail = false;
@@ -304,11 +304,11 @@ describe("Phase 3.3 Security Hardening", () => {
 
   describe("CRIT-NEW-1: per-stake finalize tracking", () => {
     it("duplicate stake in finalize is skipped silently", async () => {
-      const { context, program, payer } = await setupTest();
-      const setup = await setupClaimPeriodWithStaker(program, payer, context);
+      const { client, program, payer } = setupTest();
+      const setup = await setupClaimPeriodWithStaker(program, payer, client);
 
       // Advance past claim period
-      await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+      await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
       // Finalize with same stake listed twice - should process only once
       const remainingAccounts = [
@@ -336,7 +336,7 @@ describe("Phase 3.3 Security Hardening", () => {
     });
 
     it("trigger skips stakes not counted in finalize", async () => {
-      const { context, program, payer } = await setupTest();
+      const { client, program, payer } = setupTest();
       const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
       // Initialize claim period
@@ -399,13 +399,13 @@ describe("Phase 3.3 Security Hardening", () => {
         .rpc();
 
       // Advance past claim period
-      await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+      await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
       // Finalize ONLY stake1
       await finalizeBpd(program, payer, globalState, claimConfigPDA, [stakePDA1]);
 
       // Seal
-      await sealBpdFinalize(context, program, payer, globalState, claimConfigPDA);
+      await sealBpdFinalize(client, program, payer, globalState, claimConfigPDA);
 
       // Try to trigger with BOTH stakes (including stake2 that wasn't finalized)
       await triggerBpd(program, payer, globalState, claimConfigPDA, [stakePDA1, stakePDA2]);
@@ -424,7 +424,7 @@ describe("Phase 3.3 Security Hardening", () => {
 
   describe("CRIT-NEW-1: counter-based completion", () => {
     it("trigger does not mark complete until all finalized stakes distributed", async () => {
-      const { context, program, payer } = await setupTest();
+      const { client, program, payer } = setupTest();
       const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
       // Initialize claim period
@@ -471,13 +471,13 @@ describe("Phase 3.3 Security Hardening", () => {
       }
 
       // Advance past claim period
-      await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+      await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
       // Finalize all 3 stakes
       await finalizeBpd(program, payer, globalState, claimConfigPDA, stakes);
 
       // Seal
-      await sealBpdFinalize(context, program, payer, globalState, claimConfigPDA);
+      await sealBpdFinalize(client, program, payer, globalState, claimConfigPDA);
 
       // Trigger batch 1: only 2 stakes
       await triggerBpd(program, payer, globalState, claimConfigPDA, [stakes[0], stakes[1]]);
@@ -500,11 +500,11 @@ describe("Phase 3.3 Security Hardening", () => {
 
   describe("HIGH-2: BPD window guard", () => {
     it("unstake blocked during BPD window", async () => {
-      const { context, program, payer } = await setupTest();
-      const setup = await setupClaimPeriodWithStaker(program, payer, context);
+      const { client, program, payer } = setupTest();
+      const setup = await setupClaimPeriodWithStaker(program, payer, client);
 
       // Advance past claim period
-      await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+      await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
       // Finalize (which sets BPD window active)
       await finalizeBpd(program, payer, setup.globalState, setup.claimConfigPDA, [setup.stakePDA]);
@@ -532,15 +532,15 @@ describe("Phase 3.3 Security Hardening", () => {
     });
 
     it("unstake allowed after BPD window closes", async () => {
-      const { context, program, payer } = await setupTest();
-      const setup = await setupClaimPeriodWithStaker(program, payer, context);
+      const { client, program, payer } = setupTest();
+      const setup = await setupClaimPeriodWithStaker(program, payer, client);
 
       // Advance past claim period
-      await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+      await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
       // Complete BPD flow (finalize, seal, trigger)
       await finalizeBpd(program, payer, setup.globalState, setup.claimConfigPDA, [setup.stakePDA]);
-      await sealBpdFinalize(context, program, payer, setup.globalState, setup.claimConfigPDA);
+      await sealBpdFinalize(client, program, payer, setup.globalState, setup.claimConfigPDA);
       await triggerBpd(program, payer, setup.globalState, setup.claimConfigPDA, [setup.stakePDA]);
 
       // BPD window should now be closed - unstake should succeed
@@ -566,7 +566,7 @@ describe("Phase 3.3 Security Hardening", () => {
 
   describe("MED-5: claim_period_id validation", () => {
     it("initialize_claim_period rejects claim_period_id=0", async () => {
-      const { context, program, payer } = await setupTest();
+      const { client, program, payer } = setupTest();
       const { globalState } = await initializeProtocol(program, payer);
 
       const snapshotWallet = Keypair.generate();
@@ -592,7 +592,7 @@ describe("Phase 3.3 Security Hardening", () => {
     });
 
     it("initialize_claim_period accepts claim_period_id=1", async () => {
-      const { context, program, payer } = await setupTest();
+      const { client, program, payer } = setupTest();
       const { globalState } = await initializeProtocol(program, payer);
 
       const snapshotWallet = Keypair.generate();
@@ -618,16 +618,16 @@ describe("Phase 3.3 Security Hardening", () => {
 
   describe("LOW-2: BPD bonus in unstake", () => {
     it("unstake includes bpd_bonus_pending in payout", async () => {
-      const { context, program, payer } = await setupTest();
-      const setup = await setupClaimPeriodWithStaker(program, payer, context);
-      const testContext = context;
+      const { client, program, payer } = setupTest();
+      const setup = await setupClaimPeriodWithStaker(program, payer, client);
+      const testContext = client;
 
       // Advance past claim period
-      await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+      await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
       // Complete BPD flow
       await finalizeBpd(program, payer, setup.globalState, setup.claimConfigPDA, [setup.stakePDA]);
-      await sealBpdFinalize(context, program, payer, setup.globalState, setup.claimConfigPDA);
+      await sealBpdFinalize(client, program, payer, setup.globalState, setup.claimConfigPDA);
       await triggerBpd(program, payer, setup.globalState, setup.claimConfigPDA, [setup.stakePDA]);
 
       // Get stake details before unstake
@@ -636,7 +636,7 @@ describe("Phase 3.3 Security Hardening", () => {
       expect(bpdBonus.gtn(0)).toBe(true);
 
       // Get token balance before unstake (using bankrun's getAccount)
-      const balanceBefore = await getTokenBalance(testContext.banksClient, setup.stakerATA);
+      const balanceBefore = await getTokenBalance(testContext, setup.stakerATA);
 
       // Unstake
       await program.methods
@@ -654,7 +654,7 @@ describe("Phase 3.3 Security Hardening", () => {
         .rpc();
 
       // Get token balance after unstake
-      const balanceAfter = await getTokenBalance(testContext.banksClient, setup.stakerATA);
+      const balanceAfter = await getTokenBalance(testContext, setup.stakerATA);
 
       // Payout should include BPD bonus
       const payout = new BN(balanceAfter.toString()).sub(new BN(balanceBefore.toString()));
@@ -666,7 +666,7 @@ describe("Phase 3.3 Security Hardening", () => {
 
   describe("Integration: full hardened lifecycle", () => {
     it("full BPD lifecycle with security hardening (3 stakes, 2 batches each for finalize and trigger)", async () => {
-      const { context, program, payer } = await setupTest();
+      const { client, program, payer } = setupTest();
       const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
       // Initialize claim period
@@ -713,7 +713,7 @@ describe("Phase 3.3 Security Hardening", () => {
       }
 
       // Advance past claim period
-      await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+      await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
       // FINALIZE in 2 batches
       await finalizeBpd(program, payer, globalState, claimConfigPDA, [stakes[0], stakes[1]]);
@@ -725,7 +725,7 @@ describe("Phase 3.3 Security Hardening", () => {
       expect(claimConfig.bpdCalculationComplete).toBe(false);
 
       // SEAL
-      await sealBpdFinalize(context, program, payer, globalState, claimConfigPDA);
+      await sealBpdFinalize(client, program, payer, globalState, claimConfigPDA);
 
       claimConfig = await program.account.claimConfig.fetch(claimConfigPDA);
       expect(claimConfig.bpdCalculationComplete).toBe(true);

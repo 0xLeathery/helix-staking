@@ -16,7 +16,7 @@ import {
 
 describe("CreateStake", () => {
   it("creates a stake with correct T-shares for minimum duration (1 day)", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
 
     // Initialize protocol
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
@@ -52,7 +52,7 @@ describe("CreateStake", () => {
     await mintTokensToUser(program, payer, globalState, mint, mintAuthority, userATA, stakeAmount);
 
     // Check initial balance
-    const balanceBefore = await getTokenBalance(context.banksClient, userATA);
+    const balanceBefore = await getTokenBalance(client, userATA);
     expect(balanceBefore.toString()).toBe(stakeAmount.toString());
 
     // Create stake for 1 day
@@ -95,12 +95,12 @@ describe("CreateStake", () => {
     expect(globalStateAccount.totalShares.toString()).toBe(stakeAccount.tShares.toString());
 
     // Verify tokens were burned (balance decreased)
-    const balanceAfter = await getTokenBalance(context.banksClient, userATA);
+    const balanceAfter = await getTokenBalance(client, userATA);
     expect(balanceAfter.toString()).toBe("0");
   });
 
   it("creates a stake with LPB bonus for long duration (3641 days)", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
 
     // Initialize protocol
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
@@ -165,7 +165,7 @@ describe("CreateStake", () => {
   });
 
   it("creates a stake with BPB bonus for large amount", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
 
     // Initialize protocol
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
@@ -232,7 +232,7 @@ describe("CreateStake", () => {
   });
 
   it("rejects stake below minimum amount", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
 
     // Initialize protocol
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
@@ -290,7 +290,7 @@ describe("CreateStake", () => {
   });
 
   it("rejects stake with invalid duration (0 days)", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
 
     // Initialize protocol
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
@@ -347,7 +347,7 @@ describe("CreateStake", () => {
   });
 
   it("rejects stake with invalid duration (>5555 days)", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
 
     // Initialize protocol
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
@@ -404,7 +404,7 @@ describe("CreateStake", () => {
   });
 
   it("creates multiple stakes for same user with sequential IDs", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
 
     // Initialize protocol
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);

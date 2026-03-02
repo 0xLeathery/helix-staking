@@ -16,7 +16,7 @@ import {
 
 describe("CrankDistribution", () => {
   it("updates share_rate after advancing one day", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
 
     // Initialize protocol
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
@@ -75,7 +75,7 @@ describe("CrankDistribution", () => {
 
     // Advance clock by 1 day
     const slotsPerDay = BigInt(DEFAULT_SLOTS_PER_DAY.toString());
-    await advanceClock(context, slotsPerDay);
+    await advanceClock(client, slotsPerDay);
 
     // Call crank_distribution
     await program.methods
@@ -99,7 +99,7 @@ describe("CrankDistribution", () => {
   });
 
   it("rejects double distribution on same day", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
 
     // Initialize protocol
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
@@ -152,7 +152,7 @@ describe("CrankDistribution", () => {
 
     // Advance clock by 1 day
     const slotsPerDay = BigInt(DEFAULT_SLOTS_PER_DAY.toString());
-    await advanceClock(context, slotsPerDay);
+    await advanceClock(client, slotsPerDay);
 
     // First crank call should succeed
     await program.methods
@@ -185,7 +185,7 @@ describe("CrankDistribution", () => {
   });
 
   it("handles multi-day gap correctly", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
 
     // Initialize protocol
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
@@ -242,7 +242,7 @@ describe("CrankDistribution", () => {
 
     // Advance clock by 3 days
     const slotsPerDay = BigInt(DEFAULT_SLOTS_PER_DAY.toString());
-    await advanceClock(context, slotsPerDay * BigInt(3));
+    await advanceClock(client, slotsPerDay * BigInt(3));
 
     // Call crank
     await program.methods
@@ -266,7 +266,7 @@ describe("CrankDistribution", () => {
   });
 
   it("handles crank with zero total_shares (no stakes)", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
 
     // Initialize protocol (but don't create any stakes)
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
@@ -277,7 +277,7 @@ describe("CrankDistribution", () => {
 
     // Advance clock by 1 day
     const slotsPerDay = BigInt(DEFAULT_SLOTS_PER_DAY.toString());
-    await advanceClock(context, slotsPerDay);
+    await advanceClock(client, slotsPerDay);
 
     // Call crank (should succeed but not change share_rate)
     await program.methods
@@ -301,7 +301,7 @@ describe("CrankDistribution", () => {
   });
 
   it("anyone can call crank (permissionless)", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
 
     // Initialize protocol
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
@@ -354,28 +354,13 @@ describe("CrankDistribution", () => {
 
     // Advance clock by 1 day
     const slotsPerDay = BigInt(DEFAULT_SLOTS_PER_DAY.toString());
-    await advanceClock(context, slotsPerDay);
+    await advanceClock(client, slotsPerDay);
 
     // Create different keypair (not the authority)
     const otherUser = Keypair.generate();
 
     // Fund other user with SOL for transaction fees
-    await context.banksClient.processTransaction(
-      (() => {
-        const tx = new (require("@solana/web3.js").Transaction)();
-        tx.add(
-          require("@solana/web3.js").SystemProgram.transfer({
-            fromPubkey: payer.publicKey,
-            toPubkey: otherUser.publicKey,
-            lamports: 1_000_000_000, // 1 SOL
-          })
-        );
-        tx.recentBlockhash = context.lastBlockhash;
-        tx.feePayer = payer.publicKey;
-        tx.sign(payer);
-        return tx;
-      })()
-    );
+    client.airdrop(otherUser.publicKey, BigInt(1_000_000_000));
 
     // Call crank from different user (should succeed - permissionless)
     await program.methods

@@ -13,7 +13,7 @@ import {
 
 describe("InitializeClaimPeriod", () => {
   it("initializes claim period with valid merkle root", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
 
     // Initialize protocol first
     await initializeProtocol(program, payer);
@@ -59,7 +59,7 @@ describe("InitializeClaimPeriod", () => {
   });
 
   it("rejects non-authority caller", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
 
     // Initialize protocol
     await initializeProtocol(program, payer);
@@ -106,7 +106,7 @@ describe("InitializeClaimPeriod", () => {
   });
 
   it("rejects double initialization", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
 
     // Initialize protocol
     await initializeProtocol(program, payer);
@@ -157,13 +157,13 @@ describe("InitializeClaimPeriod", () => {
   });
 
   it("calculates correct end slot (180 days)", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
 
     // Initialize protocol
     await initializeProtocol(program, payer);
 
     // Get current slot before initializing claim period
-    const clockBefore = await context.banksClient.getClock();
+    const clockBefore = client.getClock();
 
     // Build Merkle tree
     const testWallet = Keypair.generate();
@@ -196,7 +196,7 @@ describe("InitializeClaimPeriod", () => {
   });
 
   it("emits ClaimPeriodStarted event", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
 
     // Initialize protocol
     await initializeProtocol(program, payer);

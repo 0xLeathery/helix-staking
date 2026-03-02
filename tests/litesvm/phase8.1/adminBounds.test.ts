@@ -39,7 +39,7 @@ describe("Admin Bounds Tests", () => {
   // =======================================================================
   describe("admin_set_slots_per_day bounds (T007)", () => {
     it("accepts value at lower boundary (194,400)", async () => {
-      const { program, payer } = await setupTest();
+      const { program, payer } = setupTest();
       await initializeProtocol(program, payer);
       const [globalStatePDA] = findGlobalStatePDA(program.programId);
 
@@ -57,7 +57,7 @@ describe("Admin Bounds Tests", () => {
     });
 
     it("accepts value at upper boundary (237,600)", async () => {
-      const { program, payer } = await setupTest();
+      const { program, payer } = setupTest();
       await initializeProtocol(program, payer);
       const [globalStatePDA] = findGlobalStatePDA(program.programId);
 
@@ -75,7 +75,7 @@ describe("Admin Bounds Tests", () => {
     });
 
     it("rejects value below lower boundary (194,399)", async () => {
-      const { program, payer } = await setupTest();
+      const { program, payer } = setupTest();
       await initializeProtocol(program, payer);
       const [globalStatePDA] = findGlobalStatePDA(program.programId);
 
@@ -95,7 +95,7 @@ describe("Admin Bounds Tests", () => {
     });
 
     it("rejects value above upper boundary (237,601)", async () => {
-      const { program, payer } = await setupTest();
+      const { program, payer } = setupTest();
       await initializeProtocol(program, payer);
       const [globalStatePDA] = findGlobalStatePDA(program.programId);
 
@@ -115,7 +115,7 @@ describe("Admin Bounds Tests", () => {
     });
 
     it("rejects value of 0", async () => {
-      const { program, payer } = await setupTest();
+      const { program, payer } = setupTest();
       await initializeProtocol(program, payer);
       const [globalStatePDA] = findGlobalStatePDA(program.programId);
 
@@ -136,7 +136,7 @@ describe("Admin Bounds Tests", () => {
     });
 
     it("rejects extreme value (u64 max)", async () => {
-      const { program, payer } = await setupTest();
+      const { program, payer } = setupTest();
       await initializeProtocol(program, payer);
       const [globalStatePDA] = findGlobalStatePDA(program.programId);
 
@@ -161,7 +161,7 @@ describe("Admin Bounds Tests", () => {
   // =======================================================================
   describe("admin_set_claim_end_slot monotonic constraint (T008)", () => {
     it("accepts increasing end_slot", async () => {
-      const { context, program, payer } = await setupTest();
+      const { client, program, payer } = setupTest();
       const { globalState } = await initializeProtocol(program, payer);
       const [globalStatePDA] = findGlobalStatePDA(program.programId);
       const [claimConfigPDA] = findClaimConfigPDA(program.programId);
@@ -215,7 +215,7 @@ describe("Admin Bounds Tests", () => {
     });
 
     it("rejects decreasing end_slot", async () => {
-      const { context, program, payer } = await setupTest();
+      const { client, program, payer } = setupTest();
       const { globalState } = await initializeProtocol(program, payer);
       const [claimConfigPDA] = findClaimConfigPDA(program.programId);
 
@@ -269,7 +269,7 @@ describe("Admin Bounds Tests", () => {
     });
 
     it("rejects same end_slot (not strictly greater)", async () => {
-      const { context, program, payer } = await setupTest();
+      const { client, program, payer } = setupTest();
       const { globalState } = await initializeProtocol(program, payer);
       const [claimConfigPDA] = findClaimConfigPDA(program.programId);
 
@@ -322,7 +322,7 @@ describe("Admin Bounds Tests", () => {
     });
 
     it("accepts multiple successive increases", async () => {
-      const { context, program, payer } = await setupTest();
+      const { client, program, payer } = setupTest();
       const { globalState } = await initializeProtocol(program, payer);
       const [claimConfigPDA] = findClaimConfigPDA(program.programId);
 

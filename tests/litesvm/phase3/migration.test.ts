@@ -21,7 +21,7 @@ import {
 
 describe("StakeAccount Migration", () => {
   it("old stakes (92 bytes) work with claim_rewards", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
 
     // Initialize protocol
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
@@ -52,7 +52,7 @@ describe("StakeAccount Migration", () => {
       .rpc();
 
     // Advance time and trigger crank distribution
-    await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(5).toString()));
+    await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(5).toString()));
 
     await program.methods
       .crankDistribution()
@@ -87,7 +87,7 @@ describe("StakeAccount Migration", () => {
   });
 
   it("migrated stake has bpd_bonus_pending = 0", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
     const userATA = getAssociatedTokenAddressSync(mint, payer.publicKey, false, TOKEN_2022_PROGRAM_ID);
@@ -120,7 +120,7 @@ describe("StakeAccount Migration", () => {
   });
 
   it("new stakes (112 bytes) have BPD fields", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
     const userATA = getAssociatedTokenAddressSync(mint, payer.publicKey, false, TOKEN_2022_PROGRAM_ID);
@@ -155,7 +155,7 @@ describe("StakeAccount Migration", () => {
   });
 
   it("migration preserves existing stake data", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
     const userATA = getAssociatedTokenAddressSync(mint, payer.publicKey, false, TOKEN_2022_PROGRAM_ID);
@@ -191,7 +191,7 @@ describe("StakeAccount Migration", () => {
     const originalStartSlot = stakeBefore.startSlot.toString();
 
     // Trigger claim_rewards (which might trigger migration)
-    await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(5).toString()));
+    await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(5).toString()));
 
     await program.methods
       .crankDistribution()
@@ -226,7 +226,7 @@ describe("StakeAccount Migration", () => {
   });
 
   it("user pays rent difference on migration", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
     const userATA = getAssociatedTokenAddressSync(mint, payer.publicKey, false, TOKEN_2022_PROGRAM_ID);
@@ -253,11 +253,11 @@ describe("StakeAccount Migration", () => {
       .rpc();
 
     // Track SOL balance before claim_rewards
-    const userInfoBefore = await context.banksClient.getAccount(payer.publicKey);
+    const userInfoBefore = client.getAccount(payer.publicKey);
     const solBefore = userInfoBefore!.lamports;
 
     // Trigger crank and claim
-    await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(5).toString()));
+    await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(5).toString()));
 
     await program.methods
       .crankDistribution()
@@ -283,7 +283,7 @@ describe("StakeAccount Migration", () => {
       .rpc();
 
     // SOL should have decreased (paid tx fees and possibly realloc rent)
-    const userInfoAfter = await context.banksClient.getAccount(payer.publicKey);
+    const userInfoAfter = client.getAccount(payer.publicKey);
     const solAfter = userInfoAfter!.lamports;
 
     // User pays transaction fees at minimum
@@ -291,7 +291,7 @@ describe("StakeAccount Migration", () => {
   });
 
   it("claim_rewards includes BPD bonus after trigger", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
     // Create staker wallet
@@ -350,7 +350,7 @@ describe("StakeAccount Migration", () => {
       .rpc();
 
     // Advance past claim period end (180 days)
-    await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+    await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
     // Finalize BPD calculation
     await program.methods
@@ -368,7 +368,7 @@ describe("StakeAccount Migration", () => {
 
     // Seal BPD finalize
     const claimConfigData = await program.account.claimConfig.fetch(claimConfigPDA);
-    await advanceClock(context, BigInt(216_001));
+    await advanceClock(client, BigInt(216_001));
     await program.methods
       .sealBpdFinalize(claimConfigData.bpdStakesFinalized)
       .accounts({
@@ -399,7 +399,7 @@ describe("StakeAccount Migration", () => {
   });
 
   it("claim_rewards clears bpd_bonus_pending after payout", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
     // Create staker
@@ -457,7 +457,7 @@ describe("StakeAccount Migration", () => {
       .rpc();
 
     // Advance past claim period
-    await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+    await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
     // Finalize BPD calculation
     await program.methods
@@ -475,7 +475,7 @@ describe("StakeAccount Migration", () => {
 
     // Seal BPD finalize
     let claimConfigData = await program.account.claimConfig.fetch(claimConfigPDA);
-    await advanceClock(context, BigInt(216_001));
+    await advanceClock(client, BigInt(216_001));
     await program.methods
       .sealBpdFinalize(claimConfigData.bpdStakesFinalized)
       .accounts({
@@ -536,7 +536,7 @@ describe("StakeAccount Migration", () => {
   });
 
   it("claim_rewards returns zero BPD for ineligible stake", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
     // Create stake BEFORE claim period starts
@@ -574,7 +574,7 @@ describe("StakeAccount Migration", () => {
       .rpc();
 
     // Advance a bit, THEN initialize claim period
-    await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(10).toString()));
+    await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(10).toString()));
 
     const snapshotWallet = Keypair.generate();
     const snapshotBalance = new BN("10000000000");
@@ -596,7 +596,7 @@ describe("StakeAccount Migration", () => {
       .rpc();
 
     // Advance past claim period
-    await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
+    await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()));
 
     // Finalize BPD calculation with the ineligible stake
     await program.methods
@@ -614,7 +614,7 @@ describe("StakeAccount Migration", () => {
 
     // No stakes were finalized (stake was created before claim period),
     // so seal should fail with BpdFinalizationIncomplete
-    await advanceClock(context, BigInt(216_001));
+    await advanceClock(client, BigInt(216_001));
     try {
       const claimConfigData = await program.account.claimConfig.fetch(claimConfigPDA);
       await program.methods

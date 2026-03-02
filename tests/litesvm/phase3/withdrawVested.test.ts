@@ -22,7 +22,7 @@ import {
 } from "./utils";
 
 describe("WithdrawVested", () => {
-  async function setupClaimPeriodAndClaim(program: any, payer: any, context: any) {
+  async function setupClaimPeriodAndClaim(program: any, payer: any, client: any) {
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
     const snapshotWallet = Keypair.generate();
@@ -103,8 +103,8 @@ describe("WithdrawVested", () => {
   }
 
   it("withdraws 10% immediately after claim", async () => {
-    const { context, provider, program, payer } = await setupTest();
-    const setup = await setupClaimPeriodAndClaim(program, payer, context);
+    const { client, provider, program, payer } = setupTest();
+    const setup = await setupClaimPeriodAndClaim(program, payer, client);
 
     // Try to withdraw right after claim - should get 0 additional tokens
     // because immediate portion was already withdrawn
@@ -127,13 +127,13 @@ describe("WithdrawVested", () => {
       throw new Error("Expected NoVestedTokens error");
     } catch (error: any) {
       // At slot 0 after claim, only immediate portion is vested, which is already withdrawn
-      expect(error.toString()).to.include("NoVestedTokens");
+      expect(error.toString()).toContain("NoVestedTokens");
     }
   });
 
   it("withdraws partial vesting mid-period", async () => {
-    const { context, provider, program, payer } = await setupTest();
-    const setup = await setupClaimPeriodAndClaim(program, payer, context);
+    const { client, provider, program, payer } = setupTest();
+    const setup = await setupClaimPeriodAndClaim(program, payer, client);
 
     // Get claim status to know claimed slot
     const claimStatus = await program.account.claimStatus.fetch(setup.claimStatusPDA);
@@ -142,7 +142,7 @@ describe("WithdrawVested", () => {
 
     // Advance 15 days (50% through vesting period)
     const slotsToAdvance = DEFAULT_SLOTS_PER_DAY.muln(15);
-    await advanceClock(context, BigInt(slotsToAdvance.toString()));
+    await advanceClock(client, BigInt(slotsToAdvance.toString()));
 
     const currentSlot = claimedSlot.add(slotsToAdvance);
 
@@ -182,11 +182,11 @@ describe("WithdrawVested", () => {
   });
 
   it("withdraws full amount after 30 days", async () => {
-    const { context, provider, program, payer } = await setupTest();
-    const setup = await setupClaimPeriodAndClaim(program, payer, context);
+    const { client, provider, program, payer } = setupTest();
+    const setup = await setupClaimPeriodAndClaim(program, payer, client);
 
     // Advance past vesting end (30+ days)
-    await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(VESTING_DAYS + 1).toString()));
+    await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(VESTING_DAYS + 1).toString()));
 
     // Withdraw should get entire vesting portion
     const withdrawTx = new Transaction();
@@ -211,11 +211,11 @@ describe("WithdrawVested", () => {
   });
 
   it("tracks cumulative withdrawn_amount", async () => {
-    const { context, provider, program, payer } = await setupTest();
-    const setup = await setupClaimPeriodAndClaim(program, payer, context);
+    const { client, provider, program, payer } = setupTest();
+    const setup = await setupClaimPeriodAndClaim(program, payer, client);
 
     // First withdrawal after 10 days
-    await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(10).toString()));
+    await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(10).toString()));
 
     const withdrawTx1 = new Transaction();
     withdrawTx1.add(await program.methods
@@ -237,7 +237,7 @@ describe("WithdrawVested", () => {
     const withdrawn1 = new BN(statusAfter1.withdrawnAmount.toString());
 
     // Second withdrawal after 20 more days (total 30 days)
-    await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(20).toString()));
+    await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(20).toString()));
 
     const withdrawTx2 = new Transaction();
     withdrawTx2.add(await program.methods
@@ -265,11 +265,11 @@ describe("WithdrawVested", () => {
   });
 
   it("prevents double-withdrawal of same tokens", async () => {
-    const { context, provider, program, payer } = await setupTest();
-    const setup = await setupClaimPeriodAndClaim(program, payer, context);
+    const { client, provider, program, payer } = setupTest();
+    const setup = await setupClaimPeriodAndClaim(program, payer, client);
 
     // Advance 15 days
-    await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(15).toString()));
+    await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(15).toString()));
 
     // First withdrawal
     const withdrawTx1 = new Transaction();
@@ -287,6 +287,9 @@ describe("WithdrawVested", () => {
       }).instruction());
 
     await program.provider.sendAndConfirm(withdrawTx1, [setup.snapshotWallet]);
+
+    // Expire blockhash so the second tx doesn't get rejected as AlreadyProcessed
+    client.expireBlockhash();
 
     // Immediate second withdrawal (no time passed) should fail
     const withdrawTx2 = new Transaction();
@@ -307,13 +310,13 @@ describe("WithdrawVested", () => {
       await program.provider.sendAndConfirm(withdrawTx2, [setup.snapshotWallet]);
       throw new Error("Expected NoVestedTokens error");
     } catch (error: any) {
-      expect(error.toString()).to.include("NoVestedTokens");
+      expect(error.toString()).toContain("NoVestedTokens");
     }
   });
 
   it("calculates linear vesting correctly", async () => {
-    const { context, provider, program, payer } = await setupTest();
-    const setup = await setupClaimPeriodAndClaim(program, payer, context);
+    const { client, provider, program, payer } = setupTest();
+    const setup = await setupClaimPeriodAndClaim(program, payer, client);
 
     const claimStatus = await program.account.claimStatus.fetch(setup.claimStatusPDA);
     const claimedSlot = new BN(claimStatus.claimedSlot.toString());
@@ -362,11 +365,11 @@ describe("WithdrawVested", () => {
   });
 
   it("emits VestedTokensWithdrawn event", async () => {
-    const { context, provider, program, payer } = await setupTest();
-    const setup = await setupClaimPeriodAndClaim(program, payer, context);
+    const { client, provider, program, payer } = setupTest();
+    const setup = await setupClaimPeriodAndClaim(program, payer, client);
 
     // Advance 15 days
-    await advanceClock(context, BigInt(DEFAULT_SLOTS_PER_DAY.muln(15).toString()));
+    await advanceClock(client, BigInt(DEFAULT_SLOTS_PER_DAY.muln(15).toString()));
 
     // Withdraw - event verification via state changes
     const statusBefore = await program.account.claimStatus.fetch(setup.claimStatusPDA);
@@ -401,7 +404,7 @@ describe("WithdrawVested", () => {
   });
 
   it("rejects withdrawal before claim", async () => {
-    const { context, provider, program, payer } = await setupTest();
+    const { client, provider, program, payer } = setupTest();
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
 
     const snapshotWallet = Keypair.generate();
@@ -463,12 +466,13 @@ describe("WithdrawVested", () => {
       throw new Error("Expected error for withdrawal before claim");
     } catch (error: any) {
       // ClaimStatus account doesn't exist
-      expect(error.toString().toLowerCase()).to.satisfy((msg: string) =>
+      const msg = error.toString().toLowerCase();
+      const isExpectedError =
         msg.includes("account not found") ||
         msg.includes("accountnotinitialized") ||
         msg.includes("not initialized") ||
-        msg.includes("does not exist")
-      );
+        msg.includes("does not exist");
+      expect(isExpectedError).toBe(true);
     }
   });
 });

@@ -111,7 +111,7 @@ describe("BPD Saturation Tests (C1 Fix)", () => {
     // Scenario: total_claimable is tiny (1 lamport), and a free_claim with speed bonus
     // pushes total_claimed above total_claimable. The BPD finalize should use
     // saturating_sub and produce unclaimed_amount = 0, completing immediately.
-    const { context, program, payer } = await setupTest();
+    const { client, program, payer } = setupTest();
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
     const [claimConfigPDA] = findClaimConfigPDA(program.programId);
 
@@ -156,7 +156,7 @@ describe("BPD Saturation Tests (C1 Fix)", () => {
 
     // Advance past claim period (181 days)
     await advanceClock(
-      context,
+      client,
       BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()),
     );
 
@@ -192,7 +192,7 @@ describe("BPD Saturation Tests (C1 Fix)", () => {
     // Scenario: total_claimable == total_claimed (nothing unclaimed).
     // saturating_sub produces 0, and the instruction marks BPD complete immediately
     // without entering the per-stake loop.
-    const { context, program, payer } = await setupTest();
+    const { client, program, payer } = setupTest();
     const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
     const [claimConfigPDA] = findClaimConfigPDA(program.programId);
 
@@ -237,7 +237,7 @@ describe("BPD Saturation Tests (C1 Fix)", () => {
 
     // Advance past claim period
     await advanceClock(
-      context,
+      client,
       BigInt(DEFAULT_SLOTS_PER_DAY.muln(181).toString()),
     );
 
