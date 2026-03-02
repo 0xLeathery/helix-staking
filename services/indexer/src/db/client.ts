@@ -1,5 +1,5 @@
-import { Pool } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
+import { Pool } from 'pg';
+import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from './schema.js';
 
 // Lazy initialization to avoid import-time env validation failures during tests
@@ -25,7 +25,7 @@ function getDb() {
   return _db;
 }
 
-/** Neon serverless connection pool */
+/** Standard pg connection pool */
 export const pool = new Proxy({} as Pool, {
   get(_, prop) {
     return (getPool() as any)[prop];

@@ -1,0 +1,1417 @@
+{
+  "id": "bc774bce-52e4-489c-ad2a-11ad099e1d7e",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.admin_minted_events": {
+      "name": "admin_minted_events",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "signature": {
+          "name": "signature",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slot": {
+          "name": "slot",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "authority": {
+          "name": "authority",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "recipient": {
+          "name": "recipient",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "amount": {
+          "name": "amount",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "protocol_initialized_events_signature_unique": {
+          "name": "protocol_initialized_events_signature_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "signature"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.authority_transfer_cancelled_events": {
+      "name": "authority_transfer_cancelled_events",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "signature": {
+          "name": "signature",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slot": {
+          "name": "slot",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "authority": {
+          "name": "authority",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cancelled_new_authority": {
+          "name": "cancelled_new_authority",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "protocol_initialized_events_signature_unique": {
+          "name": "protocol_initialized_events_signature_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "signature"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.authority_transfer_completed_events": {
+      "name": "authority_transfer_completed_events",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "signature": {
+          "name": "signature",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slot": {
+          "name": "slot",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "old_authority": {
+          "name": "old_authority",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "new_authority": {
+          "name": "new_authority",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "protocol_initialized_events_signature_unique": {
+          "name": "protocol_initialized_events_signature_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "signature"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.authority_transfer_initiated_events": {
+      "name": "authority_transfer_initiated_events",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "signature": {
+          "name": "signature",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slot": {
+          "name": "slot",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "old_authority": {
+          "name": "old_authority",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "new_authority": {
+          "name": "new_authority",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "protocol_initialized_events_signature_unique": {
+          "name": "protocol_initialized_events_signature_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "signature"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.big_pay_day_distributed_events": {
+      "name": "big_pay_day_distributed_events",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "signature": {
+          "name": "signature",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slot": {
+          "name": "slot",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "timestamp": {
+          "name": "timestamp",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "claim_period_id": {
+          "name": "claim_period_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_unclaimed": {
+          "name": "total_unclaimed",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_eligible_share_days": {
+          "name": "total_eligible_share_days",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "helix_per_share_day": {
+          "name": "helix_per_share_day",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "eligible_stakers": {
+          "name": "eligible_stakers",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "protocol_initialized_events_signature_unique": {
+          "name": "protocol_initialized_events_signature_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "signature"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.bpd_aborted_events": {
+      "name": "bpd_aborted_events",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "signature": {
+          "name": "signature",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slot": {
+          "name": "slot",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "claim_period_id": {
+          "name": "claim_period_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stakes_finalized": {
+          "name": "stakes_finalized",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stakes_distributed": {
+          "name": "stakes_distributed",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "protocol_initialized_events_signature_unique": {
+          "name": "protocol_initialized_events_signature_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "signature"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.bpd_batch_finalized_events": {
+      "name": "bpd_batch_finalized_events",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "signature": {
+          "name": "signature",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slot": {
+          "name": "slot",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "claim_period_id": {
+          "name": "claim_period_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "batch_stakes_processed": {
+          "name": "batch_stakes_processed",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_stakes_finalized": {
+          "name": "total_stakes_finalized",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cumulative_share_days": {
+          "name": "cumulative_share_days",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "timestamp": {
+          "name": "timestamp",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "protocol_initialized_events_signature_unique": {
+          "name": "protocol_initialized_events_signature_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "signature"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.checkpoints": {
+      "name": "checkpoints",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "program_id": {
+          "name": "program_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_signature": {
+          "name": "last_signature",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_slot": {
+          "name": "last_slot",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "processed_count": {
+          "name": "processed_count",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "checkpoints_program_id_unique": {
+          "name": "checkpoints_program_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "program_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.claim_period_ended_events": {
+      "name": "claim_period_ended_events",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "signature": {
+          "name": "signature",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slot": {
+          "name": "slot",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "timestamp": {
+          "name": "timestamp",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "claim_period_id": {
+          "name": "claim_period_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_claimed": {
+          "name": "total_claimed",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "claims_count": {
+          "name": "claims_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unclaimed_amount": {
+          "name": "unclaimed_amount",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "protocol_initialized_events_signature_unique": {
+          "name": "protocol_initialized_events_signature_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "signature"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.claim_period_started_events": {
+      "name": "claim_period_started_events",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "signature": {
+          "name": "signature",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slot": {
+          "name": "slot",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "timestamp": {
+          "name": "timestamp",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "claim_period_id": {
+          "name": "claim_period_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "merkle_root": {
+          "name": "merkle_root",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_claimable": {
+          "name": "total_claimable",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_eligible": {
+          "name": "total_eligible",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "claim_deadline_slot": {
+          "name": "claim_deadline_slot",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "protocol_initialized_events_signature_unique": {
+          "name": "protocol_initialized_events_signature_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "signature"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.inflation_distributed_events": {
+      "name": "inflation_distributed_events",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "signature": {
+          "name": "signature",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slot": {
+          "name": "slot",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "day": {
+          "name": "day",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "days_elapsed": {
+          "name": "days_elapsed",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "amount": {
+          "name": "amount",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "new_share_rate": {
+          "name": "new_share_rate",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_shares": {
+          "name": "total_shares",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "inflation_distributed_day_idx": {
+          "name": "inflation_distributed_day_idx",
+          "columns": [
+            {
+              "expression": "day",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "protocol_initialized_events_signature_unique": {
+          "name": "protocol_initialized_events_signature_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "signature"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.protocol_initialized_events": {
+      "name": "protocol_initialized_events",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "signature": {
+          "name": "signature",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slot": {
+          "name": "slot",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "global_state": {
+          "name": "global_state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "mint": {
+          "name": "mint",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "mint_authority": {
+          "name": "mint_authority",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "authority": {
+          "name": "authority",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "annual_inflation_bp": {
+          "name": "annual_inflation_bp",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "min_stake_amount": {
+          "name": "min_stake_amount",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "starting_share_rate": {
+          "name": "starting_share_rate",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slots_per_day": {
+          "name": "slots_per_day",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "protocol_initialized_events_signature_unique": {
+          "name": "protocol_initialized_events_signature_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "signature"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.rewards_claimed_events": {
+      "name": "rewards_claimed_events",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "signature": {
+          "name": "signature",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slot": {
+          "name": "slot",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "user": {
+          "name": "user",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stake_id": {
+          "name": "stake_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "amount": {
+          "name": "amount",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "rewards_claimed_user_idx": {
+          "name": "rewards_claimed_user_idx",
+          "columns": [
+            {
+              "expression": "user",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "protocol_initialized_events_signature_unique": {
+          "name": "protocol_initialized_events_signature_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "signature"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.stake_created_events": {
+      "name": "stake_created_events",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "signature": {
+          "name": "signature",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slot": {
+          "name": "slot",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "user": {
+          "name": "user",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stake_id": {
+          "name": "stake_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "amount": {
+          "name": "amount",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "t_shares": {
+          "name": "t_shares",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "days": {
+          "name": "days",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "share_rate": {
+          "name": "share_rate",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "stake_created_user_idx": {
+          "name": "stake_created_user_idx",
+          "columns": [
+            {
+              "expression": "user",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "stake_created_user_slot_idx": {
+          "name": "stake_created_user_slot_idx",
+          "columns": [
+            {
+              "expression": "user",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "slot",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "protocol_initialized_events_signature_unique": {
+          "name": "protocol_initialized_events_signature_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "signature"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.stake_ended_events": {
+      "name": "stake_ended_events",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "signature": {
+          "name": "signature",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slot": {
+          "name": "slot",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "user": {
+          "name": "user",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stake_id": {
+          "name": "stake_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "original_amount": {
+          "name": "original_amount",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "return_amount": {
+          "name": "return_amount",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "penalty_amount": {
+          "name": "penalty_amount",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "penalty_type": {
+          "name": "penalty_type",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rewards_claimed": {
+          "name": "rewards_claimed",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "stake_ended_user_idx": {
+          "name": "stake_ended_user_idx",
+          "columns": [
+            {
+              "expression": "user",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "protocol_initialized_events_signature_unique": {
+          "name": "protocol_initialized_events_signature_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "signature"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.tokens_claimed_events": {
+      "name": "tokens_claimed_events",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "signature": {
+          "name": "signature",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slot": {
+          "name": "slot",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "timestamp": {
+          "name": "timestamp",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "claimer": {
+          "name": "claimer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "snapshot_wallet": {
+          "name": "snapshot_wallet",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "claim_period_id": {
+          "name": "claim_period_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "snapshot_balance": {
+          "name": "snapshot_balance",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "base_amount": {
+          "name": "base_amount",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "bonus_bps": {
+          "name": "bonus_bps",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "days_elapsed": {
+          "name": "days_elapsed",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_amount": {
+          "name": "total_amount",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "immediate_amount": {
+          "name": "immediate_amount",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "vesting_amount": {
+          "name": "vesting_amount",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "vesting_end_slot": {
+          "name": "vesting_end_slot",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "tokens_claimed_claimer_idx": {
+          "name": "tokens_claimed_claimer_idx",
+          "columns": [
+            {
+              "expression": "claimer",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "protocol_initialized_events_signature_unique": {
+          "name": "protocol_initialized_events_signature_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "signature"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.vested_tokens_withdrawn_events": {
+      "name": "vested_tokens_withdrawn_events",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "signature": {
+          "name": "signature",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slot": {
+          "name": "slot",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "timestamp": {
+          "name": "timestamp",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "claimer": {
+          "name": "claimer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "amount": {
+          "name": "amount",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_vested": {
+          "name": "total_vested",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_withdrawn": {
+          "name": "total_withdrawn",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "remaining": {
+          "name": "remaining",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "vested_tokens_withdrawn_claimer_idx": {
+          "name": "vested_tokens_withdrawn_claimer_idx",
+          "columns": [
+            {
+              "expression": "claimer",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "protocol_initialized_events_signature_unique": {
+          "name": "protocol_initialized_events_signature_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "signature"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
