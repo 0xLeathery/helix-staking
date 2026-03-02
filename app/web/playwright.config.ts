@@ -6,7 +6,7 @@ import * as path from 'path';
 // ---------------------------------------------------------------------------
 // Pre-generate a test wallet keypair at config-parse time.
 // This runs before both globalSetup and webServer, so the wallet secret is
-// available for the Next.js process (NEXT_PUBLIC_TEST_WALLET_SECRET) and
+// available for the Next.js process (via TEST_WALLET_SECRET server-side env) and
 // globalSetup reads it back to fund+stake with the same keypair.
 // ---------------------------------------------------------------------------
 
@@ -88,7 +88,7 @@ export default defineConfig({
       NEXT_PUBLIC_SKIP_WALLET_CHECK: 'true',
       HELIUS_RPC_URL: 'http://localhost:8899',
       NEXT_PUBLIC_RPC_URL: 'http://localhost:8899',
-      NEXT_PUBLIC_TEST_WALLET_SECRET: secretKeyBase58,
+      TEST_WALLET_SECRET: secretKeyBase58,
     },
   },
 });

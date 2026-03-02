@@ -44,11 +44,21 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [wallets, setWallets] = useState<Adapter[]>([]);
 
   useEffect(() => {
-    // Test wallet injection is intentionally removed from the client.
-    // NEXT_PUBLIC_ prefixed env vars are inlined into client bundles at build time,
-    // which caused a secret key (F-01 CRITICAL) to leak into the deployed JS bundle.
-    // For E2E testing, use a server-side mechanism to inject test wallets.
-    // For manual dev testing, connect a wallet manually via the wallet modal.
+    // E2E test wallet injection (Phase 8.2-01 F-01 safe pattern).
+    // TEST_WALLET_SECRET is server-side only — never embedded in client bundles.
+    // /api/test-wallet returns 404 in production (env var absent) — safe to call always.
+    fetch('/api/test-wallet')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { secretKeyBase58: string; publicKey: string } | null) => {
+        if (data?.secretKeyBase58) {
+          import('@/lib/testing/test-wallet-adapter').then(({ TestWalletAdapter }) => {
+            setWallets((prev) => [new TestWalletAdapter(data.secretKeyBase58), ...prev]);
+          });
+        }
+      })
+      .catch(() => {
+        // Not in test mode or adapter unavailable — ignore silently.
+      });
   }, []);
 
   const endpoint = useMemo(() => getRpcEndpoint(), []);
