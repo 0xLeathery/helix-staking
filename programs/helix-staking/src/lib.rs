@@ -165,6 +165,14 @@ pub mod helix_staking {
     pub fn accept_authority(ctx: Context<AcceptAuthority>) -> Result<()> {
         instructions::accept_authority::accept_authority(ctx)
     }
+
+    pub fn pause(ctx: Context<Pause>) -> Result<()> {
+        instructions::pause::pause(ctx)
+    }
+
+    pub fn unpause(ctx: Context<Unpause>) -> Result<()> {
+        instructions::unpause::unpause(ctx)
+    }
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]

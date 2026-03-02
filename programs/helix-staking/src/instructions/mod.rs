@@ -51,3 +51,9 @@ pub use transfer_authority::*;
 
 pub mod accept_authority;
 pub use accept_authority::*;
+
+pub mod pause;
+pub use pause::*;
+
+pub mod unpause;
+pub use unpause::*;
