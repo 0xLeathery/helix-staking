@@ -5,6 +5,7 @@ import {
   bigint,
   integer,
   timestamp,
+  boolean,
   uniqueIndex,
   index,
 } from 'drizzle-orm/pg-core';
@@ -275,6 +276,26 @@ export const referralStakedEvents = pgTable(
   (table) => [
     index('referral_staked_referrer_idx').on(table.referrer),
     index('referral_staked_referee_idx').on(table.referee),
+  ],
+);
+
+// ---------------------------------------------------------------------------
+// Phase 11: Badge Eligibility (derived, not an event table)
+// ---------------------------------------------------------------------------
+export const badgeEligibility = pgTable(
+  'badge_eligibility',
+  {
+    id: serial('id').primaryKey(),
+    wallet: text('wallet').notNull(),
+    badgeType: text('badge_type').notNull(), // 'first_stake' | '365_day' | 'bpd' | 'shrimp' | 'fish' | 'dolphin' | 'shark' | 'whale'
+    eligible: boolean('eligible').notNull().default(false),
+    earnedAt: timestamp('earned_at'),        // when the qualifying event occurred (slot-derived or null)
+    stakeAmount: text('stake_amount'),       // for tier badges: the amount that qualified
+    computedAt: timestamp('computed_at').defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex('badge_eligibility_wallet_type_idx').on(table.wallet, table.badgeType),
+    index('badge_eligibility_wallet_idx').on(table.wallet),
   ],
 );
 
