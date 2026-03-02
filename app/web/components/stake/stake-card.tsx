@@ -4,9 +4,9 @@ import Link from "next/link";
 import BN from "bn.js";
 import { PublicKey } from "@solana/web3.js";
 import { useGlobalState } from "@/lib/hooks/useGlobalState";
-import { calculatePendingRewards } from "@/lib/solana/math";
+import { calculatePendingRewards, calculateLoyaltyBonus, applyLoyaltyMultiplier } from "@/lib/solana/math";
 import { formatHelix, formatTShares, formatDays } from "@/lib/utils/format";
-import { LABELS, SLOTS_PER_DAY } from "@/lib/solana/constants";
+import { LABELS, SLOTS_PER_DAY, PRECISION } from "@/lib/solana/constants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -135,13 +135,26 @@ export function StakeCard({
     SLOTS_PER_DAY
   );
 
-  const pendingRewards = globalState
+  const loyaltyBonus = calculateLoyaltyBonus(
+    startSlot,
+    currentSlot,
+    new BN(account.stakeDays),
+    new BN(SLOTS_PER_DAY)
+  );
+
+  const rawPendingRewards = globalState
     ? calculatePendingRewards(
         tShares,
         new BN(globalState.shareRate.toString()),
         rewardDebt
       )
     : new BN(0);
+
+  const pendingRewards = globalState
+    ? applyLoyaltyMultiplier(rawPendingRewards, loyaltyBonus)
+    : new BN(0);
+
+  const loyaltyPct = loyaltyBonus.muln(100).div(PRECISION).toNumber();
 
   const stakeDetailUrl = `/dashboard/stakes/${stakePublicKey.toBase58()}`;
 
@@ -208,6 +221,19 @@ export function StakeCard({
               {formatHelix(pendingRewards)}
             </span>
           </div>
+          {loyaltyPct > 0 && (
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-muted-foreground">Loyalty Bonus</span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="font-mono text-green-400 cursor-help">+{loyaltyPct}%</span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Loyalty multiplier applied at claim/unstake. Rewards already include this bonus.</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          )}
           {!bpdBonus.isZero() && (
             <div className="flex justify-between text-sm">
               <span className="text-zinc-500">{LABELS.BIG_PAY_DAY} Bonus</span>
