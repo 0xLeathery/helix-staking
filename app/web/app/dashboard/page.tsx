@@ -7,6 +7,7 @@ import { StakesList } from "@/components/dashboard/stakes-list";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { ProtocolPausedBanner } from "@/components/dashboard/protocol-paused-banner";
 import { ReferralStatsPanel } from "@/components/dashboard/referral-stats-panel";
+import { BadgeMiniStrip } from "@/components/badges/badge-mini-strip";
 import { useGlobalState } from "@/lib/hooks/useGlobalState";
 
 export default function DashboardPage() {
@@ -28,6 +29,11 @@ export default function DashboardPage() {
       {/* Referral Program */}
       <ErrorBoundary>
         <ReferralStatsPanel />
+      </ErrorBoundary>
+
+      {/* Badge Mini Strip */}
+      <ErrorBoundary>
+        <BadgeMiniStrip />
       </ErrorBoundary>
 
       {/* Portfolio + Stakes - 2-column on desktop */}
