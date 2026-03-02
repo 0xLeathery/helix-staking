@@ -1,5 +1,6 @@
 import { desc } from 'drizzle-orm';
 import { db, type DbClient } from '../db/client.js';
+import { sendBpdTransitionNotification, sendRewardsNotification } from './notification-scheduler.js';
 import {
   protocolInitializedEvents,
   stakeCreatedEvents,
@@ -160,6 +161,11 @@ export async function processEvent(
         // Gap detection: check if there's a gap between this day and the
         // previous distribution that isn't explained by daysElapsed
         await detectInflationGap(toNum(data.day), toNum(data.daysElapsed));
+
+        // Fire-and-forget: notify subscribed users of new rewards
+        sendRewardsNotification().catch((err) =>
+          logger.warn({ err: err instanceof Error ? err.message : String(err) }, 'Failed to send rewards notification'),
+        );
         break;
       }
 
@@ -259,6 +265,11 @@ export async function processEvent(
             eligibleStakers: toNum(data.eligibleStakers),
           })
           .onConflictDoNothing();
+
+        // Fire-and-forget: notify subscribed users that BPD distribution is complete
+        sendBpdTransitionNotification('distribution_complete').catch((err) =>
+          logger.warn({ err: err instanceof Error ? err.message : String(err) }, 'Failed to send BPD distribution notification'),
+        );
         break;
 
       case 'BpdAborted':
@@ -295,6 +306,11 @@ export async function processEvent(
             shareDays: toStr(data.cumulativeShareDays),
           },
           'BPD batch finalized',
+        );
+
+        // Fire-and-forget: notify subscribed users that BPD finalization has started
+        sendBpdTransitionNotification('finalization_started').catch((err) =>
+          logger.warn({ err: err instanceof Error ? err.message : String(err) }, 'Failed to send BPD finalization notification'),
         );
         break;
 
