@@ -82,7 +82,13 @@ export function usePushNotifications(wallet: string | null): UsePushNotification
     }
 
     const reg = await navigator.serviceWorker.ready;
-    const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!;
+    const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+    if (!vapidKey) {
+      throw new Error(
+        'Push notifications are not configured on this deployment. ' +
+        'Set NEXT_PUBLIC_VAPID_PUBLIC_KEY in .env.local and rebuild.'
+      );
+    }
     const sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(vapidKey),

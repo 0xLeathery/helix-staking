@@ -20,10 +20,6 @@ import { Keypair } from '@solana/web3.js';
 import { generateBadgeSvg } from '@/lib/badges/badge-svg-server';
 import { BADGE_NAMES, BADGE_TYPES, type BadgeType } from '@/lib/badges/badge-types';
 
-// Server-only environment constants — never NEXT_PUBLIC_
-const BADGE_COLLECTION = umiPubkey(process.env.BADGE_COLLECTION_ADDRESS!);
-const MERKLE_TREE = umiPubkey(process.env.BADGE_MERKLE_TREE_ADDRESS!);
-
 export async function POST(req: NextRequest) {
   try {
     // ---------- 1. Parse and validate request ----------
@@ -39,11 +35,25 @@ export async function POST(req: NextRequest) {
 
     const typedBadgeType = badgeType as BadgeType;
 
-    // ---------- 2. Eligibility check from indexer ----------
-    const indexerUrl = process.env.NEXT_PUBLIC_INDEXER_URL;
-    if (!indexerUrl) {
-      return NextResponse.json({ error: 'Indexer URL not configured' }, { status: 500 });
+    // ---------- 1b. Validate server configuration ----------
+    const collectionAddress = process.env.BADGE_COLLECTION_ADDRESS;
+    const merkleTreeAddress = process.env.BADGE_MERKLE_TREE_ADDRESS;
+    if (!collectionAddress || !merkleTreeAddress) {
+      return NextResponse.json(
+        {
+          error:
+            'Badge collection not configured. ' +
+            'Run scripts/setup-badge-collection.ts and set BADGE_COLLECTION_ADDRESS ' +
+            'and BADGE_MERKLE_TREE_ADDRESS in .env.local.',
+        },
+        { status: 503 }
+      );
     }
+    const BADGE_COLLECTION = umiPubkey(collectionAddress);
+    const MERKLE_TREE = umiPubkey(merkleTreeAddress);
+
+    // ---------- 2. Eligibility check from indexer ----------
+    const indexerUrl = process.env.NEXT_PUBLIC_INDEXER_URL ?? 'http://localhost:3001';
     const eligibilityResp = await fetch(`${indexerUrl}/api/badges?wallet=${wallet}`);
     if (!eligibilityResp.ok) {
       console.error('[badges/mint] Indexer eligibility check failed:', eligibilityResp.status);
@@ -88,9 +98,17 @@ export async function POST(req: NextRequest) {
       .use(mplCore())
       .use(dasApi());
 
-    const serverKeypair = Keypair.fromSecretKey(
-      Uint8Array.from(JSON.parse(process.env.BADGE_AUTHORITY_SECRET))
-    );
+    let serverKeypair: Keypair;
+    try {
+      serverKeypair = Keypair.fromSecretKey(
+        Uint8Array.from(JSON.parse(process.env.BADGE_AUTHORITY_SECRET))
+      );
+    } catch {
+      return NextResponse.json(
+        { error: 'BADGE_AUTHORITY_SECRET must be a valid JSON array of numbers (64 bytes).' },
+        { status: 500 }
+      );
+    }
     const umiKeypair = fromWeb3JsKeypair(serverKeypair);
     const serverSigner = createSignerFromKeypair(umi, umiKeypair);
     umi.use(keypairIdentity(serverSigner));
