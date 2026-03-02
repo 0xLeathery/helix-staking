@@ -329,7 +329,10 @@ Plans:
   3. A second referral between the same referrer-referee pair is rejected on-chain — the duplicate-prevention `ReferralRecord` PDA already exists and the transaction fails
   4. A user can view a referral stats panel in the dashboard showing the total number of wallets they referred and the total bonus T-shares earned via referrals
   5. A user can copy their referral link from the dashboard and share it; staking via that link lands in the stake wizard with the referrer pre-populated
-**Plans**: TBD
+**Plans**: 1 plan in 1 wave
+
+Plans:
+- [ ] 14-01-PLAN.md -- Runtime env var guards for push hook and badge mint route + .env.local.example documentation
 
 ### Phase 11: NFT Badges
 **Goal**: Users who reach staking milestones can claim soulbound Bubblegum V2 cNFT badges from a gallery in the dashboard — the indexer determines eligibility, a Next.js API route co-signs the mint, and all badges are permanently non-transferable
@@ -341,7 +344,10 @@ Plans:
   3. A user who staked at or above a tier threshold (Shrimp/Fish/Dolphin/Shark/Whale) sees the corresponding tier badge as claimable
   4. An attempt to transfer any claimed badge is rejected by the Bubblegum V2 program — the `PermanentFreezeDelegate` enforcement makes badges non-transferable regardless of which wallet holds the tree authority
   5. A user who has not met eligibility for a badge sees that badge as locked in the gallery with a description of the requirement
-**Plans**: TBD
+**Plans**: 1 plan in 1 wave
+
+Plans:
+- [ ] 14-01-PLAN.md -- Runtime env var guards for push hook and badge mint route + .env.local.example documentation
 
 ### Phase 12: Push Notifications
 **Goal**: Users can opt into browser push notifications from the dashboard and receive timely alerts for stake maturity, late penalty windows, claimable rewards, and BPD phase transitions — with per-event-type toggles and PWA installability on iOS
@@ -354,7 +360,10 @@ Plans:
   4. A user receives a push notification on each BPD phase transition (finalization started, seal delay complete, distribution complete)
   5. A user can open the notification preferences panel and toggle individual notification types (maturity, late penalty, rewards available, BPD) on or off — subsequent notifications respect those preferences
   6. The dashboard has a valid `manifest.json` with `display: "standalone"` and the browser shows an install prompt on eligible devices
-**Plans**: TBD
+**Plans**: 1 plan in 1 wave
+
+Plans:
+- [ ] 14-01-PLAN.md -- Runtime env var guards for push hook and badge mint route + .env.local.example documentation
 
 ### Phase 13: Test Coverage
 **Goal**: The entire codebase achieves 80%+ test coverage — the deprecated `anchor-bankrun` runner is replaced with `anchor-litesvm`, all instruction modules reach their per-module targets, the indexer and frontend reach 80%+ line coverage, and Playwright E2E specs cover the critical user flows end-to-end
@@ -386,7 +395,10 @@ Plans:
   2. `use-push-notifications.ts` subscribe path does not crash when `NEXT_PUBLIC_VAPID_PUBLIC_KEY` is unset — shows a user-facing error instead
   3. `app/api/badges/mint/route.ts` does not crash at module load when badge env vars are unset — returns a descriptive error response
   4. `app/api/badges/mint/route.ts` does not return a 500 when `NEXT_PUBLIC_INDEXER_URL` is unset — falls back to localhost or returns a descriptive error
-**Plans**: TBD
+**Plans**: 1 plan in 1 wave
+
+Plans:
+- [ ] 14-01-PLAN.md -- Runtime env var guards for push hook and badge mint route + .env.local.example documentation
 
 ## Progress
 
@@ -418,4 +430,4 @@ v1.1 execution order: 9 -> 10 -> 11 -> 12 (can overlap with 10/11) -> 13
 | 11. NFT Badges | 4/4 | Complete    | 2026-03-02 |
 | 12. Push Notifications | 4/4 | Complete    | 2026-03-02 |
 | 13. Test Coverage | 6/6 | Complete    | 2026-03-02 |
-| 14. Deployment Docs & Env Guards | 0/0 | Pending | — |
+| 14. Deployment Docs & Env Guards | 0/1 | In Progress | — |
