@@ -40,6 +40,9 @@ const PROGRAM_ID = new PublicKey(
 const LOCALNET_URL = "http://localhost:8899";
 const IDL_PATH = path.resolve(__dirname, "../../../target/idl/helix_staking.json");
 const WALLET_OUT = path.resolve(__dirname, ".test-wallet.json");
+// Referrer pubkey for referral-stake E2E test — written each run so the spec
+// can read it and know which pubkey to use as ?ref= parameter.
+export const REFERRER_PUBKEY_OUT = path.resolve(__dirname, ".referrer-pubkey.txt");
 
 // Docker bootstrap keypair — this IS the GlobalState authority.
 // bootstrap.ts initializes the protocol with this keypair on validator start.
@@ -144,6 +147,32 @@ export default async function globalSetup() {
   const walletData = JSON.parse(fs.readFileSync(WALLET_OUT, "utf-8"));
   const testWallet = Keypair.fromSecretKey(Uint8Array.from(walletData.secretKey));
   await airdrop(connection, testWallet.publicKey, 10);
+
+  // 5a. Create a dedicated referrer keypair for referral-stake.spec.ts.
+  //     Using the admin wallet as referrer would cause SelfReferral (if admin IS the
+  //     connected wallet) or a different ATA issue. A dedicated keypair avoids both.
+  //     We generate it fresh each run, fund it, create its ATA, and write its pubkey
+  //     to .referrer-pubkey.txt so the spec can read it.
+  const referrerKeypair = Keypair.generate();
+  await airdrop(connection, referrerKeypair.publicKey, 1);
+  const referrerAta = getAssociatedTokenAddressSync(
+    mintPda,
+    referrerKeypair.publicKey,
+    false,
+    TOKEN_2022_PROGRAM_ID
+  );
+  const referrerAtaIx = createAssociatedTokenAccountInstruction(
+    admin.publicKey,
+    referrerAta,
+    referrerKeypair.publicKey,
+    mintPda,
+    TOKEN_2022_PROGRAM_ID
+  );
+  const referrerAtaTx = new anchor.web3.Transaction().add(referrerAtaIx);
+  await provider.sendAndConfirm(referrerAtaTx);
+  // Write referrer pubkey to disk so referral-stake.spec.ts can read it
+  fs.writeFileSync(REFERRER_PUBKEY_OUT, referrerKeypair.publicKey.toBase58());
+  console.log("[global-setup] Referrer wallet created:", referrerKeypair.publicKey.toBase58());
 
   // 6. Create ATA for test wallet
   const testAta = getAssociatedTokenAddressSync(
