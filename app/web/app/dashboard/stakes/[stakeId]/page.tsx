@@ -15,6 +15,8 @@ import { PenaltyCalculator } from "@/components/stake/penalty-calculator";
 import { UnstakeConfirmation } from "@/components/stake/unstake-confirmation";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { ProtocolPausedBanner } from "@/components/dashboard/protocol-paused-banner";
 import Link from "next/link";
 
 /**
@@ -122,6 +124,7 @@ export default function StakeDetailPage() {
   // BPD window check
   const reserved = globalState.reserved as BN[] | undefined;
   const isBpdWindowActive = reserved && reserved.length > 0 && !reserved[0].isZero();
+  const isPaused = reserved && reserved.length > 1 && !reserved[1].isZero();
 
   // Action button label
   let actionButtonLabel: string = LABELS.ON_TIME_UNSTAKE;
@@ -156,6 +159,9 @@ export default function StakeDetailPage() {
           <Link href="/dashboard">Back to Dashboard</Link>
         </Button>
       </div>
+
+      {/* Protocol Paused Banner */}
+      <ProtocolPausedBanner isPaused={!!isPaused} />
 
       {/* BPD Window Warning Banner */}
       {isBpdWindowActive && (
@@ -257,29 +263,51 @@ export default function StakeDetailPage() {
 
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-3">
-        <Button
-          onClick={() => setIsUnstakeDialogOpen(true)}
-          disabled={isBpdWindowActive}
-          className="flex-1 bg-red-600 hover:bg-red-700"
-        >
-          {actionButtonLabel}
-        </Button>
-
-        <Button
-          onClick={handleClaimRewards}
-          disabled={pendingRewards.add(bpdBonusPending).isZero() || claimRewards.isPending}
-          variant="outline"
-          className="flex-1"
-        >
-          {claimRewards.isPending ? (
-            <>
-              <SpinnerIcon className="mr-2 h-4 w-4 animate-spin" />
-              Claiming...
-            </>
-          ) : (
-            "Claim Rewards"
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="flex-1">
+              <Button
+                onClick={() => setIsUnstakeDialogOpen(true)}
+                disabled={isBpdWindowActive || !!isPaused}
+                className="w-full bg-red-600 hover:bg-red-700"
+              >
+                {actionButtonLabel}
+              </Button>
+            </span>
+          </TooltipTrigger>
+          {isPaused && (
+            <TooltipContent>
+              <p>Protocol is currently paused. Please try again later.</p>
+            </TooltipContent>
           )}
-        </Button>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="flex-1">
+              <Button
+                onClick={handleClaimRewards}
+                disabled={pendingRewards.add(bpdBonusPending).isZero() || claimRewards.isPending || !!isPaused}
+                variant="outline"
+                className="w-full"
+              >
+                {claimRewards.isPending ? (
+                  <>
+                    <SpinnerIcon className="mr-2 h-4 w-4 animate-spin" />
+                    Claiming...
+                  </>
+                ) : (
+                  "Claim Rewards"
+                )}
+              </Button>
+            </span>
+          </TooltipTrigger>
+          {isPaused && (
+            <TooltipContent>
+              <p>Protocol is currently paused. Please try again later.</p>
+            </TooltipContent>
+          )}
+        </Tooltip>
       </div>
 
       {/* Unstake Confirmation Dialog */}
