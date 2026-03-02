@@ -11,6 +11,12 @@
   },
   "dependencies": {
     "@coral-xyz/anchor": "0.31.1",
+    "@metaplex-foundation/digital-asset-standard-api": "^2.0.0",
+    "@metaplex-foundation/mpl-bubblegum": "^5.0.2",
+    "@metaplex-foundation/mpl-core": "^1.7.0",
+    "@metaplex-foundation/umi": "^1.5.1",
+    "@metaplex-foundation/umi-bundle-defaults": "^1.5.1",
+    "@metaplex-foundation/umi-web3js-adapters": "^1.5.1",
     "@noble/curves": "^2.0.1",
     "@noble/hashes": "^2.0.1",
     "@radix-ui/react-checkbox": "^1.1.0",

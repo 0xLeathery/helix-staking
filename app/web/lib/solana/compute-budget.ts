@@ -10,6 +10,7 @@ export const CU_LIMITS = {
   crankDistribution: 100_000,
   triggerBigPayDay: 600_000, // 20 remaining_accounts
   finalizeBpd: 600_000, // 20 remaining_accounts
+  claimBadge: 400_000, // Bubblegum V2 mintV2 + proof accounts
 } as const;
 
 // Default priority fee in micro-lamports per CU
