@@ -68,6 +68,18 @@ impl GlobalState {
         self.reserved[0] = if active { 1 } else { 0 };
     }
 
+    // reserved[1] = is_paused flag (OPS-03)
+
+    /// Check if the program is paused (emergency halt)
+    pub fn is_paused(&self) -> bool {
+        self.reserved[1] == 1
+    }
+
+    /// Set the pause flag (authority-gated)
+    pub fn set_paused(&mut self, paused: bool) {
+        self.reserved[1] = if paused { 1 } else { 0 };
+    }
+
     pub const LEN: usize = 8    // discriminator
         + 32   // authority
         + 32   // mint

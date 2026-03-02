@@ -104,4 +104,6 @@ pub enum HelixError {
     InvalidDivisor,
     #[msg("Slots per day must be greater than 0")]
     InvalidSlotsPerDay,
+    #[msg("Program is currently paused")]
+    ProgramPaused,
 }
