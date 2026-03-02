@@ -7,6 +7,7 @@ import { getCheckpoint, updateCheckpoint } from './checkpoint.js';
 import { fetchNewSignatures } from './poller.js';
 import { decodeEventsFromSignature } from './decoder.js';
 import { processEvent } from './processor.js';
+import { startNotificationScheduler } from './notification-scheduler.js';
 
 // ---------------------------------------------------------------------------
 // State flags
@@ -167,3 +168,4 @@ logger.info(
   { intervalMs: env.POLL_INTERVAL_MS },
   'Polling loop started',
 );
+startNotificationScheduler();
