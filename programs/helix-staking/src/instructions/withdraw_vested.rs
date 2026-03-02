@@ -68,6 +68,9 @@ pub fn withdraw_vested(ctx: Context<WithdrawVested>) -> Result<()> {
     let claim_status = &mut ctx.accounts.claim_status;
     let global_state = &ctx.accounts.global_state;
 
+    // OPS-03: Reject user operations while program is paused
+    require!(!global_state.is_paused(), HelixError::ProgramPaused);
+
     // Calculate total vested amount based on time elapsed
     let total_vested = calculate_vested_amount(
         claim_status.claimed_amount,

@@ -96,6 +96,9 @@ pub fn free_claim(
     let claim_status = &mut ctx.accounts.claim_status;
     let global_state = &ctx.accounts.global_state;
 
+    // OPS-03: Reject user operations while program is paused
+    require!(!global_state.is_paused(), HelixError::ProgramPaused);
+
     // === Security Check 1: Verify claim period is active ===
     require!(
         clock.slot <= claim_config.end_slot,

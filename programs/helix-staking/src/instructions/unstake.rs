@@ -63,6 +63,9 @@ pub fn unstake(ctx: Context<Unstake>) -> Result<()> {
     let global_state = &mut ctx.accounts.global_state;
     let stake = &ctx.accounts.stake_account;
 
+    // OPS-03: Reject user operations while program is paused
+    require!(!global_state.is_paused(), HelixError::ProgramPaused);
+
     // HIGH-2: Block unstake during BPD window
     require!(!global_state.is_bpd_window_active(), HelixError::UnstakeBlockedDuringBpd);
 

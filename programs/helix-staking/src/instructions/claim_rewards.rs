@@ -68,6 +68,9 @@ pub fn claim_rewards(ctx: Context<ClaimRewards>) -> Result<()> {
     let global_state = &mut ctx.accounts.global_state;
     let stake = &ctx.accounts.stake_account;
 
+    // OPS-03: Reject user operations while program is paused
+    require!(!global_state.is_paused(), HelixError::ProgramPaused);
+
     // Save values before mutating
     let stake_id = stake.stake_id;
     let t_shares = stake.t_shares;

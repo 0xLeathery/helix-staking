@@ -40,6 +40,9 @@ pub fn crank_distribution(ctx: Context<CrankDistribution>) -> Result<()> {
     let global_state = &mut ctx.accounts.global_state;
     let clock = Clock::get()?;
 
+    // OPS-03: Reject user operations while program is paused
+    require!(!global_state.is_paused(), HelixError::ProgramPaused);
+
     // Explicit check for manual crank to preserve error behavior
     let current_day = get_current_day(
         global_state.init_slot,

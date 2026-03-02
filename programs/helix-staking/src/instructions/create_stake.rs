@@ -66,6 +66,9 @@ pub fn create_stake<'info>(
     let global_state = &mut ctx.accounts.global_state;
     let stake_account = &mut ctx.accounts.stake_account;
 
+    // OPS-03: Reject user operations while program is paused
+    require!(!global_state.is_paused(), HelixError::ProgramPaused);
+
     // Validate amount
     require!(
         amount >= global_state.min_stake_amount,
