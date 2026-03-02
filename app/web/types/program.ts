@@ -2205,6 +2205,20 @@ export type HelixStaking = {
               "Count of unique stakes distributed to during trigger_big_pay_day (Phase 3.3)"
             ],
             "type": "u32"
+          },
+          {
+            "name": "bpdFinalizeStartTimestamp",
+            "docs": [
+              "Unix timestamp when finalize_bpd_calculation completed (Phase 8.1). Zero until seal_bpd_finalize is callable."
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "bpdOriginalUnclaimed",
+            "docs": [
+              "Original unclaimed amount at BPD distribution start (Phase 8.1). Immutable after first trigger_big_pay_day."
+            ],
+            "type": "u64"
           }
         ]
       }

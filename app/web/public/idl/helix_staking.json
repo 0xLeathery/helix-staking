@@ -2097,6 +2097,19 @@
       ]
     },
     {
+      "name": "BpdBatchFinalized",
+      "discriminator": [
+        158,
+        191,
+        63,
+        0,
+        242,
+        79,
+        60,
+        147
+      ]
+    },
+    {
       "name": "ClaimPeriodEnded",
       "discriminator": [
         51,
@@ -2570,6 +2583,37 @@
       }
     },
     {
+      "name": "BpdBatchFinalized",
+      "docs": [
+        "Phase 8.1: Emitted after each finalize_bpd_calculation batch for off-chain transparency"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "claim_period_id",
+            "type": "u32"
+          },
+          {
+            "name": "batch_stakes_processed",
+            "type": "u32"
+          },
+          {
+            "name": "total_stakes_finalized",
+            "type": "u32"
+          },
+          {
+            "name": "cumulative_share_days",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
       "name": "ClaimConfig",
       "docs": [
         "Global claim period configuration (singleton PDA)",
@@ -2724,6 +2768,20 @@
               "Count of unique stakes distributed to during trigger_big_pay_day (Phase 3.3)"
             ],
             "type": "u32"
+          },
+          {
+            "name": "bpd_finalize_start_timestamp",
+            "docs": [
+              "Unix timestamp when finalize_bpd_calculation completed (Phase 8.1). Zero until seal_bpd_finalize is callable."
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "bpd_original_unclaimed",
+            "docs": [
+              "Original unclaimed amount at BPD distribution start (Phase 8.1). Immutable after first trigger_big_pay_day."
+            ],
+            "type": "u64"
           }
         ]
       }
