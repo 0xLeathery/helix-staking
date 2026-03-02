@@ -1,15 +1,25 @@
 "use client";
 
+import BN from "bn.js";
 import { ProtocolStats } from "@/components/dashboard/protocol-stats";
 import { PortfolioSummary } from "@/components/dashboard/portfolio-summary";
 import { StakesList } from "@/components/dashboard/stakes-list";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { ProtocolPausedBanner } from "@/components/dashboard/protocol-paused-banner";
+import { useGlobalState } from "@/lib/hooks/useGlobalState";
 
 export default function DashboardPage() {
+  const { data: globalState } = useGlobalState();
+  const reserved = globalState?.reserved as BN[] | undefined;
+  const isPaused = reserved && reserved.length > 1 && !reserved[1].isZero();
+
   return (
     <div className="space-y-8">
       {/* Page Title */}
       <h1 className="text-2xl font-bold text-zinc-100">Your Dashboard</h1>
+
+      {/* Protocol Paused Banner */}
+      <ProtocolPausedBanner isPaused={!!isPaused} />
 
       {/* Protocol Stats - full width */}
       <ProtocolStats />
