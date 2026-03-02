@@ -39,17 +39,16 @@ function getRpcEndpoint(): string {
 }
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  // When NEXT_PUBLIC_TEST_WALLET_SECRET is set (E2E testing), dynamically load
-  // the TestWalletAdapter. This keeps test code out of the production bundle.
+  // Test wallet adapter is loaded server-side via API route to prevent secret key exposure
+  // in client bundles. See: app/api/test-wallet/route.ts (dev-only endpoint)
   const [wallets, setWallets] = useState<Adapter[]>([]);
 
   useEffect(() => {
-    const secret = process.env.NEXT_PUBLIC_TEST_WALLET_SECRET;
-    if (secret) {
-      import("@/lib/testing/test-wallet-adapter").then(({ TestWalletAdapter }) => {
-        setWallets([new TestWalletAdapter(secret)]);
-      });
-    }
+    // Test wallet injection is intentionally removed from the client.
+    // NEXT_PUBLIC_ prefixed env vars are inlined into client bundles at build time,
+    // which caused a secret key (F-01 CRITICAL) to leak into the deployed JS bundle.
+    // For E2E testing, use a server-side mechanism to inject test wallets.
+    // For manual dev testing, connect a wallet manually via the wallet modal.
   }, []);
 
   const endpoint = useMemo(() => getRpcEndpoint(), []);
