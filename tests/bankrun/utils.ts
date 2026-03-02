@@ -12,6 +12,7 @@ export const GLOBAL_STATE_SEED = Buffer.from("global_state");
 export const MINT_AUTHORITY_SEED = Buffer.from("mint_authority");
 export const MINT_SEED = Buffer.from("helix_mint");
 export const STAKE_SEED = Buffer.from("stake");
+export const REFERRAL_RECORD_SEED = Buffer.from("referral");
 
 // Protocol defaults (mirror constants.rs)
 export const DEFAULT_ANNUAL_INFLATION_BP = new BN(3_690_000);
@@ -178,6 +179,21 @@ export async function mintTokensToUser(
     })
     .signers([payer])
     .rpc();
+}
+
+/**
+ * Derives the ReferralRecord PDA address.
+ * Seeds: [b"referral", referrer, referee]
+ */
+export function findReferralRecordPDA(
+  programId: PublicKey,
+  referrer: PublicKey,
+  referee: PublicKey,
+): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync(
+    [REFERRAL_RECORD_SEED, referrer.toBuffer(), referee.toBuffer()],
+    programId,
+  );
 }
 
 /**
