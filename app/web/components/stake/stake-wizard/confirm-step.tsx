@@ -7,12 +7,19 @@ import { calculateLpbBonus, calculateBpbBonus, calculateTShares } from "@/lib/so
 import { useGlobalState } from "@/lib/hooks/useGlobalState";
 import { PRECISION } from "@/lib/solana/constants";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import BN from "bn.js";
 
 export function ConfirmStep() {
   const { amount, days, setStep } = useStakeWizard();
   const { data: globalState } = useGlobalState();
   const { mutateAsync, isPending, error } = useCreateStake();
+
+  // Show loading skeleton while globalState is not yet available (F-10)
+  // Using a fallback shareRate of 1 would silently display incorrect T-share calculations
+  if (!globalState) {
+    return <div className="animate-pulse h-48 bg-zinc-800 rounded" />;
+  }
 
   const handleConfirm = async () => {
     try {
@@ -27,7 +34,7 @@ export function ConfirmStep() {
   // Calculate bonuses and T-shares
   const amountBn = parseHelix(amount);
   const stakeDaysBn = new BN(days);
-  const shareRate = globalState?.shareRate || new BN(1);
+  const shareRate = globalState.shareRate;
 
   const lpbBonus = calculateLpbBonus(stakeDaysBn);
   const bpbBonus = calculateBpbBonus(amountBn);
