@@ -49,8 +49,8 @@ export async function POST(req: NextRequest) {
       console.error('[badges/mint] Indexer eligibility check failed:', eligibilityResp.status);
       return NextResponse.json({ error: 'Failed to verify badge eligibility' }, { status: 502 });
     }
-    const eligibilityData = await eligibilityResp.json() as { badges?: Array<{ type: string; eligible: boolean }> };
-    const badge = eligibilityData.badges?.find((b) => b.type === badgeType);
+    const eligibilityData = await eligibilityResp.json() as { badges?: Array<{ badgeType: string; eligible: boolean }> };
+    const badge = eligibilityData.badges?.find((b) => b.badgeType === badgeType);
     if (!badge?.eligible) {
       return NextResponse.json({ error: 'Not eligible for this badge' }, { status: 403 });
     }
