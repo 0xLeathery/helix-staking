@@ -110,4 +110,6 @@ pub enum HelixError {
     AlreadyMigrated,
     #[msg("Cannot refer yourself")]
     SelfReferral,
+    #[msg("Program ID mismatch — chain binding violated")]
+    ProgramIdMismatch,
 }

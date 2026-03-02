@@ -21,6 +21,10 @@ pub mod helix_staking {
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>, params: InitializeParams) -> Result<()> {
+        // Chain binding: explicit runtime assertion that this program is deployed
+        // at the expected address. Defense-in-depth against unauthorized forks.
+        require!(ctx.program_id == &crate::ID, HelixError::ProgramIdMismatch);
+
         let clock = Clock::get()?;
         let global_state = &mut ctx.accounts.global_state;
 
