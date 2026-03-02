@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useClaimConfig } from "@/lib/hooks/useClaimConfig";
 import { useGlobalState } from "@/lib/hooks/useGlobalState";
+import { useCurrentSlot } from "@/lib/hooks/useCurrentSlot";
 
 /**
  * Big Pay Day status component.
@@ -22,6 +23,7 @@ import { useGlobalState } from "@/lib/hooks/useGlobalState";
 export function BpdStatus() {
   const { data: claimConfig, isLoading: isLoadingConfig } = useClaimConfig();
   const { data: globalState, isLoading: isLoadingGlobal } = useGlobalState();
+  const { data: currentSlot } = useCurrentSlot();
 
   if (isLoadingConfig || isLoadingGlobal) {
     return (
@@ -50,9 +52,9 @@ export function BpdStatus() {
   // Check BPD window status (reserved[0] !== 0)
   const isBpdWindowActive = globalState.reserved && globalState.reserved.length > 0 && !globalState.reserved[0].isZero();
 
-  // Determine BPD phase
-  const currentSlot = globalState.initSlot.toNumber() + globalState.currentDay.toNumber() * globalState.slotsPerDay.toNumber();
-  const isClaimPeriodEnded = currentSlot > claimConfig.endSlot.toNumber();
+  // Determine BPD phase — use real blockchain slot, not globalState.currentDay
+  // (currentDay only updates when crank_distribution runs, so it can lag behind)
+  const isClaimPeriodEnded = currentSlot != null && currentSlot > claimConfig.endSlot.toNumber();
 
   const bpdCalculationComplete = claimConfig.bpdCalculationComplete || false;
   const bpdStakesFinalized = claimConfig.bpdStakesFinalized || 0;

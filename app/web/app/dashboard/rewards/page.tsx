@@ -63,13 +63,13 @@ export default function RewardsPage() {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Total Pending Rewards:</span>
                 <span className="font-mono font-bold text-green-400">
-                  {formatHelix(totalPendingRewards)} HELIX
+                  {formatHelix(totalPendingRewards)}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Total BPD Bonus Pending:</span>
                 <span className="font-mono font-bold text-yellow-400">
-                  {formatHelix(totalBpdBonus)} HELIX
+                  {formatHelix(totalBpdBonus)}
                 </span>
               </div>
               {globalState && (
