@@ -55,6 +55,16 @@ async function fetcher<T>(path: string): Promise<T> {
   return res.json();
 }
 
+export interface BadgeEligibility {
+  badgeType: string;
+  name: string;
+  description: string;
+  requirement: string;
+  eligible: boolean;
+  earnedAt: string | null;
+  stakeAmount: string | null;
+}
+
 export const api = {
   getStats: () => fetcher<Stats>('/api/stats'),
   getHistory: (limit?: number) =>
@@ -75,4 +85,6 @@ export const api = {
     const qs = params.toString();
     return fetcher<{ data: WhaleActivity[] }>(`/api/whale-activity${qs ? `?${qs}` : ''}`);
   },
+  getBadges: (wallet: string) =>
+    fetcher<{ wallet: string; badges: BadgeEligibility[] }>(`/api/badges?wallet=${wallet}`),
 };
