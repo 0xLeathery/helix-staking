@@ -6,6 +6,7 @@ import { AmountStep } from "@/components/stake/stake-wizard/amount-step";
 import { DurationStep } from "@/components/stake/stake-wizard/duration-step";
 import { ConfirmStep } from "@/components/stake/stake-wizard/confirm-step";
 import { SuccessScreen } from "@/components/stake/stake-wizard/success-screen";
+import { ErrorBoundary } from "@/components/error-boundary";
 
 export default function StakePage() {
   const { step, reset } = useStakeWizard();
@@ -46,12 +47,14 @@ export default function StakePage() {
       )}
 
       {/* Step Content */}
-      <div className="rounded-lg border border-zinc-800 bg-zinc-900/30 p-8">
-        {step === 1 && <AmountStep />}
-        {step === 2 && <DurationStep />}
-        {step === 3 && <ConfirmStep />}
-        {step === "success" && <SuccessScreen />}
-      </div>
+      <ErrorBoundary>
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900/30 p-8">
+          {step === 1 && <AmountStep />}
+          {step === 2 && <DurationStep />}
+          {step === 3 && <ConfirmStep />}
+          {step === "success" && <SuccessScreen />}
+        </div>
+      </ErrorBoundary>
     </div>
   );
 }

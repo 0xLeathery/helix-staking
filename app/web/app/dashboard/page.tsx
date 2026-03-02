@@ -3,6 +3,7 @@
 import { ProtocolStats } from "@/components/dashboard/protocol-stats";
 import { PortfolioSummary } from "@/components/dashboard/portfolio-summary";
 import { StakesList } from "@/components/dashboard/stakes-list";
+import { ErrorBoundary } from "@/components/error-boundary";
 
 export default function DashboardPage() {
   return (
@@ -16,10 +17,14 @@ export default function DashboardPage() {
       {/* Portfolio + Stakes - 2-column on desktop */}
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-1">
-          <PortfolioSummary />
+          <ErrorBoundary>
+            <PortfolioSummary />
+          </ErrorBoundary>
         </div>
         <div className="lg:col-span-2">
-          <StakesList />
+          <ErrorBoundary>
+            <StakesList />
+          </ErrorBoundary>
         </div>
       </div>
     </div>
