@@ -35,3 +35,19 @@ app/web/e2e/.test-wallet.json
 
 # Claude mem context files
 **/CLAUDE.md
+
+# Deployment scripts & ops tooling
+scripts/
+docker/test-wallet.json
+
+# Planning & audit docs (local only)
+.planning/
+.specify/
+.audit/
+Auto Run Docs/
+
+# Merkle tree data
+voicetree-9-2/
+
+# Claude Code
+.claude/
