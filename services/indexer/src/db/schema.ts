@@ -260,6 +260,25 @@ export const authorityTransferCompletedEvents = pgTable(
 );
 
 // ---------------------------------------------------------------------------
+// Phase 10: ReferralStaked
+// ---------------------------------------------------------------------------
+export const referralStakedEvents = pgTable(
+  'referral_staked_events',
+  {
+    ...sharedColumns,
+    referrer: text('referrer').notNull(),
+    referee: text('referee').notNull(),
+    stakeId: bigint('stake_id', { mode: 'number' }).notNull(),
+    refereeTShareBonus: text('referee_t_share_bonus').notNull(),
+    referrerTokenBonus: text('referrer_token_bonus').notNull(),
+  },
+  (table) => [
+    index('referral_staked_referrer_idx').on(table.referrer),
+    index('referral_staked_referee_idx').on(table.referee),
+  ],
+);
+
+// ---------------------------------------------------------------------------
 // Operational: Checkpoints (polling state)
 // ---------------------------------------------------------------------------
 export const checkpoints = pgTable('checkpoints', {
