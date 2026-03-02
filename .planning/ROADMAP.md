@@ -430,4 +430,4 @@ v1.1 execution order: 9 -> 10 -> 11 -> 12 (can overlap with 10/11) -> 13
 | 11. NFT Badges | 4/4 | Complete    | 2026-03-02 |
 | 12. Push Notifications | 4/4 | Complete    | 2026-03-02 |
 | 13. Test Coverage | 6/6 | Complete    | 2026-03-02 |
-| 14. Deployment Docs & Env Guards | 1/1 | Complete   | 2026-03-02 |
+| 14. Deployment Docs & Env Guards | 1/1 | Complete    | 2026-03-02 |
