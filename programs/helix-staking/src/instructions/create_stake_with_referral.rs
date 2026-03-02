@@ -258,3 +258,43 @@ pub fn create_stake_with_referral<'info>(
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::constants::*;
+    use crate::instructions::math::{calculate_t_shares, mul_div};
+
+    #[test]
+    fn test_referee_bonus_10_percent() {
+        // REFEREE_BONUS_BPS = 1_000 = 10%
+        let rate = DEFAULT_STARTING_SHARE_RATE;
+        let base = calculate_t_shares(1_000_000_000, 365, rate).unwrap();
+        let bonus = mul_div(base, REFEREE_BONUS_BPS, BPS_SCALER).unwrap();
+        assert_eq!(bonus, base / 10); // 10% of base
+        let total = base + bonus;
+        assert!(total > base, "with referral bonus, t_shares should be 10% higher");
+    }
+
+    #[test]
+    fn test_referrer_bonus_5_percent() {
+        // REFERRER_BONUS_BPS = 500 = 5%
+        let amount = 1_000_000_000u64;
+        let bonus = mul_div(amount, REFERRER_BONUS_BPS, BPS_SCALER).unwrap();
+        assert_eq!(bonus, amount / 20); // 5% of staked amount
+    }
+
+    #[test]
+    fn test_referee_bonus_applied_before_reward_debt() {
+        // t_shares with bonus > base t_shares → reward_debt is larger too
+        use crate::instructions::math::calculate_reward_debt;
+        let rate = DEFAULT_STARTING_SHARE_RATE;
+        let amount = 1_000_000_000u64;
+        let base = calculate_t_shares(amount, 365, rate).unwrap();
+        let bonus = mul_div(base, REFEREE_BONUS_BPS, BPS_SCALER).unwrap();
+        let t_shares_with_bonus = base + bonus;
+
+        let debt_base = calculate_reward_debt(base, rate).unwrap();
+        let debt_bonus = calculate_reward_debt(t_shares_with_bonus, rate).unwrap();
+        assert!(debt_bonus > debt_base, "reward debt with referral bonus should be larger");
+    }
+}

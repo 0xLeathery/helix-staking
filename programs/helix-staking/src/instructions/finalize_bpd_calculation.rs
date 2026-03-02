@@ -214,3 +214,80 @@ pub fn finalize_bpd_calculation<'info>(
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::constants::*;
+    use crate::instructions::crank_distribution::make_test_global_state;
+
+    #[test]
+    fn test_share_days_calculation() {
+        // share_days = t_shares * days_staked
+        // For a 100 day stake with 1e6 t_shares: share_days = 1e8
+        let t_shares = 1_000_000u64;
+        let days_staked = 100u64;
+        let share_days = (t_shares as u128).checked_mul(days_staked as u128).unwrap();
+        assert_eq!(share_days, 100_000_000u128);
+    }
+
+    #[test]
+    fn test_share_days_overflow_safety() {
+        // u128 can hold t_shares * days without overflow
+        // Max t_shares: ~u64::MAX, max days: 5555
+        // Result fits in u128 since u64::MAX * 5555 < u128::MAX
+        let t_shares = u64::MAX;
+        let days_staked = MAX_STAKE_DAYS;
+        let share_days = (t_shares as u128).checked_mul(days_staked as u128);
+        assert!(share_days.is_some(), "u128 should hold max share_days without overflow");
+    }
+
+    #[test]
+    fn test_batch_share_days_accumulate() {
+        // Multiple stakes' share_days should add together correctly
+        let stake1_share_days: u128 = 1_000_000 * 100;  // 1e8
+        let stake2_share_days: u128 = 500_000 * 200;    // 1e8
+        let total = stake1_share_days.checked_add(stake2_share_days).unwrap();
+        assert_eq!(total, 200_000_000u128);
+    }
+
+    #[test]
+    fn test_unclaimed_amount_saturating() {
+        // Phase 8.1 (C1/FR-001): total_claimed can exceed total_claimable due to speed bonuses
+        // saturating_sub prevents underflow
+        let total_claimable = 1_000_000u64;
+        let total_claimed = 1_100_000u64; // Speed bonuses caused over-claiming
+        let unclaimed = total_claimable.saturating_sub(total_claimed);
+        assert_eq!(unclaimed, 0, "saturating_sub should clamp to 0");
+    }
+
+    #[test]
+    fn test_slots_per_day_division_in_days_staked() {
+        // days_staked = (stake_end - stake_start) / slots_per_day
+        let spd = DEFAULT_SLOTS_PER_DAY;
+        let start_slot = 1000u64;
+        let end_slot = start_slot + 30 * spd; // 30-day stake
+        let snapshot_slot = end_slot; // snapshot at end
+
+        let stake_end = std::cmp::min(snapshot_slot, end_slot);
+        let days_staked = stake_end.saturating_sub(start_slot) / spd;
+        assert_eq!(days_staked, 30);
+    }
+
+    #[test]
+    fn test_bpd_first_batch_detection() {
+        // First batch: remaining_unclaimed == 0 AND total_share_days == 0 AND snapshot_slot == 0
+        let remaining_unclaimed: u64 = 0;
+        let total_share_days: u128 = 0;
+        let snapshot_slot: u64 = 0;
+
+        let is_first = remaining_unclaimed == 0
+            && total_share_days == 0
+            && snapshot_slot == 0;
+        assert!(is_first, "all zeroes indicates first batch");
+
+        // Second batch: remaining_unclaimed has a value
+        let remaining2: u64 = 500_000;
+        let is_second = !(remaining2 == 0 && total_share_days == 0 && snapshot_slot == 0);
+        assert!(is_second, "non-zero remaining indicates subsequent batch");
+    }
+}

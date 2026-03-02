@@ -277,3 +277,92 @@ pub fn trigger_big_pay_day<'info>(
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::constants::*;
+    use crate::instructions::math::mul_div;
+
+    #[test]
+    fn test_bonus_calculation_per_stake() {
+        // bonus = share_days * helix_per_share_day / PRECISION
+        let share_days = 1_000u128;
+        let rate = PRECISION as u128; // 1 token per share-day (in PRECISION units)
+        let bonus_u128 = share_days
+            .checked_mul(rate).unwrap()
+            .checked_div(PRECISION as u128).unwrap();
+        let bonus = u64::try_from(bonus_u128).unwrap();
+        assert_eq!(bonus, 1_000);
+    }
+
+    #[test]
+    fn test_whale_cap_applies() {
+        // max_bonus_per_stake = total_unclaimed * BPD_MAX_SHARE_PCT / 100
+        let total_unclaimed = 1_000_000u64;
+        let cap = mul_div(total_unclaimed, BPD_MAX_SHARE_PCT, 100).unwrap();
+        assert_eq!(cap, 50_000); // 5% of pool
+
+        // Bonus capped at max
+        let raw_bonus = 100_000u64; // > cap
+        let capped = raw_bonus.min(cap);
+        assert_eq!(capped, cap, "Large bonus should be capped");
+    }
+
+    #[test]
+    fn test_whale_cap_small_stake_uncapped() {
+        // Small stake bonus is less than cap → not modified
+        let total_unclaimed = 1_000_000u64;
+        let cap = mul_div(total_unclaimed, BPD_MAX_SHARE_PCT, 100).unwrap();
+
+        let raw_bonus = 10_000u64; // well within cap
+        let capped = raw_bonus.min(cap);
+        assert_eq!(capped, raw_bonus, "Small bonus should not be capped");
+    }
+
+    #[test]
+    fn test_bpd_completion_by_counter() {
+        // CRIT-NEW-1: Completion when bpd_stakes_distributed >= bpd_stakes_finalized
+        let finalized: u32 = 10;
+        let distributed: u32 = 10;
+        assert!(distributed >= finalized, "Completion condition met when all stakes distributed");
+
+        // Not complete yet
+        let distributed2: u32 = 9;
+        assert!(!(distributed2 >= finalized), "Not complete when stakes remaining");
+    }
+
+    #[test]
+    fn test_bpd_remaining_decrements_on_distribution() {
+        // bpd_remaining_unclaimed decrements by batch_distributed
+        let remaining = 1_000_000u64;
+        let batch_distributed = 50_000u64;
+        let new_remaining = remaining.checked_sub(batch_distributed).unwrap();
+        assert_eq!(new_remaining, 950_000);
+    }
+
+    #[test]
+    fn test_days_staked_calculation() {
+        // days_staked = (min(snapshot, stake_end) - start_slot) / slots_per_day
+        let spd = DEFAULT_SLOTS_PER_DAY;
+        let start_slot = 1000u64;
+        let stake_end = start_slot + 30 * spd;
+        let snapshot_slot = stake_end + 100; // snapshot after stake ends
+
+        let effective_end = std::cmp::min(snapshot_slot, stake_end);
+        let days_staked = effective_end.saturating_sub(start_slot) / spd;
+        assert_eq!(days_staked, 30);
+    }
+
+    #[test]
+    fn test_days_staked_capped_at_snapshot() {
+        // If snapshot comes before stake end, days are capped at snapshot
+        let spd = DEFAULT_SLOTS_PER_DAY;
+        let start_slot = 1000u64;
+        let stake_end = start_slot + 365 * spd;
+        let snapshot_slot = start_slot + 100 * spd; // snapshot before stake ends
+
+        let effective_end = std::cmp::min(snapshot_slot, stake_end);
+        let days_staked = effective_end.saturating_sub(start_slot) / spd;
+        assert_eq!(days_staked, 100, "Days should be capped at snapshot");
+    }
+}

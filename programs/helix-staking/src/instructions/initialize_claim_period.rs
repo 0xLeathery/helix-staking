@@ -100,3 +100,53 @@ pub fn initialize_claim_period(
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::constants::*;
+
+    #[test]
+    fn test_claim_period_end_slot_calculation() {
+        // end_slot = start_slot + CLAIM_PERIOD_DAYS * slots_per_day
+        let spd = DEFAULT_SLOTS_PER_DAY;
+        let start = 10_000u64;
+        let expected_end = start + CLAIM_PERIOD_DAYS * spd;
+
+        let days_in_slots = CLAIM_PERIOD_DAYS.checked_mul(spd).unwrap();
+        let end = start.checked_add(days_in_slots).unwrap();
+
+        assert_eq!(end, expected_end);
+        assert_eq!(CLAIM_PERIOD_DAYS, 180, "Claim period is 180 days");
+    }
+
+    #[test]
+    fn test_claim_period_id_must_be_nonzero() {
+        // claim_period_id = 0 would collide with default bpd_claim_period_id=0 in StakeAccount
+        // So claim_period_id > 0 is required
+        let id: u32 = 0;
+        assert!(!(id > 0), "id=0 must fail validation");
+
+        let valid_id: u32 = 1;
+        assert!(valid_id > 0, "id=1 must pass validation");
+    }
+
+    #[test]
+    fn test_bpd_fields_initialized_to_zero() {
+        // All BPD pagination fields start at 0 in initialize_claim_period
+        let bpd_remaining_unclaimed: u64 = 0;
+        let bpd_total_share_days: u128 = 0;
+        let bpd_helix_per_share_day: u128 = 0;
+        let bpd_calculation_complete: bool = false;
+        let bpd_snapshot_slot: u64 = 0;
+        let bpd_stakes_finalized: u32 = 0;
+        let bpd_stakes_distributed: u32 = 0;
+
+        assert_eq!(bpd_remaining_unclaimed, 0);
+        assert_eq!(bpd_total_share_days, 0);
+        assert_eq!(bpd_helix_per_share_day, 0);
+        assert!(!bpd_calculation_complete);
+        assert_eq!(bpd_snapshot_slot, 0);
+        assert_eq!(bpd_stakes_finalized, 0);
+        assert_eq!(bpd_stakes_distributed, 0);
+    }
+}

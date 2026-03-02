@@ -8,6 +8,24 @@ use crate::state::{GlobalState, StakeAccount};
 use crate::instructions::math::{calculate_early_penalty, calculate_late_penalty, calculate_pending_rewards, calculate_loyalty_bonus, mul_div};
 use crate::instructions::crank_distribution::distribute_pending_inflation;
 
+/// Apply loyalty multiplier to a reward amount.
+/// reward × (1 + loyalty_bonus / PRECISION)
+/// Returns the adjusted reward amount.
+fn apply_loyalty_multiplier(pending_rewards: u64, loyalty_bonus: u64) -> Result<u64> {
+    if loyalty_bonus == 0 || pending_rewards == 0 {
+        return Ok(pending_rewards);
+    }
+    let total_multiplier = (PRECISION as u128)
+        .checked_add(loyalty_bonus as u128)
+        .ok_or(error!(HelixError::Overflow))?;
+    let adjusted = (pending_rewards as u128)
+        .checked_mul(total_multiplier)
+        .ok_or(error!(HelixError::Overflow))?
+        .checked_div(PRECISION as u128)
+        .ok_or(error!(HelixError::DivisionByZero))?;
+    u64::try_from(adjusted).map_err(|_| error!(HelixError::Overflow))
+}
+
 #[derive(Accounts)]
 pub struct Unstake<'info> {
     #[account(mut)]
@@ -95,19 +113,7 @@ pub fn unstake(ctx: Context<Unstake>) -> Result<()> {
     )?;
 
     // Apply loyalty multiplier to inflation rewards only (NOT principal or BPD bonus)
-    let loyalty_adjusted_rewards = if loyalty_bonus > 0 && pending_rewards > 0 {
-        let total_multiplier = (PRECISION as u128)
-            .checked_add(loyalty_bonus as u128)
-            .ok_or(error!(HelixError::Overflow))?;
-        let adjusted = (pending_rewards as u128)
-            .checked_mul(total_multiplier)
-            .ok_or(error!(HelixError::Overflow))?
-            .checked_div(PRECISION as u128)
-            .ok_or(error!(HelixError::DivisionByZero))?;
-        u64::try_from(adjusted).map_err(|_| error!(HelixError::Overflow))?
-    } else {
-        pending_rewards
-    };
+    let loyalty_adjusted_rewards = apply_loyalty_multiplier(pending_rewards, loyalty_bonus)?;
 
     // Determine penalty based on timing
     let (penalty, penalty_type) = if clock.slot < end_slot {
@@ -215,4 +221,105 @@ pub fn unstake(ctx: Context<Unstake>) -> Result<()> {
     });
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::constants::*;
+    use crate::instructions::math::{calculate_pending_rewards, calculate_early_penalty, calculate_late_penalty, calculate_loyalty_bonus};
+
+    // ====== apply_loyalty_multiplier ======
+
+    #[test]
+    fn test_loyalty_multiplier_no_bonus() {
+        // Zero loyalty → unchanged
+        assert_eq!(apply_loyalty_multiplier(1_000_000, 0).unwrap(), 1_000_000);
+    }
+
+    #[test]
+    fn test_loyalty_multiplier_zero_rewards() {
+        // Zero rewards → stays 0 regardless of bonus
+        assert_eq!(apply_loyalty_multiplier(0, 500_000_000).unwrap(), 0);
+    }
+
+    #[test]
+    fn test_loyalty_multiplier_half_bonus() {
+        // LOYALTY_MAX_BONUS = 500_000_000 = 0.5x
+        // 1_000_000 * 1.5 = 1_500_000
+        let result = apply_loyalty_multiplier(1_000_000, LOYALTY_MAX_BONUS).unwrap();
+        assert_eq!(result, 1_500_000);
+    }
+
+    #[test]
+    fn test_loyalty_multiplier_quarter_bonus() {
+        // 25% bonus: 1_000_000 * 1.25 = 1_250_000
+        let bonus = LOYALTY_MAX_BONUS / 2; // 250_000_000 = 0.25x
+        let result = apply_loyalty_multiplier(1_000_000, bonus).unwrap();
+        assert_eq!(result, 1_250_000);
+    }
+
+    // ====== unstake math integration ======
+
+    #[test]
+    fn test_unstake_early_return_amount() {
+        // Early unstake: return = staked - penalty
+        let staked = 1_000_000_000u64;
+        let start = 0u64;
+        let end = 100u64;
+        let current = 50u64; // 50% served
+
+        let penalty = calculate_early_penalty(staked, start, current, end).unwrap();
+        // 50% served → natural penalty = 50% = min penalty exactly
+        assert_eq!(penalty, staked / 2);
+        let return_amount = staked - penalty;
+        assert_eq!(return_amount, staked / 2);
+    }
+
+    #[test]
+    fn test_unstake_late_penalty_at_grace_boundary() {
+        // At grace period end → still 0 penalty
+        let staked = 1_000_000_000u64;
+        let spd = DEFAULT_SLOTS_PER_DAY;
+        let end = 0u64;
+        let at_grace_end = GRACE_PERIOD_DAYS * spd;
+        let penalty = calculate_late_penalty(staked, end, at_grace_end, spd).unwrap();
+        assert_eq!(penalty, 0);
+    }
+
+    #[test]
+    fn test_unstake_on_time_no_penalty() {
+        // On-time unstake: end_slot, still in grace → penalty = 0
+        let staked = 1_000_000_000u64;
+        let spd = DEFAULT_SLOTS_PER_DAY;
+        let end = 1000u64;
+
+        let penalty = calculate_late_penalty(staked, end, end, spd).unwrap();
+        assert_eq!(penalty, 0);
+    }
+
+    #[test]
+    fn test_pending_rewards_integration() {
+        // After share_rate increases, pending rewards should be positive
+        use crate::instructions::math::calculate_reward_debt;
+        let t_shares = 1_000_000u64;
+        let rate_at_stake = 10_000u64;
+        let debt = calculate_reward_debt(t_shares, rate_at_stake).unwrap();
+
+        // After some time, rate increases by 1000
+        let new_rate = rate_at_stake + 1_000;
+        let pending = calculate_pending_rewards(t_shares, new_rate, debt).unwrap();
+        assert!(pending > 0, "Should have pending rewards after rate increase");
+    }
+
+    #[test]
+    fn test_penalty_redistributed_to_share_rate() {
+        // Simulate penalty redistribution: share_rate_increase = penalty * PRECISION / total_shares
+        use crate::instructions::math::mul_div;
+        let penalty = 1_000_000u64;
+        let total_shares = 10_000_000u64;
+
+        let increase = mul_div(penalty, PRECISION, total_shares).unwrap();
+        assert!(increase > 0, "Penalty should increase share_rate for remaining stakers");
+    }
 }

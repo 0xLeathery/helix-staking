@@ -50,3 +50,40 @@ pub fn transfer_authority(ctx: Context<TransferAuthority>, new_authority: Pubkey
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use anchor_lang::prelude::Pubkey;
+
+    #[test]
+    fn test_transfer_authority_overwrite_detection() {
+        // When new_authority differs from existing pending.new_authority,
+        // it's an overwrite (should emit AuthorityTransferCancelled).
+        let old_pending = Pubkey::new_unique();
+        let new_authority = Pubkey::new_unique();
+
+        // Overwrite: old_pending != default AND != new_authority
+        let is_overwrite = old_pending != Pubkey::default() && old_pending != new_authority;
+        assert!(is_overwrite, "Different new_authority is an overwrite");
+    }
+
+    #[test]
+    fn test_transfer_authority_no_overwrite_if_default() {
+        // If pending.new_authority is default (no previous pending transfer), no cancel event
+        let pending = Pubkey::default();
+        let new_authority = Pubkey::new_unique();
+
+        let is_overwrite = pending != Pubkey::default() && pending != new_authority;
+        assert!(!is_overwrite, "Default pending is not an overwrite");
+    }
+
+    #[test]
+    fn test_transfer_authority_no_overwrite_if_same() {
+        // If setting same authority again, no cancel event
+        let pending = Pubkey::new_unique();
+        let new_authority = pending; // Same pubkey
+
+        let is_overwrite = pending != Pubkey::default() && pending != new_authority;
+        assert!(!is_overwrite, "Setting same authority is not an overwrite");
+    }
+}

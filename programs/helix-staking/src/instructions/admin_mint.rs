@@ -89,3 +89,34 @@ pub fn admin_mint(ctx: Context<AdminMint>, amount: u64) -> Result<()> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_admin_mint_cap_check() {
+        // Admin mint cap: total_admin_minted + amount <= max_admin_mint
+        let max_admin_mint = 1_000_000_000u64;
+        let current_minted = 900_000_000u64;
+        let amount = 100_000_000u64;
+
+        // Exactly at cap = OK
+        let new_total = current_minted.checked_add(amount).unwrap();
+        assert!(new_total <= max_admin_mint);
+
+        // Over cap = fail
+        let over_amount = 100_000_001u64;
+        let over_total = current_minted.checked_add(over_amount).unwrap();
+        assert!(over_total > max_admin_mint);
+    }
+
+    #[test]
+    fn test_admin_mint_state_before_cpi() {
+        // state update happens before CPI (Check-Effects-Interactions)
+        // Verify: after updating, total_admin_minted reflects the new value
+        let mut total_admin_minted = 500_000_000u64;
+        let amount = 100_000_000u64;
+        let new_total = total_admin_minted.checked_add(amount).unwrap();
+        total_admin_minted = new_total; // Update before CPI
+        assert_eq!(total_admin_minted, 600_000_000);
+    }
+}

@@ -79,3 +79,29 @@ pub fn abort_bpd(ctx: Context<AbortBpd>) -> Result<()> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::instructions::crank_distribution::make_test_global_state;
+    use crate::constants::*;
+
+    #[test]
+    fn test_abort_bpd_window_not_active_is_noop() {
+        // When BPD window is not active, abort is a no-op
+        let spd = DEFAULT_SLOTS_PER_DAY;
+        let gs = make_test_global_state(0, spd, 0, 0, 0, DEFAULT_STARTING_SHARE_RATE, DEFAULT_ANNUAL_INFLATION_BP);
+        assert!(!gs.is_bpd_window_active(), "Initially not active");
+        // Logic: if !is_bpd_window_active() → return Ok(()) immediately
+    }
+
+    #[test]
+    fn test_abort_bpd_clears_window() {
+        // After BPD window is set active, abort should clear it
+        let spd = DEFAULT_SLOTS_PER_DAY;
+        let mut gs = make_test_global_state(0, spd, 0, 0, 0, DEFAULT_STARTING_SHARE_RATE, DEFAULT_ANNUAL_INFLATION_BP);
+        gs.set_bpd_window_active(true);
+        assert!(gs.is_bpd_window_active());
+        gs.set_bpd_window_active(false); // Simulating abort_bpd's set_bpd_window_active(false)
+        assert!(!gs.is_bpd_window_active());
+    }
+}

@@ -103,3 +103,93 @@ impl GlobalState {
         + 8    // max_admin_mint
         + 48;  // reserved (6 * u64)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn default_global_state() -> GlobalState {
+        GlobalState {
+            authority: Pubkey::default(),
+            mint: Pubkey::default(),
+            mint_authority_bump: 255,
+            bump: 254,
+            annual_inflation_bp: 3_690_000,
+            min_stake_amount: 10_000_000,
+            share_rate: 10_000,
+            starting_share_rate: 10_000,
+            slots_per_day: 216_000,
+            claim_period_days: 180,
+            init_slot: 0,
+            total_stakes_created: 0,
+            total_unstakes_created: 0,
+            total_claims_created: 0,
+            total_tokens_staked: 0,
+            total_tokens_unstaked: 0,
+            total_shares: 0,
+            current_day: 0,
+            total_admin_minted: 0,
+            max_admin_mint: 0,
+            reserved: [0u64; 6],
+        }
+    }
+
+    #[test]
+    fn test_bpd_window_initially_inactive() {
+        let gs = default_global_state();
+        assert!(!gs.is_bpd_window_active());
+    }
+
+    #[test]
+    fn test_bpd_window_set_active() {
+        let mut gs = default_global_state();
+        gs.set_bpd_window_active(true);
+        assert!(gs.is_bpd_window_active());
+        assert_eq!(gs.reserved[0], 1);
+    }
+
+    #[test]
+    fn test_bpd_window_clear() {
+        let mut gs = default_global_state();
+        gs.set_bpd_window_active(true);
+        gs.set_bpd_window_active(false);
+        assert!(!gs.is_bpd_window_active());
+        assert_eq!(gs.reserved[0], 0);
+    }
+
+    #[test]
+    fn test_pause_initially_false() {
+        let gs = default_global_state();
+        assert!(!gs.is_paused());
+    }
+
+    #[test]
+    fn test_pause_set() {
+        let mut gs = default_global_state();
+        gs.set_paused(true);
+        assert!(gs.is_paused());
+        assert_eq!(gs.reserved[1], 1);
+    }
+
+    #[test]
+    fn test_pause_clear() {
+        let mut gs = default_global_state();
+        gs.set_paused(true);
+        gs.set_paused(false);
+        assert!(!gs.is_paused());
+        assert_eq!(gs.reserved[1], 0);
+    }
+
+    #[test]
+    fn test_bpd_and_pause_flags_independent() {
+        // reserved[0] = BPD window, reserved[1] = pause; they don't interfere
+        let mut gs = default_global_state();
+        gs.set_bpd_window_active(true);
+        gs.set_paused(true);
+        assert!(gs.is_bpd_window_active());
+        assert!(gs.is_paused());
+        gs.set_bpd_window_active(false);
+        assert!(!gs.is_bpd_window_active());
+        assert!(gs.is_paused(), "Paused state should be unaffected by BPD window clear");
+    }
+}

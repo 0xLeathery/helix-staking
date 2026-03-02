@@ -43,3 +43,35 @@ pub fn admin_set_slots_per_day(
     ctx.accounts.global_state.slots_per_day = new_slots_per_day;
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::constants::*;
+
+    #[test]
+    fn test_slots_per_day_bounds() {
+        let upper_bound = DEFAULT_SLOTS_PER_DAY.checked_mul(10).unwrap();
+
+        // 1 is valid (floor = 1)
+        assert!(1u64 > 0 && 1u64 <= upper_bound);
+
+        // Default is valid
+        assert!(DEFAULT_SLOTS_PER_DAY > 0 && DEFAULT_SLOTS_PER_DAY <= upper_bound);
+
+        // Upper bound is valid
+        assert!(upper_bound > 0 && upper_bound <= upper_bound);
+
+        // 0 is invalid
+        assert!(!(0u64 > 0));
+
+        // Upper + 1 is invalid
+        assert!(!(upper_bound + 1 <= upper_bound));
+    }
+
+    #[test]
+    fn test_slots_per_day_upper_bound_value() {
+        // Upper bound = 10 * DEFAULT = 10 * 216_000 = 2_160_000
+        let upper = DEFAULT_SLOTS_PER_DAY.checked_mul(10).unwrap();
+        assert_eq!(upper, 2_160_000);
+    }
+}

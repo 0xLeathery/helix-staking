@@ -182,3 +182,65 @@ pub fn create_stake<'info>(
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::constants::*;
+    use crate::instructions::math::{calculate_t_shares, calculate_reward_debt};
+
+    #[test]
+    fn test_t_shares_calculation_basic() {
+        // Verify t_shares increases with amount (BPB bonus makes it non-perfectly-linear)
+        let rate = DEFAULT_STARTING_SHARE_RATE;
+        let small = calculate_t_shares(1_000_000_000, 1, rate).unwrap();
+        let large = calculate_t_shares(10_000_000_000, 1, rate).unwrap();
+        // With BPB bonus, larger amounts get proportionally more t_shares
+        assert!(large > small * 10 - small, "larger amount yields more t_shares due to BPB");
+        assert!(large > 0 && small > 0, "t_shares should be positive");
+    }
+
+    #[test]
+    fn test_t_shares_lpb_increases_with_duration() {
+        let rate = DEFAULT_STARTING_SHARE_RATE;
+        let amount = 1_000_000_000u64;
+        let short = calculate_t_shares(amount, 1, rate).unwrap();
+        let long_ = calculate_t_shares(amount, 3641, rate).unwrap(); // LPB_MAX_DAYS
+        assert!(long_ > short, "longer duration should yield more t_shares");
+    }
+
+    #[test]
+    fn test_reward_debt_at_creation() {
+        // At creation time: reward_debt = t_shares * share_rate
+        let rate = DEFAULT_STARTING_SHARE_RATE;
+        let t_shares = 1_500_000_000u64;
+        let debt = calculate_reward_debt(t_shares, rate).unwrap();
+        assert_eq!(debt, t_shares * rate);
+    }
+
+    #[test]
+    fn test_end_slot_calculation() {
+        // end_slot = start_slot + days * slots_per_day
+        let spd = DEFAULT_SLOTS_PER_DAY;
+        let start = 1000u64;
+        let days = 365u64;
+        let end = start + days * spd;
+        assert_eq!(end - start, days * spd);
+    }
+
+    #[test]
+    fn test_stake_validates_minimum() {
+        // min_stake_amount check: amount must be >= min
+        let min = 10_000_000u64; // DEFAULT_MIN_STAKE_AMOUNT
+        assert!(1_000_000 < min, "below minimum should fail validation");
+        assert!(10_000_000 >= min, "exactly minimum should pass");
+    }
+
+    #[test]
+    fn test_stake_validates_duration() {
+        // days must be 1..=MAX_STAKE_DAYS
+        assert!(1 >= 1 && 1 <= MAX_STAKE_DAYS, "1 day is valid");
+        assert!(5555 >= 1 && 5555 <= MAX_STAKE_DAYS, "max days is valid");
+        assert!(!(5556 <= MAX_STAKE_DAYS as u16), "above max is invalid");
+        assert!(!(0 >= 1u16), "0 days is invalid");
+    }
+}

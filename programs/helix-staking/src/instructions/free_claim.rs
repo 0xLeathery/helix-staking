@@ -370,3 +370,181 @@ fn calculate_speed_bonus(
 
     Ok((bonus_bps as u16, base_amount, bonus_amount))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::constants::*;
+
+    // ====== calculate_days_elapsed ======
+
+    #[test]
+    fn test_days_elapsed_day_zero() {
+        // Same slot → 0 days
+        let spd = DEFAULT_SLOTS_PER_DAY;
+        assert_eq!(calculate_days_elapsed(100, 100, spd).unwrap(), 0);
+    }
+
+    #[test]
+    fn test_days_elapsed_exact_days() {
+        let spd = DEFAULT_SLOTS_PER_DAY;
+        // Exactly 1 day
+        assert_eq!(calculate_days_elapsed(0, spd, spd).unwrap(), 1);
+        // Exactly 7 days
+        assert_eq!(calculate_days_elapsed(0, 7 * spd, spd).unwrap(), 7);
+        // Exactly 28 days
+        assert_eq!(calculate_days_elapsed(0, 28 * spd, spd).unwrap(), 28);
+        // Exactly 29 days (past bonus period)
+        assert_eq!(calculate_days_elapsed(0, 29 * spd, spd).unwrap(), 29);
+    }
+
+    #[test]
+    fn test_days_elapsed_with_remainder() {
+        let spd = DEFAULT_SLOTS_PER_DAY;
+        // 1 day + partial → still 1 day (integer division truncates)
+        assert_eq!(calculate_days_elapsed(0, spd + 100, spd).unwrap(), 1);
+        // 6 days 23 hours → still 6
+        assert_eq!(calculate_days_elapsed(0, spd * 7 - 1, spd).unwrap(), 6);
+    }
+
+    #[test]
+    fn test_days_elapsed_underflow() {
+        // current < start → underflow error
+        let spd = DEFAULT_SLOTS_PER_DAY;
+        assert!(calculate_days_elapsed(100, 0, spd).is_err());
+    }
+
+    #[test]
+    fn test_days_elapsed_division_by_zero() {
+        // slots_per_day = 0 → division by zero error
+        assert!(calculate_days_elapsed(0, 1000, 0).is_err());
+    }
+
+    // ====== calculate_speed_bonus ======
+
+    #[test]
+    fn test_speed_bonus_week1() {
+        // Day 0 (same day as start): +20% bonus
+        let (bps, base, bonus) = calculate_speed_bonus(1_000_000_000, 0).unwrap();
+        assert_eq!(bps, SPEED_BONUS_WEEK1_BPS as u16);
+        // base = 1_000_000_000 * 10000 / 10 = 1_000_000_000_000
+        assert_eq!(base, 1_000_000_000_000);
+        // bonus = 1_000_000_000_000 * 2000 / 10000 = 200_000_000_000
+        assert_eq!(bonus, base * 2000 / 10000);
+    }
+
+    #[test]
+    fn test_speed_bonus_week1_boundary() {
+        // Day 7: last day of week 1 bonus (SPEED_BONUS_WEEK1_END = 7)
+        let (bps, base, bonus) = calculate_speed_bonus(1_000_000_000, SPEED_BONUS_WEEK1_END).unwrap();
+        assert_eq!(bps, SPEED_BONUS_WEEK1_BPS as u16);
+        assert_eq!(bonus, base * SPEED_BONUS_WEEK1_BPS / BPS_SCALER);
+    }
+
+    #[test]
+    fn test_speed_bonus_weeks2to4() {
+        // Day 8: start of weeks 2-4 bonus
+        let (bps, base, bonus) = calculate_speed_bonus(1_000_000_000, 8).unwrap();
+        assert_eq!(bps, SPEED_BONUS_WEEK2_4_BPS as u16);
+        assert_eq!(bonus, base * SPEED_BONUS_WEEK2_4_BPS / BPS_SCALER);
+
+        // Day 28: last day of weeks 2-4 bonus (SPEED_BONUS_WEEK4_END = 28)
+        let (bps28, _, _) = calculate_speed_bonus(1_000_000_000, SPEED_BONUS_WEEK4_END).unwrap();
+        assert_eq!(bps28, SPEED_BONUS_WEEK2_4_BPS as u16);
+    }
+
+    #[test]
+    fn test_speed_bonus_no_bonus() {
+        // Day 29: past bonus period → 0 bonus_bps
+        let (bps, base, bonus) = calculate_speed_bonus(1_000_000_000, 29).unwrap();
+        assert_eq!(bps, 0);
+        assert_eq!(bonus, 0);
+        assert!(base > 0);
+    }
+
+    #[test]
+    fn test_speed_bonus_base_calculation() {
+        // 1 SOL = 1_000_000_000 lamports
+        // base = 1_000_000_000 * 10000 / 10 = 1_000_000_000_000 (1e12 base units)
+        // = 10,000 HELIX tokens (8 decimals) = 1e12 / 1e8 = 1e4
+        let (_, base, _) = calculate_speed_bonus(1_000_000_000, 100).unwrap();
+        assert_eq!(base, 1_000_000_000_000);
+
+        // 0.1 SOL = 100_000_000 lamports → 100_000_000_000 base units
+        let (_, base_small, _) = calculate_speed_bonus(100_000_000, 100).unwrap();
+        assert_eq!(base_small, 100_000_000_000);
+    }
+
+    // ====== verify_merkle_proof ======
+
+    #[test]
+    fn test_merkle_proof_empty_tree() {
+        // Single leaf: proof is empty, root = leaf hash
+        use solana_nostd_keccak::hashv;
+        use anchor_lang::prelude::Pubkey;
+
+        let wallet = Pubkey::new_unique();
+        let amount = 1_000_000_000u64;
+        let period_id = 1u32;
+
+        let leaf = hashv(&[
+            wallet.as_ref(),
+            &amount.to_le_bytes(),
+            &period_id.to_le_bytes(),
+        ]);
+
+        // With empty proof, root must equal leaf
+        let root = leaf;
+        assert!(verify_merkle_proof(wallet, amount, period_id, &root, &[]).is_ok());
+    }
+
+    #[test]
+    fn test_merkle_proof_invalid_root() {
+        use anchor_lang::prelude::Pubkey;
+
+        let wallet = Pubkey::new_unique();
+        let wrong_root = [0u8; 32];
+        assert!(verify_merkle_proof(wallet, 100, 1, &wrong_root, &[]).is_err());
+    }
+
+    #[test]
+    fn test_merkle_proof_too_long() {
+        use anchor_lang::prelude::Pubkey;
+
+        let wallet = Pubkey::new_unique();
+        let root = [0u8; 32];
+        // MAX_MERKLE_PROOF_LEN = 20, provide 21 elements
+        let proof = vec![[0u8; 32]; MAX_MERKLE_PROOF_LEN + 1];
+        assert!(verify_merkle_proof(wallet, 100, 1, &root, &proof).is_err());
+    }
+
+    #[test]
+    fn test_merkle_proof_two_leaves() {
+        // Two-leaf tree: root = hash(sort(leaf1, leaf2))
+        use solana_nostd_keccak::hashv;
+        use anchor_lang::prelude::Pubkey;
+
+        let wallet1 = Pubkey::new_unique();
+        let wallet2 = Pubkey::new_unique();
+        let amount = 500_000_000u64;
+        let period_id = 1u32;
+
+        let leaf1 = hashv(&[wallet1.as_ref(), &amount.to_le_bytes(), &period_id.to_le_bytes()]);
+        let leaf2 = hashv(&[wallet2.as_ref(), &amount.to_le_bytes(), &period_id.to_le_bytes()]);
+
+        // Build root by sorting
+        let root = if leaf1 < leaf2 {
+            hashv(&[&leaf1, &leaf2])
+        } else {
+            hashv(&[&leaf2, &leaf1])
+        };
+
+        // Proof for wallet1: sibling is leaf2
+        let proof1 = vec![leaf2];
+        assert!(verify_merkle_proof(wallet1, amount, period_id, &root, &proof1).is_ok());
+
+        // Proof for wallet2: sibling is leaf1
+        let proof2 = vec![leaf1];
+        assert!(verify_merkle_proof(wallet2, amount, period_id, &root, &proof2).is_ok());
+    }
+}

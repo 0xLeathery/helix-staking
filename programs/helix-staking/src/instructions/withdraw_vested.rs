@@ -167,3 +167,109 @@ fn calculate_vested_amount(
         .checked_add(unlocked_vesting)
         .ok_or(HelixError::Overflow.into())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::constants::*;
+
+    #[test]
+    fn test_vested_amount_at_claim_time() {
+        // At exactly claim slot: only immediate (10%) is vested
+        let claimed = 1_000_000_000u64; // 10 tokens
+        let claimed_slot = 1000u64;
+        let vesting_end = claimed_slot + VESTING_DAYS * DEFAULT_SLOTS_PER_DAY;
+
+        let vested = calculate_vested_amount(claimed, claimed_slot, vesting_end, claimed_slot).unwrap();
+        // immediate = 10% = 100_000_000
+        assert_eq!(vested, claimed / 10);
+    }
+
+    #[test]
+    fn test_vested_amount_after_vesting_end() {
+        // Past vesting end: entire claimed amount is available
+        let claimed = 1_000_000_000u64;
+        let claimed_slot = 0u64;
+        let vesting_end = 1_000u64;
+        let current_after = vesting_end + 1000;
+
+        let vested = calculate_vested_amount(claimed, claimed_slot, vesting_end, current_after).unwrap();
+        assert_eq!(vested, claimed);
+    }
+
+    #[test]
+    fn test_vested_amount_at_vesting_end() {
+        // Exactly at vesting_end_slot: full amount vested
+        let claimed = 1_000_000_000u64;
+        let claimed_slot = 0u64;
+        let vesting_end = DEFAULT_SLOTS_PER_DAY * VESTING_DAYS;
+
+        let vested = calculate_vested_amount(claimed, claimed_slot, vesting_end, vesting_end).unwrap();
+        assert_eq!(vested, claimed);
+    }
+
+    #[test]
+    fn test_vested_amount_halfway() {
+        // Halfway through vesting: 10% immediate + 45% of 90% = 10% + 45% = 55% total
+        // Actually: immediate (10%) + (90% * 0.5) = 10% + 45% = 55%
+        let claimed = 1_000_000_000u64;
+        let claimed_slot = 0u64;
+        let vesting_end = 1_000_000u64;
+        let half = claimed_slot + (vesting_end - claimed_slot) / 2;
+
+        let vested = calculate_vested_amount(claimed, claimed_slot, vesting_end, half).unwrap();
+        // immediate = 100_000_000 (10%)
+        // vesting_portion = 900_000_000 (90%)
+        // unlocked = 900_000_000 * half / vesting_end = 450_000_000
+        // total = 100_000_000 + 450_000_000 = 550_000_000
+        assert_eq!(vested, 550_000_000);
+    }
+
+    #[test]
+    fn test_vested_amount_before_claim() {
+        // current_slot <= claimed_slot: only immediate
+        let claimed = 1_000_000_000u64;
+        let claimed_slot = 1000u64;
+        let vesting_end = 2000u64;
+
+        // current = claimed_slot exactly (edge of <= condition)
+        let vested = calculate_vested_amount(claimed, claimed_slot, vesting_end, claimed_slot).unwrap();
+        assert_eq!(vested, claimed / 10); // immediate only
+
+        // current < claimed_slot (shouldn't happen but handled)
+        // This triggers the `current_slot <= claimed_slot` branch
+        // Note: In practice this can't happen without underflow elsewhere, but the function handles it
+    }
+
+    #[test]
+    fn test_vested_amount_large_claim() {
+        // Large claim to exercise mul_div overflow protection
+        let claimed = u64::MAX / 100; // Large but not overflowing
+        let claimed_slot = 0u64;
+        let vesting_end = 1_000_000u64;
+        let half = 500_000u64;
+
+        // Should not panic or overflow
+        let result = calculate_vested_amount(claimed, claimed_slot, vesting_end, half);
+        assert!(result.is_ok());
+        let vested = result.unwrap();
+        assert!(vested > claimed / 10); // More than immediate
+        assert!(vested < claimed);       // Less than full amount
+    }
+
+    #[test]
+    fn test_vested_amount_one_quarter() {
+        // 25% through vesting period
+        let claimed = 10_000_000_000u64; // 100 tokens
+        let claimed_slot = 0u64;
+        let vesting_end = 1_000_000u64;
+        let quarter = 250_000u64; // 25% of vesting period
+
+        let vested = calculate_vested_amount(claimed, claimed_slot, vesting_end, quarter).unwrap();
+        // immediate = 10% = 1_000_000_000
+        // vesting_portion = 9_000_000_000
+        // unlocked = 9_000_000_000 * 250_000 / 1_000_000 = 2_250_000_000
+        // total = 1_000_000_000 + 2_250_000_000 = 3_250_000_000
+        assert_eq!(vested, 3_250_000_000);
+    }
+}

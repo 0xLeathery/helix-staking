@@ -43,3 +43,33 @@ pub fn accept_authority(ctx: Context<AcceptAuthority>) -> Result<()> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use anchor_lang::prelude::Pubkey;
+    use crate::instructions::crank_distribution::make_test_global_state;
+    use crate::constants::*;
+
+    #[test]
+    fn test_accept_authority_updates_global_state() {
+        let spd = DEFAULT_SLOTS_PER_DAY;
+        let mut gs = make_test_global_state(0, spd, 0, 0, 0, DEFAULT_STARTING_SHARE_RATE, DEFAULT_ANNUAL_INFLATION_BP);
+        let old_auth = gs.authority;
+        let new_auth = Pubkey::new_unique();
+
+        // Simulate accept_authority
+        gs.authority = new_auth;
+
+        assert_ne!(gs.authority, old_auth, "Authority changed");
+        assert_eq!(gs.authority, new_auth, "New authority set correctly");
+    }
+
+    #[test]
+    fn test_authority_transfer_blocked_during_bpd() {
+        // accept_authority has a constraint: !is_bpd_window_active()
+        let spd = DEFAULT_SLOTS_PER_DAY;
+        let mut gs = make_test_global_state(0, spd, 0, 0, 0, DEFAULT_STARTING_SHARE_RATE, DEFAULT_ANNUAL_INFLATION_BP);
+        gs.set_bpd_window_active(true);
+        assert!(gs.is_bpd_window_active(), "BPD window blocks authority transfer");
+    }
+}

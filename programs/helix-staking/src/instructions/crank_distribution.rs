@@ -36,6 +36,44 @@ pub struct CrankDistribution<'info> {
     pub token_program: Program<'info, Token2022>,
 }
 
+/// Create a minimal GlobalState for unit testing — only fills fields needed by
+/// `distribute_pending_inflation`. Not valid for on-chain use (no PDA, no authority).
+#[cfg(test)]
+pub fn make_test_global_state(
+    init_slot: u64,
+    slots_per_day: u64,
+    current_day: u64,
+    total_shares: u64,
+    total_tokens_staked: u64,
+    share_rate: u64,
+    annual_inflation_bp: u64,
+) -> crate::state::GlobalState {
+    use anchor_lang::prelude::Pubkey;
+    crate::state::GlobalState {
+        authority: Pubkey::default(),
+        mint: Pubkey::default(),
+        mint_authority_bump: 0,
+        bump: 0,
+        annual_inflation_bp,
+        min_stake_amount: 10_000_000,
+        share_rate,
+        starting_share_rate: share_rate,
+        slots_per_day,
+        claim_period_days: 180,
+        init_slot,
+        total_stakes_created: 0,
+        total_unstakes_created: 0,
+        total_claims_created: 0,
+        total_tokens_staked,
+        total_tokens_unstaked: 0,
+        total_shares,
+        current_day,
+        total_admin_minted: 0,
+        max_admin_mint: 0,
+        reserved: [0u64; 6],
+    }
+}
+
 pub fn crank_distribution(ctx: Context<CrankDistribution>) -> Result<()> {
     let global_state = &mut ctx.accounts.global_state;
     let clock = Clock::get()?;
@@ -134,4 +172,137 @@ pub fn distribute_pending_inflation(global_state: &mut GlobalState, clock: &Cloc
     });
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::constants::*;
+
+    fn make_clock(slot: u64) -> Clock {
+        Clock {
+            slot,
+            epoch_start_timestamp: 0,
+            epoch: 0,
+            leader_schedule_epoch: 0,
+            unix_timestamp: 0,
+        }
+    }
+
+    #[test]
+    fn test_distribute_same_day_noop() {
+        // current_day == global_state.current_day → no distribution
+        let spd = DEFAULT_SLOTS_PER_DAY;
+        let mut gs = make_test_global_state(
+            0, spd, 0,               // init_slot, spd, current_day
+            1_000_000_000,           // total_shares
+            10_000_000_000,          // total_tokens_staked
+            DEFAULT_STARTING_SHARE_RATE,
+            DEFAULT_ANNUAL_INFLATION_BP,
+        );
+        let initial_rate = gs.share_rate;
+        // slot = day 0 exactly → current_day calculation = 0 = gs.current_day
+        let clock = make_clock(0);
+        distribute_pending_inflation(&mut gs, &clock).unwrap();
+        assert_eq!(gs.share_rate, initial_rate, "no-op on same day");
+        assert_eq!(gs.current_day, 0);
+    }
+
+    #[test]
+    fn test_distribute_one_day_no_shares() {
+        // Day advances but no shares → current_day updates, share_rate unchanged
+        let spd = DEFAULT_SLOTS_PER_DAY;
+        let mut gs = make_test_global_state(
+            0, spd, 0, 0, 0,
+            DEFAULT_STARTING_SHARE_RATE,
+            DEFAULT_ANNUAL_INFLATION_BP,
+        );
+        let initial_rate = gs.share_rate;
+        let clock = make_clock(spd); // exactly day 1
+        distribute_pending_inflation(&mut gs, &clock).unwrap();
+        assert_eq!(gs.current_day, 1);
+        assert_eq!(gs.share_rate, initial_rate, "no shares → rate unchanged");
+    }
+
+    #[test]
+    fn test_distribute_one_day_with_shares() {
+        // Day advances with active shares → share_rate increases
+        let spd = DEFAULT_SLOTS_PER_DAY;
+        let staked = 10_000_000_000_000u64; // 100,000 HELIX (8 decimals)
+        let shares = 1_000_000_000_000u64;  // 1e12 shares
+        let rate = DEFAULT_STARTING_SHARE_RATE;
+        let mut gs = make_test_global_state(0, spd, 0, shares, staked, rate, DEFAULT_ANNUAL_INFLATION_BP);
+        let initial_rate = gs.share_rate;
+        let clock = make_clock(spd); // day 1
+        distribute_pending_inflation(&mut gs, &clock).unwrap();
+        assert_eq!(gs.current_day, 1);
+        assert!(gs.share_rate > initial_rate, "share_rate should increase after distribution");
+    }
+
+    #[test]
+    fn test_distribute_multiple_days_catchup() {
+        // 5 days skipped → all caught up in single call
+        let spd = DEFAULT_SLOTS_PER_DAY;
+        let staked = 10_000_000_000_000u64;
+        let shares = 1_000_000_000_000u64;
+        let rate = DEFAULT_STARTING_SHARE_RATE;
+        let mut gs = make_test_global_state(0, spd, 0, shares, staked, rate, DEFAULT_ANNUAL_INFLATION_BP);
+
+        // Single-day distribution reference
+        let mut gs_1day = make_test_global_state(0, spd, 0, shares, staked, rate, DEFAULT_ANNUAL_INFLATION_BP);
+        distribute_pending_inflation(&mut gs_1day, &make_clock(spd)).unwrap();
+        let rate_after_1day = gs_1day.share_rate;
+
+        // 5-day catchup
+        let clock5 = make_clock(5 * spd);
+        distribute_pending_inflation(&mut gs, &clock5).unwrap();
+        assert_eq!(gs.current_day, 5);
+        // share_rate increase for 5 days should be > 1 day
+        assert!(gs.share_rate > rate_after_1day, "5-day catchup > 1-day");
+    }
+
+    #[test]
+    fn test_distribute_idempotent_same_slot() {
+        // Calling twice with the same clock is idempotent (second call is noop)
+        let spd = DEFAULT_SLOTS_PER_DAY;
+        let staked = 10_000_000_000_000u64;
+        let shares = 1_000_000_000_000u64;
+        let rate = DEFAULT_STARTING_SHARE_RATE;
+        let mut gs = make_test_global_state(0, spd, 0, shares, staked, rate, DEFAULT_ANNUAL_INFLATION_BP);
+        let clock = make_clock(spd);
+
+        distribute_pending_inflation(&mut gs, &clock).unwrap();
+        let rate_after_first = gs.share_rate;
+
+        // Second call with same clock → noop
+        distribute_pending_inflation(&mut gs, &clock).unwrap();
+        assert_eq!(gs.share_rate, rate_after_first, "second call is idempotent");
+    }
+
+    #[test]
+    fn test_global_state_bpd_window_flag() {
+        let spd = DEFAULT_SLOTS_PER_DAY;
+        let mut gs = make_test_global_state(0, spd, 0, 0, 0, DEFAULT_STARTING_SHARE_RATE, DEFAULT_ANNUAL_INFLATION_BP);
+
+        // Initially not active
+        assert!(!gs.is_bpd_window_active());
+
+        gs.set_bpd_window_active(true);
+        assert!(gs.is_bpd_window_active());
+
+        gs.set_bpd_window_active(false);
+        assert!(!gs.is_bpd_window_active());
+    }
+
+    #[test]
+    fn test_global_state_pause_flag() {
+        let spd = DEFAULT_SLOTS_PER_DAY;
+        let mut gs = make_test_global_state(0, spd, 0, 0, 0, DEFAULT_STARTING_SHARE_RATE, DEFAULT_ANNUAL_INFLATION_BP);
+
+        assert!(!gs.is_paused());
+        gs.set_paused(true);
+        assert!(gs.is_paused());
+        gs.set_paused(false);
+        assert!(!gs.is_paused());
+    }
 }

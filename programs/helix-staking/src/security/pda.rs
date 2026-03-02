@@ -73,7 +73,81 @@ pub fn validate_stake_pda(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::constants::*;
 
-    // Tests will be in tests/bankrun/security.test.ts (integration tests)
-    // Unit tests here for pure validation logic if needed
+    #[test]
+    fn test_stake_pda_derivation_is_deterministic() {
+        // Same inputs should always yield the same PDA
+        let user = Pubkey::new_unique();
+        let stake_id: u64 = 42;
+
+        let (pda1, bump1) = Pubkey::try_find_program_address(
+            &[STAKE_SEED, user.as_ref(), &stake_id.to_le_bytes()],
+            &crate::id(),
+        ).unwrap();
+
+        let (pda2, bump2) = Pubkey::try_find_program_address(
+            &[STAKE_SEED, user.as_ref(), &stake_id.to_le_bytes()],
+            &crate::id(),
+        ).unwrap();
+
+        assert_eq!(pda1, pda2, "PDA derivation is deterministic");
+        assert_eq!(bump1, bump2, "Canonical bump is deterministic");
+    }
+
+    #[test]
+    fn test_different_users_yield_different_pdas() {
+        let user1 = Pubkey::new_unique();
+        let user2 = Pubkey::new_unique();
+        let stake_id: u64 = 0;
+
+        let (pda1, _) = Pubkey::try_find_program_address(
+            &[STAKE_SEED, user1.as_ref(), &stake_id.to_le_bytes()],
+            &crate::id(),
+        ).unwrap();
+
+        let (pda2, _) = Pubkey::try_find_program_address(
+            &[STAKE_SEED, user2.as_ref(), &stake_id.to_le_bytes()],
+            &crate::id(),
+        ).unwrap();
+
+        assert_ne!(pda1, pda2, "Different users yield different PDAs");
+    }
+
+    #[test]
+    fn test_different_stake_ids_yield_different_pdas() {
+        let user = Pubkey::new_unique();
+
+        let (pda1, _) = Pubkey::try_find_program_address(
+            &[STAKE_SEED, user.as_ref(), &0u64.to_le_bytes()],
+            &crate::id(),
+        ).unwrap();
+
+        let (pda2, _) = Pubkey::try_find_program_address(
+            &[STAKE_SEED, user.as_ref(), &1u64.to_le_bytes()],
+            &crate::id(),
+        ).unwrap();
+
+        assert_ne!(pda1, pda2, "Different stake_ids yield different PDAs");
+    }
+
+    #[test]
+    fn test_canonical_bump_is_valid() {
+        // The canonical bump returned by try_find_program_address should create a valid PDA
+        let user = Pubkey::new_unique();
+        let stake_id: u64 = 5;
+
+        let (pda, bump) = Pubkey::try_find_program_address(
+            &[STAKE_SEED, user.as_ref(), &stake_id.to_le_bytes()],
+            &crate::id(),
+        ).unwrap();
+
+        // Verify by recreating with create_program_address
+        let recreated = Pubkey::create_program_address(
+            &[STAKE_SEED, user.as_ref(), &stake_id.to_le_bytes(), &[bump]],
+            &crate::id(),
+        ).unwrap();
+
+        assert_eq!(pda, recreated, "Canonical bump recreates the same PDA");
+    }
 }
