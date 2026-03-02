@@ -14,6 +14,155 @@ export type HelixStaking = {
   },
   "instructions": [
     {
+      "name": "abortBpd",
+      "discriminator": [
+        135,
+        115,
+        41,
+        80,
+        48,
+        233,
+        102,
+        209
+      ],
+      "accounts": [
+        {
+          "name": "globalState",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "claimConfig",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  108,
+                  97,
+                  105,
+                  109,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true,
+          "relations": [
+            "globalState"
+          ]
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "acceptAuthority",
+      "discriminator": [
+        107,
+        86,
+        198,
+        91,
+        33,
+        12,
+        107,
+        160
+      ],
+      "accounts": [
+        {
+          "name": "globalState",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "pendingAuthority",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  101,
+                  110,
+                  100,
+                  105,
+                  110,
+                  103,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "newAuthority",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "adminMint",
       "discriminator": [
         137,
@@ -117,6 +266,204 @@ export type HelixStaking = {
       "args": [
         {
           "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "adminSetBpdFinalizeTimestamp",
+      "discriminator": [
+        119,
+        141,
+        255,
+        46,
+        52,
+        58,
+        227,
+        236
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "globalState",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "claimConfig",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  108,
+                  97,
+                  105,
+                  109,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "newTimestamp",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "adminSetClaimEndSlot",
+      "discriminator": [
+        185,
+        218,
+        12,
+        8,
+        210,
+        189,
+        217,
+        223
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "globalState",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "claimConfig",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  108,
+                  97,
+                  105,
+                  109,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "newEndSlot",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "adminSetSlotsPerDay",
+      "discriminator": [
+        21,
+        154,
+        109,
+        58,
+        79,
+        237,
+        202,
+        113
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "globalState",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "newSlotsPerDay",
           "type": "u64"
         }
       ]
@@ -481,7 +828,60 @@ export type HelixStaking = {
         },
         {
           "name": "userTokenAccount",
-          "writable": true
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "user"
+              },
+              {
+                "kind": "account",
+                "path": "tokenProgram"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
         },
         {
           "name": "mint",
@@ -527,6 +927,242 @@ export type HelixStaking = {
       ]
     },
     {
+      "name": "createStakeWithReferral",
+      "discriminator": [
+        197,
+        124,
+        58,
+        22,
+        71,
+        166,
+        104,
+        213
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "globalState",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "stakeAccount",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  116,
+                  97,
+                  107,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              },
+              {
+                "kind": "account",
+                "path": "global_state.total_stakes_created",
+                "account": "globalState"
+              }
+            ]
+          }
+        },
+        {
+          "name": "userTokenAccount",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "user"
+              },
+              {
+                "kind": "account",
+                "path": "tokenProgram"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "referrerTokenAccount",
+          "docs": [
+            "Referrer's token account — must hold the correct mint and belong to the referrer"
+          ],
+          "writable": true
+        },
+        {
+          "name": "referralRecord",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  102,
+                  101,
+                  114,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "referrer"
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  104,
+                  101,
+                  108,
+                  105,
+                  120,
+                  95,
+                  109,
+                  105,
+                  110,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mintAuthority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "tokenProgram",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "days",
+          "type": "u16"
+        },
+        {
+          "name": "referrer",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
       "name": "finalizeBpdCalculation",
       "discriminator": [
         168,
@@ -542,7 +1178,7 @@ export type HelixStaking = {
         {
           "name": "caller",
           "docs": [
-            "Anyone can call this (permissionless)"
+            "M-1 FIX: Only authority can initiate BPD finalization (prevents griefing)"
           ],
           "signer": true
         },
@@ -1083,6 +1719,51 @@ export type HelixStaking = {
       "args": []
     },
     {
+      "name": "pause",
+      "discriminator": [
+        211,
+        22,
+        221,
+        251,
+        74,
+        121,
+        193,
+        47
+      ],
+      "accounts": [
+        {
+          "name": "globalState",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "sealBpdFinalize",
       "discriminator": [
         81,
@@ -1152,7 +1833,96 @@ export type HelixStaking = {
           }
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "expectedFinalizedCount",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "transferAuthority",
+      "discriminator": [
+        48,
+        169,
+        76,
+        72,
+        229,
+        180,
+        55,
+        161
+      ],
+      "accounts": [
+        {
+          "name": "globalState",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "pendingAuthority",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  101,
+                  110,
+                  100,
+                  105,
+                  110,
+                  103,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "newAuthority",
+          "type": "pubkey"
+        }
+      ]
     },
     {
       "name": "triggerBigPayDay",
@@ -1223,6 +1993,51 @@ export type HelixStaking = {
               }
             ]
           }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "unpause",
+      "discriminator": [
+        169,
+        144,
+        4,
+        38,
+        10,
+        141,
+        188,
+        255
+      ],
+      "accounts": [
+        {
+          "name": "globalState",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true
         }
       ],
       "args": []
@@ -1635,6 +2450,32 @@ export type HelixStaking = {
       ]
     },
     {
+      "name": "pendingAuthority",
+      "discriminator": [
+        108,
+        91,
+        208,
+        174,
+        216,
+        189,
+        207,
+        93
+      ]
+    },
+    {
+      "name": "referralRecord",
+      "discriminator": [
+        225,
+        215,
+        211,
+        93,
+        50,
+        168,
+        252,
+        185
+      ]
+    },
+    {
       "name": "stakeAccount",
       "discriminator": [
         80,
@@ -1663,6 +2504,45 @@ export type HelixStaking = {
       ]
     },
     {
+      "name": "authorityTransferCancelled",
+      "discriminator": [
+        31,
+        228,
+        187,
+        148,
+        20,
+        99,
+        237,
+        48
+      ]
+    },
+    {
+      "name": "authorityTransferCompleted",
+      "discriminator": [
+        11,
+        219,
+        75,
+        24,
+        117,
+        129,
+        240,
+        79
+      ]
+    },
+    {
+      "name": "authorityTransferInitiated",
+      "discriminator": [
+        194,
+        206,
+        0,
+        50,
+        236,
+        124,
+        236,
+        147
+      ]
+    },
+    {
       "name": "bigPayDayDistributed",
       "discriminator": [
         213,
@@ -1673,6 +2553,32 @@ export type HelixStaking = {
         154,
         104,
         198
+      ]
+    },
+    {
+      "name": "bpdAborted",
+      "discriminator": [
+        171,
+        154,
+        147,
+        10,
+        175,
+        142,
+        9,
+        102
+      ]
+    },
+    {
+      "name": "bpdBatchFinalized",
+      "discriminator": [
+        158,
+        191,
+        63,
+        0,
+        242,
+        79,
+        60,
+        147
       ]
     },
     {
@@ -1725,6 +2631,19 @@ export type HelixStaking = {
         118,
         76,
         132
+      ]
+    },
+    {
+      "name": "referralStaked",
+      "discriminator": [
+        81,
+        191,
+        0,
+        125,
+        42,
+        128,
+        43,
+        185
       ]
     },
     {
@@ -1983,6 +2902,86 @@ export type HelixStaking = {
       "code": 6037,
       "name": "stakeNotFinalized",
       "msg": "Stake not counted in BPD finalize phase"
+    },
+    {
+      "code": 6038,
+      "name": "bpdFinalizationIncomplete",
+      "msg": "BPD finalization incomplete - no stakes finalized"
+    },
+    {
+      "code": 6039,
+      "name": "bpdWindowNotActive",
+      "msg": "BPD window is not active"
+    },
+    {
+      "code": 6040,
+      "name": "bpdFinalizeCountMismatch",
+      "msg": "BPD finalize count mismatch - expected stakes do not match finalized count"
+    },
+    {
+      "code": 6041,
+      "name": "bpdDistributionAlreadyStarted",
+      "msg": "Cannot abort BPD after distribution has started"
+    },
+    {
+      "code": 6042,
+      "name": "unauthorizedNewAuthority",
+      "msg": "Signer does not match pending authority"
+    },
+    {
+      "code": 6043,
+      "name": "authorityTransferBlockedDuringBpd",
+      "msg": "Authority transfer blocked while BPD window is active"
+    },
+    {
+      "code": 6044,
+      "name": "bpdSealTooEarly",
+      "msg": "BPD seal attempted before observation window elapsed"
+    },
+    {
+      "code": 6045,
+      "name": "adminBoundsExceeded",
+      "msg": "Admin parameter change exceeds safe bounds (±10% of default)"
+    },
+    {
+      "code": 6046,
+      "name": "claimAmountZero",
+      "msg": "Claim amount is zero — nothing to distribute"
+    },
+    {
+      "code": 6047,
+      "name": "invalidPda",
+      "msg": "Invalid PDA derivation"
+    },
+    {
+      "code": 6048,
+      "name": "invalidBumpSeed",
+      "msg": "Invalid bump seed (not canonical)"
+    },
+    {
+      "code": 6049,
+      "name": "invalidDivisor",
+      "msg": "Invalid divisor in arithmetic operation"
+    },
+    {
+      "code": 6050,
+      "name": "invalidSlotsPerDay",
+      "msg": "Slots per day must be greater than 0"
+    },
+    {
+      "code": 6051,
+      "name": "programPaused",
+      "msg": "Program is currently paused"
+    },
+    {
+      "code": 6052,
+      "name": "alreadyMigrated",
+      "msg": "Stake account is already at current layout version"
+    },
+    {
+      "code": 6053,
+      "name": "selfReferral",
+      "msg": "Cannot refer yourself"
     }
   ],
   "types": [
@@ -2010,6 +3009,54 @@ export type HelixStaking = {
           {
             "name": "amount",
             "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "authorityTransferCancelled",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "cancelledNewAuthority",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "authorityTransferCompleted",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "oldAuthority",
+            "type": "pubkey"
+          },
+          {
+            "name": "newAuthority",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "authorityTransferInitiated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "oldAuthority",
+            "type": "pubkey"
+          },
+          {
+            "name": "newAuthority",
+            "type": "pubkey"
           }
         ]
       }
@@ -2046,6 +3093,57 @@ export type HelixStaking = {
           {
             "name": "eligibleStakers",
             "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "bpdAborted",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "claimPeriodId",
+            "type": "u32"
+          },
+          {
+            "name": "stakesFinalized",
+            "type": "u32"
+          },
+          {
+            "name": "stakesDistributed",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "bpdBatchFinalized",
+      "docs": [
+        "Phase 8.1: Emitted after each finalize_bpd_calculation batch for off-chain transparency"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "claimPeriodId",
+            "type": "u32"
+          },
+          {
+            "name": "batchStakesProcessed",
+            "type": "u32"
+          },
+          {
+            "name": "totalStakesFinalized",
+            "type": "u32"
+          },
+          {
+            "name": "cumulativeShareDays",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
           }
         ]
       }
@@ -2209,14 +3307,17 @@ export type HelixStaking = {
           {
             "name": "bpdFinalizeStartTimestamp",
             "docs": [
-              "Unix timestamp when finalize_bpd_calculation completed (Phase 8.1). Zero until seal_bpd_finalize is callable."
+              "Unix timestamp of the first finalize_bpd_calculation batch.",
+              "Used to enforce seal delay (must wait BPD_SEAL_DELAY_SECONDS after this).",
+              "Set on first batch, reset by abort_bpd."
             ],
             "type": "i64"
           },
           {
             "name": "bpdOriginalUnclaimed",
             "docs": [
-              "Original unclaimed amount at BPD distribution start (Phase 8.1). Immutable after first trigger_big_pay_day."
+              "Original unclaimed amount captured at seal time, used for consistent",
+              "per-stake whale cap calculation across all trigger_big_pay_day batches."
             ],
             "type": "u64"
           }
@@ -2587,6 +3688,28 @@ export type HelixStaking = {
       }
     },
     {
+      "name": "pendingAuthority",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "newAuthority",
+            "docs": [
+              "The proposed new authority pubkey"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "Bump seed for this PDA"
+            ],
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
       "name": "protocolInitialized",
       "type": {
         "kind": "struct",
@@ -2625,6 +3748,62 @@ export type HelixStaking = {
           },
           {
             "name": "slotsPerDay",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "referralRecord",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "referrer",
+            "type": "pubkey"
+          },
+          {
+            "name": "referee",
+            "type": "pubkey"
+          },
+          {
+            "name": "slot",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "referralStaked",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "slot",
+            "type": "u64"
+          },
+          {
+            "name": "referrer",
+            "type": "pubkey"
+          },
+          {
+            "name": "referee",
+            "type": "pubkey"
+          },
+          {
+            "name": "stakeId",
+            "type": "u64"
+          },
+          {
+            "name": "refereeTShareBonus",
+            "type": "u64"
+          },
+          {
+            "name": "referrerTokenBonus",
             "type": "u64"
           }
         ]

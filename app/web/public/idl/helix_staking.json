@@ -921,6 +921,242 @@
       ]
     },
     {
+      "name": "create_stake_with_referral",
+      "discriminator": [
+        197,
+        124,
+        58,
+        22,
+        71,
+        166,
+        104,
+        213
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "global_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "stake_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  116,
+                  97,
+                  107,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              },
+              {
+                "kind": "account",
+                "path": "global_state.total_stakes_created",
+                "account": "GlobalState"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user_token_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "user"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "referrer_token_account",
+          "docs": [
+            "Referrer's token account — must hold the correct mint and belong to the referrer"
+          ],
+          "writable": true
+        },
+        {
+          "name": "referral_record",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  102,
+                  101,
+                  114,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "referrer"
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  104,
+                  101,
+                  108,
+                  105,
+                  120,
+                  95,
+                  109,
+                  105,
+                  110,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint_authority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "days",
+          "type": "u16"
+        },
+        {
+          "name": "referrer",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
       "name": "finalize_bpd_calculation",
       "discriminator": [
         168,
@@ -2221,6 +2457,19 @@
       ]
     },
     {
+      "name": "ReferralRecord",
+      "discriminator": [
+        225,
+        215,
+        211,
+        93,
+        50,
+        168,
+        252,
+        185
+      ]
+    },
+    {
       "name": "StakeAccount",
       "discriminator": [
         80,
@@ -2376,6 +2625,19 @@
         118,
         76,
         132
+      ]
+    },
+    {
+      "name": "ReferralStaked",
+      "discriminator": [
+        81,
+        191,
+        0,
+        125,
+        42,
+        128,
+        43,
+        185
       ]
     },
     {
@@ -2709,6 +2971,11 @@
       "code": 6052,
       "name": "AlreadyMigrated",
       "msg": "Stake account is already at current layout version"
+    },
+    {
+      "code": 6053,
+      "name": "SelfReferral",
+      "msg": "Cannot refer yourself"
     }
   ],
   "types": [
@@ -3475,6 +3742,62 @@
           },
           {
             "name": "slots_per_day",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ReferralRecord",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "referrer",
+            "type": "pubkey"
+          },
+          {
+            "name": "referee",
+            "type": "pubkey"
+          },
+          {
+            "name": "slot",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ReferralStaked",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "slot",
+            "type": "u64"
+          },
+          {
+            "name": "referrer",
+            "type": "pubkey"
+          },
+          {
+            "name": "referee",
+            "type": "pubkey"
+          },
+          {
+            "name": "stake_id",
+            "type": "u64"
+          },
+          {
+            "name": "referee_t_share_bonus",
+            "type": "u64"
+          },
+          {
+            "name": "referrer_token_bonus",
             "type": "u64"
           }
         ]

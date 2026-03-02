@@ -180,6 +180,15 @@ pub mod helix_staking {
     pub fn unpause(ctx: Context<Unpause>) -> Result<()> {
         instructions::unpause::unpause(ctx)
     }
+
+    pub fn create_stake_with_referral<'info>(
+        ctx: Context<'_, '_, 'info, 'info, CreateStakeWithReferral<'info>>,
+        amount: u64,
+        days: u16,
+        referrer: Pubkey,
+    ) -> Result<()> {
+        instructions::create_stake_with_referral::create_stake_with_referral(ctx, amount, days, referrer)
+    }
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
