@@ -265,6 +265,80 @@
       ]
     },
     {
+      "name": "admin_set_bpd_finalize_timestamp",
+      "discriminator": [
+        119,
+        141,
+        255,
+        46,
+        52,
+        58,
+        227,
+        236
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "global_state",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "claim_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  108,
+                  97,
+                  105,
+                  109,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "new_timestamp",
+          "type": "i64"
+        }
+      ]
+    },
+    {
       "name": "admin_set_claim_end_slot",
       "discriminator": [
         185,
@@ -748,7 +822,60 @@
         },
         {
           "name": "user_token_account",
-          "writable": true
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "user"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
         },
         {
           "name": "mint",
@@ -1350,6 +1477,51 @@
       "args": []
     },
     {
+      "name": "pause",
+      "discriminator": [
+        211,
+        22,
+        221,
+        251,
+        74,
+        121,
+        193,
+        47
+      ],
+      "accounts": [
+        {
+          "name": "global_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "seal_bpd_finalize",
       "discriminator": [
         81,
@@ -1579,6 +1751,51 @@
               }
             ]
           }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "unpause",
+      "discriminator": [
+        169,
+        144,
+        4,
+        38,
+        10,
+        141,
+        188,
+        255
+      ],
+      "accounts": [
+        {
+          "name": "global_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true
         }
       ],
       "args": []
@@ -2447,6 +2664,51 @@
       "code": 6043,
       "name": "AuthorityTransferBlockedDuringBpd",
       "msg": "Authority transfer blocked while BPD window is active"
+    },
+    {
+      "code": 6044,
+      "name": "BpdSealTooEarly",
+      "msg": "BPD seal attempted before observation window elapsed"
+    },
+    {
+      "code": 6045,
+      "name": "AdminBoundsExceeded",
+      "msg": "Admin parameter change exceeds safe bounds (±10% of default)"
+    },
+    {
+      "code": 6046,
+      "name": "ClaimAmountZero",
+      "msg": "Claim amount is zero — nothing to distribute"
+    },
+    {
+      "code": 6047,
+      "name": "InvalidPDA",
+      "msg": "Invalid PDA derivation"
+    },
+    {
+      "code": 6048,
+      "name": "InvalidBumpSeed",
+      "msg": "Invalid bump seed (not canonical)"
+    },
+    {
+      "code": 6049,
+      "name": "InvalidDivisor",
+      "msg": "Invalid divisor in arithmetic operation"
+    },
+    {
+      "code": 6050,
+      "name": "InvalidSlotsPerDay",
+      "msg": "Slots per day must be greater than 0"
+    },
+    {
+      "code": 6051,
+      "name": "ProgramPaused",
+      "msg": "Program is currently paused"
+    },
+    {
+      "code": 6052,
+      "name": "AlreadyMigrated",
+      "msg": "Stake account is already at current layout version"
     }
   ],
   "types": [
@@ -2772,14 +3034,17 @@
           {
             "name": "bpd_finalize_start_timestamp",
             "docs": [
-              "Unix timestamp when finalize_bpd_calculation completed (Phase 8.1). Zero until seal_bpd_finalize is callable."
+              "Unix timestamp of the first finalize_bpd_calculation batch.",
+              "Used to enforce seal delay (must wait BPD_SEAL_DELAY_SECONDS after this).",
+              "Set on first batch, reset by abort_bpd."
             ],
             "type": "i64"
           },
           {
             "name": "bpd_original_unclaimed",
             "docs": [
-              "Original unclaimed amount at BPD distribution start (Phase 8.1). Immutable after first trigger_big_pay_day."
+              "Original unclaimed amount captured at seal time, used for consistent",
+              "per-stake whale cap calculation across all trigger_big_pay_day batches."
             ],
             "type": "u64"
           }
