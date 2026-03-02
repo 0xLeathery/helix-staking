@@ -11,6 +11,7 @@ import { stakeRoutes } from './routes/stakes.js';
 import { claimRoutes } from './routes/claims.js';
 import { leaderboardRoutes } from './routes/leaderboard.js';
 import { whaleActivityRoutes } from './routes/whale-activity.js';
+import { referralRoutes } from './routes/referrals.js';
 
 const fastify = Fastify({ logger: false });
 
@@ -37,6 +38,7 @@ await fastify.register(stakeRoutes);
 await fastify.register(claimRoutes);
 await fastify.register(leaderboardRoutes);
 await fastify.register(whaleActivityRoutes);
+await fastify.register(referralRoutes);
 
 // ---------------------------------------------------------------------------
 // Global error handler

@@ -17,6 +17,7 @@ import {
   authorityTransferInitiatedEvents,
   authorityTransferCancelledEvents,
   authorityTransferCompletedEvents,
+  referralStakedEvents,
 } from '../db/schema.js';
 import { logger } from '../lib/logger.js';
 
@@ -343,6 +344,21 @@ export async function processEvent(
           { oldAuthority: toStr(data.oldAuthority), newAuthority: toStr(data.newAuthority) },
           'Authority transfer completed',
         );
+        break;
+
+      case 'ReferralStaked':
+        await db
+          .insert(referralStakedEvents)
+          .values({
+            signature,
+            slot,
+            referrer: toStr(data.referrer),
+            referee: toStr(data.referee),
+            stakeId: toNum(data.stakeId),
+            refereeTShareBonus: toStr(data.refereeTShareBonus),
+            referrerTokenBonus: toStr(data.referrerTokenBonus),
+          })
+          .onConflictDoNothing();
         break;
 
       default:
