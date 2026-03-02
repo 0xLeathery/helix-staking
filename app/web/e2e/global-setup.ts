@@ -1,10 +1,16 @@
 /**
- * Playwright globalSetup — starts a local Solana validator, initializes the
- * HELIX protocol, funds a test wallet, creates pre-existing stakes, and
- * cranks distribution so reward-related tests have data to work with.
+ * Playwright globalSetup — waits for the Docker validator already running at
+ * localhost:8899 (started by Plan 09.1-01 scripts), loads the bootstrap
+ * admin keypair (docker/test-wallet.json), funds a test wallet, creates
+ * pre-existing stakes, and cranks distribution so reward-related tests have
+ * data to work with.
  *
- * Writes `.test-wallet.json` (secret key) and a temp PID file so
- * global-teardown can kill the validator afterwards.
+ * KEY DIFFERENCES from the old standalone-validator setup:
+ *  - Does NOT spawn solana-test-validator (conflicts with Docker validator)
+ *  - Does NOT kill any existing process on port 8899
+ *  - Does NOT write a PID file (Docker validator is not managed by Playwright)
+ *  - Loads docker/test-wallet.json as admin (GlobalState authority)
+ *  - Skips initialize() if GlobalState already exists (bootstrap.ts ran it)
  */
 
 import * as anchor from "@coral-xyz/anchor";
@@ -21,31 +27,23 @@ import {
   getAssociatedTokenAddressSync,
   createAssociatedTokenAccountInstruction,
 } from "@solana/spl-token";
-import { execSync, spawn } from "child_process";
 import * as fs from "fs";
-import * as os from "os";
 import * as path from "path";
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
-
-// Ensure Solana CLI tools are in PATH (common install locations)
-const SOLANA_BIN = path.join(
-  os.homedir(),
-  ".local/share/solana/install/active_release/bin"
-);
-if (fs.existsSync(SOLANA_BIN)) {
-  process.env.PATH = `${SOLANA_BIN}:${process.env.PATH}`;
-}
 
 const PROGRAM_ID = new PublicKey(
   "E9B7BsxdPS89M66CRGGbsCzQ9LkiGv6aNsra3cNBJha7"
 );
 const LOCALNET_URL = "http://localhost:8899";
-const BPF_SO = path.resolve(__dirname, "../../../target/deploy/helix_staking.so");
 const IDL_PATH = path.resolve(__dirname, "../../../target/idl/helix_staking.json");
 const WALLET_OUT = path.resolve(__dirname, ".test-wallet.json");
-const PID_FILE = path.join(os.tmpdir(), "helix-e2e-validator.json");
+
+// Docker bootstrap keypair — this IS the GlobalState authority.
+// bootstrap.ts initializes the protocol with this keypair on validator start.
+const DOCKER_WALLET_PATH = path.resolve(__dirname, "../../../docker/test-wallet.json");
 
 const GLOBAL_STATE_SEED = Buffer.from("global_state");
 const MINT_SEED = Buffer.from("helix_mint");
@@ -84,46 +82,20 @@ async function airdrop(conn: Connection, to: PublicKey, sol: number) {
 // ---------------------------------------------------------------------------
 
 export default async function globalSetup() {
-  // 0. Verify solana-test-validator is available
-  try {
-    execSync("solana-test-validator --version", { stdio: "pipe" });
-  } catch {
-    throw new Error(
-      "solana-test-validator not found. Install with: sh -c \"$(curl -sSfL https://release.anza.xyz/stable/install)\""
-    );
-  }
+  // 1. Wait for the Docker validator (already running at localhost:8899)
+  console.log("[global-setup] Waiting for Docker validator at localhost:8899...");
+  await waitForValidator(LOCALNET_URL, 30_000);
+  console.log("[global-setup] Docker validator ready.");
+  // No PID file written — Docker validator lifecycle is not managed by Playwright.
 
-  // Kill any stale validator on port 8899
-  try {
-    execSync("lsof -ti:8899 | xargs kill -9 2>/dev/null", { stdio: "pipe" });
-    await sleep(1000);
-  } catch {
-    // nothing running — that's fine
-  }
-
-  // 1. Start solana-test-validator
-  console.log("[global-setup] Starting solana-test-validator...");
-  const validator = spawn(
-    "solana-test-validator",
-    [
-      "--bpf-program", PROGRAM_ID.toBase58(), BPF_SO,
-      "--reset",
-      "--quiet",
-    ],
-    { detached: true, stdio: "ignore" }
-  );
-  validator.unref();
-
-  // Save PID for teardown
-  fs.writeFileSync(PID_FILE, JSON.stringify({ pid: validator.pid }));
-
-  await waitForValidator(LOCALNET_URL);
-  console.log("[global-setup] Validator ready.");
-
-  // 2. Setup connection + admin wallet
+  // 2. Setup connection + load Docker bootstrap wallet (GlobalState authority)
   const connection = new Connection(LOCALNET_URL, "confirmed");
-  const admin = Keypair.generate();
-  await airdrop(connection, admin.publicKey, 100);
+
+  const adminKeypair = Keypair.fromSecretKey(
+    Uint8Array.from(JSON.parse(fs.readFileSync(DOCKER_WALLET_PATH, "utf-8")))
+  );
+  const admin = adminKeypair;
+  console.log("[global-setup] Loaded Docker admin wallet:", admin.publicKey.toBase58());
 
   const wallet = new anchor.Wallet(admin);
   const provider = new anchor.AnchorProvider(connection, wallet, {
@@ -138,28 +110,35 @@ export default async function globalSetup() {
   const [mintPda] = PublicKey.findProgramAddressSync([MINT_SEED], PROGRAM_ID);
   const [mintAuthority] = PublicKey.findProgramAddressSync([MINT_AUTHORITY_SEED], PROGRAM_ID);
 
-  // 4. Initialize protocol (slotsPerDay=10 for fast day advancement)
-  console.log("[global-setup] Initializing protocol...");
-  const params = {
-    annualInflationBp: new anchor.BN(3_690_000),
-    minStakeAmount: new anchor.BN(10_000_000),    // 0.01 HELIX (8 decimals)
-    startingShareRate: new anchor.BN(10_000),
-    slotsPerDay: new anchor.BN(10),                // 1 "day" = 10 slots ~4s
-    claimPeriodDays: 180,
-    maxAdminMint: new anchor.BN(1_000_000_000_000), // 1000 HELIX
-  };
-  await program.methods
-    .initialize(params)
-    .accountsPartial({
-      authority: admin.publicKey,
-      globalState,
-      mint: mintPda,
-      mintAuthority,
-      tokenProgram: TOKEN_2022_PROGRAM_ID,
-      systemProgram: SystemProgram.programId,
-    })
-    .rpc();
-  console.log("[global-setup] Protocol initialized.");
+  // 4. Skip initialize() — bootstrap.ts already ran it when Docker validator started.
+  //    Only initialize if GlobalState is somehow missing (should not happen normally).
+  try {
+    await program.account.globalState.fetch(globalState);
+    console.log("[global-setup] Protocol already initialized (Docker bootstrap). Skipping init.");
+  } catch {
+    // Fallback: initialize if GlobalState is missing (defensive — should not occur)
+    console.log("[global-setup] GlobalState not found — initializing protocol...");
+    const params = {
+      annualInflationBp: new anchor.BN(3_690_000),
+      minStakeAmount: new anchor.BN(10_000_000),    // 0.01 HELIX (8 decimals)
+      startingShareRate: new anchor.BN(10_000),
+      slotsPerDay: new anchor.BN(10),                // 1 "day" = 10 slots ~4s
+      claimPeriodDays: 180,
+      maxAdminMint: new anchor.BN(1_000_000_000_000), // 1000 HELIX
+    };
+    await program.methods
+      .initialize(params)
+      .accountsPartial({
+        authority: admin.publicKey,
+        globalState,
+        mint: mintPda,
+        mintAuthority,
+        tokenProgram: TOKEN_2022_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+      })
+      .rpc();
+    console.log("[global-setup] Protocol initialized.");
+  }
 
   // 5. Load the pre-generated test wallet keypair (written by playwright.config.ts)
   const walletData = JSON.parse(fs.readFileSync(WALLET_OUT, "utf-8"));
@@ -198,8 +177,8 @@ export default async function globalSetup() {
     })
     .rpc();
 
-  // 8. Create 2 pre-existing stakes for end-stake / claim-rewards tests
-  //    We need the test wallet to sign, so build a separate provider.
+  // 8. Create 2 pre-existing stakes for end-stake / claim-rewards tests.
+  //    Test wallet signs these, so use a separate provider.
   const testWalletObj = new anchor.Wallet(testWallet);
   const testProvider = new anchor.AnchorProvider(connection, testWalletObj, {
     commitment: "confirmed",
@@ -234,7 +213,7 @@ export default async function globalSetup() {
   await createStake(5_00_000_000, 60);    // Stake #2: 5 HELIX / 60 days  (for claim-rewards test)
   console.log("[global-setup] 2 stakes created.");
 
-  // 9. Wait for ~50 slots so multiple "days" have elapsed (slotsPerDay=10)
+  // 9. Wait for ~50 slots so multiple "days" have elapsed (slotsPerDay=10 per bootstrap)
   console.log("[global-setup] Waiting for slots to advance...");
   const startSlot = await connection.getSlot();
   while ((await connection.getSlot()) - startSlot < 50) {
