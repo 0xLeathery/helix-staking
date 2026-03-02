@@ -158,3 +158,13 @@ pub struct AuthorityTransferCompleted {
     pub old_authority: Pubkey,
     pub new_authority: Pubkey,
 }
+
+#[event]
+pub struct ReferralStaked {
+    pub slot: u64,
+    pub referrer: Pubkey,
+    pub referee: Pubkey,
+    pub stake_id: u64,
+    pub referee_t_share_bonus: u64,
+    pub referrer_token_bonus: u64,
+}

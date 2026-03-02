@@ -84,3 +84,10 @@ pub const BPB_MAX_BONUS: u64 = 1_500_000_000;
 /// Minimum seconds between first finalize batch and seal.
 /// 86400 = 24 hours observation window for community verification.
 pub const BPD_SEAL_DELAY_SECONDS: i64 = 86400;
+
+// === Phase 10: Referral System ===
+pub const REFERRAL_RECORD_SEED: &[u8] = b"referral";
+/// +10% T-share bonus for referee in basis points
+pub const REFEREE_BONUS_BPS: u64 = 1_000;
+/// +5% token bonus for referrer in basis points
+pub const REFERRER_BONUS_BPS: u64 = 500;

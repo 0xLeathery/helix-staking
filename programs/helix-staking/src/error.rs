@@ -108,4 +108,6 @@ pub enum HelixError {
     ProgramPaused,
     #[msg("Stake account is already at current layout version")]
     AlreadyMigrated,
+    #[msg("Cannot refer yourself")]
+    SelfReferral,
 }
