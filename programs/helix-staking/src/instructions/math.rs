@@ -543,7 +543,6 @@ mod tests {
         let overflow_result = calculate_reward_debt(u64::MAX, 2);
         assert!(overflow_result.is_err());
     }
-}
 
     #[test]
     fn test_calculate_pending_rewards() {
@@ -575,4 +574,235 @@ mod tests {
         let debt = calculate_reward_debt(t_shares, rate_start).unwrap();
         let pending_large = calculate_pending_rewards(t_shares, rate_end, debt).unwrap();
         assert_eq!(pending_large, 100_000_000, "Should handle large numbers correctly");
+
+        // Case 4: reward_debt > current_value (saturating sub returns 0)
+        let pending_zero = calculate_pending_rewards(1, 0, 100).unwrap();
+        assert_eq!(pending_zero, 0, "Saturating sub should return 0 when debt > current");
+
+        // Case 5: zero t_shares → zero pending regardless of rate
+        let pending_no_shares = calculate_pending_rewards(0, prec * 1000, 0).unwrap();
+        assert_eq!(pending_no_shares, 0, "Zero t_shares should yield zero pending");
     }
+
+    #[test]
+    fn test_mul_div_basic() {
+        // Basic cases
+        assert_eq!(mul_div(10, 5, 2).unwrap(), 25);
+        assert_eq!(mul_div(100, 3, 10).unwrap(), 30);
+        assert_eq!(mul_div(0, 1000, 1).unwrap(), 0);
+
+        // Division by zero returns error
+        assert!(mul_div(1, 1, 0).is_err());
+
+        // Large values via u128 intermediate — no overflow, result = floor((MAX/2 * 2) / MAX) = 0
+        // Use a case that actually produces a large result: MAX * 1 / MAX = 1
+        let large = mul_div(u64::MAX, 1, u64::MAX).unwrap();
+        assert_eq!(large, 1);
+    }
+
+    #[test]
+    fn test_mul_div_up_rounding() {
+        // Exact division — same as mul_div
+        assert_eq!(mul_div_up(10, 4, 2).unwrap(), 20);
+
+        // Ceiling: 10 * 3 / 4 = 7.5 → 8
+        assert_eq!(mul_div_up(10, 3, 4).unwrap(), 8);
+
+        // Zero numerator always 0
+        assert_eq!(mul_div_up(0, 100, 7).unwrap(), 0);
+
+        // Division by zero returns error
+        assert!(mul_div_up(1, 1, 0).is_err());
+    }
+
+    #[test]
+    fn test_lpb_bonus_boundaries() {
+        // Zero days — edge: returns 0 (stake_days == 0 branch)
+        assert_eq!(calculate_lpb_bonus(0).unwrap(), 0);
+
+        // 1 day — minimum positive stake: (1-1) * 2 * PRECISION / LPB_MAX_DAYS = 0
+        assert_eq!(calculate_lpb_bonus(1).unwrap(), 0);
+
+        // LPB_MAX_DAYS - 1 should be just below 2 * PRECISION
+        let near_max = calculate_lpb_bonus(LPB_MAX_DAYS - 1).unwrap();
+        assert!(near_max < 2 * PRECISION);
+        assert!(near_max > 0);
+
+        // LPB_MAX_DAYS exactly = 2 * PRECISION
+        assert_eq!(calculate_lpb_bonus(LPB_MAX_DAYS).unwrap(), 2 * PRECISION);
+
+        // LPB_MAX_DAYS + 1 caps at 2 * PRECISION
+        assert_eq!(calculate_lpb_bonus(LPB_MAX_DAYS + 1).unwrap(), 2 * PRECISION);
+
+        // Very large value still capped
+        assert_eq!(calculate_lpb_bonus(u64::MAX).unwrap(), 2 * PRECISION);
+    }
+
+    #[test]
+    fn test_bpb_bonus_boundaries() {
+        // Zero — returns 0
+        assert_eq!(calculate_bpb_bonus(0).unwrap(), 0);
+
+        // Small amount below tier 1 threshold — linear
+        let small = calculate_bpb_bonus(1_000_000_000).unwrap();
+        assert!(small > 0 && small < PRECISION);
+
+        // At BPB_TIER_2 boundary — exactly PRECISION + 250_000_000
+        let at_tier2 = calculate_bpb_bonus(BPB_TIER_2).unwrap();
+        assert_eq!(at_tier2, PRECISION + 250_000_000);
+
+        // Just above BPB_TIER_2 — enters tier 3 branch
+        let above_tier2 = calculate_bpb_bonus(BPB_TIER_2 + 1).unwrap();
+        assert!(above_tier2 >= PRECISION + 250_000_000);
+
+        // At BPB_TIER_3 boundary — exactly PRECISION + 250_000_000 + 150_000_000
+        let at_tier3 = calculate_bpb_bonus(BPB_TIER_3).unwrap();
+        assert_eq!(at_tier3, PRECISION + 400_000_000);
+
+        // Above BPB_TIER_3 — hard cap
+        let above_tier3 = calculate_bpb_bonus(BPB_TIER_3 + 1).unwrap();
+        assert_eq!(above_tier3, BPB_MAX_BONUS);
+    }
+
+    #[test]
+    fn test_early_penalty_boundaries() {
+        let staked = 1_000_000_000u64; // 10 tokens
+
+        // At end_slot exactly — not early, returns 0
+        assert_eq!(calculate_early_penalty(staked, 0, 100, 100).unwrap(), 0);
+
+        // Past end — returns 0
+        assert_eq!(calculate_early_penalty(staked, 0, 200, 100).unwrap(), 0);
+
+        // At start — 100% of committed, penalty = 100% (but never below 50%)
+        // 0% served, 100% penalty
+        let start_penalty = calculate_early_penalty(staked, 0, 0, 100).unwrap();
+        assert_eq!(start_penalty, staked);
+
+        // 50% served — natural penalty = 50% = minimum threshold exactly
+        let fifty_pct = calculate_early_penalty(staked, 0, 50, 100).unwrap();
+        // served_fraction_bps = 50 * 10000 / 100 = 5000
+        // penalty_bps = 10000 - 5000 = 5000 = MIN_PENALTY_BPS exactly
+        assert_eq!(fifty_pct, staked / 2);
+
+        // 90% served — natural penalty = 10%, enforced to 50%
+        let ninety_pct = calculate_early_penalty(staked, 0, 90, 100).unwrap();
+        assert_eq!(ninety_pct, staked / 2);
+    }
+
+    #[test]
+    fn test_late_penalty_exact_day_365() {
+        let staked = 1_000_000_000u64;
+        let spd = DEFAULT_SLOTS_PER_DAY;
+        let end = 1000u64;
+
+        // Exactly GRACE_PERIOD_DAYS late — still in grace, 0 penalty
+        let grace_end = end + GRACE_PERIOD_DAYS * spd;
+        assert_eq!(calculate_late_penalty(staked, end, grace_end, spd).unwrap(), 0);
+
+        // 1 slot past grace — penalty_days = 0 (integer division), still 0
+        let just_past = end + GRACE_PERIOD_DAYS * spd + 1;
+        assert_eq!(calculate_late_penalty(staked, end, just_past, spd).unwrap(), 0);
+
+        // LATE_PENALTY_WINDOW_DAYS past grace — 100% penalty
+        let full_late = end + (GRACE_PERIOD_DAYS + LATE_PENALTY_WINDOW_DAYS) * spd;
+        let late_penalty = calculate_late_penalty(staked, end, full_late, spd).unwrap();
+        assert_eq!(late_penalty, staked);
+
+        // Way past — capped at 100%
+        let way_late = end + 1000 * spd;
+        assert_eq!(calculate_late_penalty(staked, end, way_late, spd).unwrap(), staked);
+    }
+
+    #[test]
+    fn test_get_current_day() {
+        let spd = DEFAULT_SLOTS_PER_DAY;
+
+        // Day 0: init_slot == current_slot
+        assert_eq!(get_current_day(0, 0, spd).unwrap(), 0);
+
+        // Day 1: exactly one day elapsed
+        assert_eq!(get_current_day(0, spd, spd).unwrap(), 1);
+
+        // Day 1 with remainder: slots_per_day - 1 elapsed
+        assert_eq!(get_current_day(0, spd - 1, spd).unwrap(), 0);
+
+        // Day 10
+        assert_eq!(get_current_day(100, 100 + 10 * spd, spd).unwrap(), 10);
+    }
+
+    #[test]
+    fn test_calculate_t_shares() {
+        let share_rate = 10_000u64; // DEFAULT_STARTING_SHARE_RATE
+
+        // Base case: 1 day stake, no LPB/BPB bonus (1 day = 0 LPB, small amount = small BPB)
+        let t_shares = calculate_t_shares(1_000_000_000, 1, share_rate).unwrap();
+        assert!(t_shares > 0);
+
+        // Longer stake gets more t_shares (LPB bonus applies)
+        let short_stake = calculate_t_shares(1_000_000_000, 1, share_rate).unwrap();
+        let long_stake = calculate_t_shares(1_000_000_000, 365, share_rate).unwrap();
+        assert!(long_stake > short_stake);
+
+        // Zero share_rate returns error
+        assert!(calculate_t_shares(1_000_000_000, 1, 0).is_err());
+    }
+
+    #[test]
+    fn test_calculate_loyalty_bonus_edge_cases() {
+        let spd = DEFAULT_SLOTS_PER_DAY;
+
+        // committed_days = 0 returns 0
+        assert_eq!(calculate_loyalty_bonus(100, 200, 0, spd).unwrap(), 0);
+
+        // slots_per_day = 0 returns 0
+        assert_eq!(calculate_loyalty_bonus(0, spd, 365, 0).unwrap(), 0);
+
+        // start > current (saturating_sub → 0 slots → 0 days → 0 bonus)
+        assert_eq!(calculate_loyalty_bonus(1000, 0, 365, spd).unwrap(), 0);
+
+        // Exactly at committed_days boundary
+        let at_term = calculate_loyalty_bonus(0, 365 * spd, 365, spd).unwrap();
+        assert_eq!(at_term, LOYALTY_MAX_BONUS);
+
+        // 1 slot before full term — not quite max
+        let one_before = calculate_loyalty_bonus(0, 365 * spd - 1, 365, spd).unwrap();
+        // days_served = (365*spd - 1) / spd = 364 (integer division truncates)
+        let expected = mul_div(364, LOYALTY_MAX_BONUS, 365).unwrap();
+        assert_eq!(one_before, expected);
+    }
+
+    #[test]
+    fn test_calculate_bpb_bonus_tier2_partial() {
+        // Mid-tier-2 amount (3B tokens): between BPB_THRESHOLD*10 and BPB_TIER_2
+        // Ensure tier 2 branch (staked_amount <= BPB_TIER_2) is covered
+        let mid_tier2 = 300_000_000_000_000_000u64; // 3B tokens
+        let bonus = calculate_bpb_bonus(mid_tier2).unwrap();
+        assert!(bonus > PRECISION, "mid-tier2 bonus should exceed base (1.0x)");
+        assert!(bonus < PRECISION + 250_000_000, "mid-tier2 bonus should be below 1.25x");
+    }
+
+    #[test]
+    fn test_calculate_bpb_bonus_tier3_partial() {
+        // Mid-tier-3 amount (7.5B tokens): between BPB_TIER_2 and BPB_TIER_3
+        let mid_tier3 = 750_000_000_000_000_000u64; // 7.5B tokens
+        let bonus = calculate_bpb_bonus(mid_tier3).unwrap();
+        assert!(bonus > PRECISION + 250_000_000, "mid-tier3 bonus should exceed 1.25x");
+        assert!(bonus < PRECISION + 400_000_000, "mid-tier3 bonus should be below 1.4x");
+    }
+
+    #[test]
+    fn test_calculate_pending_rewards_saturating_zero() {
+        // t_shares * rate would be less than reward_debt — defensive case
+        // saturating_sub ensures no underflow panic
+        let result = calculate_pending_rewards(1, 100, 1_000_000_000_000).unwrap();
+        assert_eq!(result, 0, "Should saturate to 0 when debt exceeds current value");
+    }
+
+    #[test]
+    fn test_mul_div_error_paths() {
+        // Division by zero
+        assert!(mul_div(1, 2, 0).is_err());
+        assert!(mul_div_up(1, 2, 0).is_err());
+    }
+}
