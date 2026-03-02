@@ -3,7 +3,8 @@ import { z } from 'zod';
 
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
-  RPC_URL: z.string().default('https://api.devnet.solana.com'),
+  RPC_URL: z.string().url().describe('Required: Solana RPC endpoint URL (no default — fails loudly if missing)'),
+  CLUSTER: z.enum(['devnet', 'mainnet-beta', 'localnet']).default('devnet'),
   PROGRAM_ID: z.string().min(1, 'PROGRAM_ID is required'),
   PORT: z.coerce.number().int().positive().default(3001),
   POLL_INTERVAL_MS: z.coerce.number().int().positive().default(5000),
