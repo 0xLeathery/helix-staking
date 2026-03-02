@@ -7,6 +7,7 @@ import { getAssociatedTokenAddressSync, TOKEN_2022_PROGRAM_ID } from "@solana/sp
 import { useProgram } from "./useProgram";
 import { deriveGlobalState, deriveMint, deriveMintAuthority } from "@/lib/solana/pdas";
 import { simulateTransactionOrThrow, SimulationError, getSimulationErrorMessage } from "./useTransactionSimulation";
+import { getComputeBudgetInstructions, CU_LIMITS } from "@/lib/solana/compute-budget";
 import { toast } from "sonner";
 
 interface UnstakeParams {
@@ -61,6 +62,9 @@ export function useUnstake() {
           tokenProgram: TOKEN_2022_PROGRAM_ID,
         })
         .transaction();
+
+      // Prepend ComputeBudget instructions (RT-03: CU limit + priority fee)
+      tx.instructions.unshift(...getComputeBudgetInstructions(CU_LIMITS.unstake));
 
       // Set recent blockhash and fee payer
       const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
