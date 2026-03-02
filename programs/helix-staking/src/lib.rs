@@ -158,6 +158,13 @@ pub mod helix_staking {
         instructions::admin_set_slots_per_day::admin_set_slots_per_day(ctx, new_slots_per_day)
     }
 
+    pub fn admin_set_bpd_finalize_timestamp(
+        ctx: Context<AdminSetBpdFinalizeTimestamp>,
+        new_timestamp: i64,
+    ) -> Result<()> {
+        instructions::admin_set_bpd_finalize_timestamp::admin_set_bpd_finalize_timestamp(ctx, new_timestamp)
+    }
+
     pub fn transfer_authority(ctx: Context<TransferAuthority>, new_authority: Pubkey) -> Result<()> {
         instructions::transfer_authority::transfer_authority(ctx, new_authority)
     }

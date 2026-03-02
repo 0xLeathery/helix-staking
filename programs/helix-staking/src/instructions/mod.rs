@@ -46,6 +46,9 @@ pub use admin_set_claim_end_slot::*;
 pub mod admin_set_slots_per_day;
 pub use admin_set_slots_per_day::*;
 
+pub mod admin_set_bpd_finalize_timestamp;
+pub use admin_set_bpd_finalize_timestamp::*;
+
 pub mod transfer_authority;
 pub use transfer_authority::*;
 
