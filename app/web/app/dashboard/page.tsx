@@ -6,6 +6,7 @@ import { PortfolioSummary } from "@/components/dashboard/portfolio-summary";
 import { StakesList } from "@/components/dashboard/stakes-list";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { ProtocolPausedBanner } from "@/components/dashboard/protocol-paused-banner";
+import { ReferralStatsPanel } from "@/components/dashboard/referral-stats-panel";
 import { useGlobalState } from "@/lib/hooks/useGlobalState";
 
 export default function DashboardPage() {
@@ -23,6 +24,11 @@ export default function DashboardPage() {
 
       {/* Protocol Stats - full width */}
       <ProtocolStats />
+
+      {/* Referral Program */}
+      <ErrorBoundary>
+        <ReferralStatsPanel />
+      </ErrorBoundary>
 
       {/* Portfolio + Stakes - 2-column on desktop */}
       <div className="grid gap-8 lg:grid-cols-3">

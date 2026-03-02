@@ -2,6 +2,7 @@
 
 import { useStakeWizard } from "@/lib/store/ui-store";
 import { useCreateStake } from "@/lib/hooks/useCreateStake";
+import { useCreateStakeWithReferral } from "@/lib/hooks/useCreateStakeWithReferral";
 import { parseHelix, formatHelix, formatDays, formatTShares } from "@/lib/utils/format";
 import { calculateLpbBonus, calculateBpbBonus, calculateTShares } from "@/lib/solana/math";
 import { useGlobalState } from "@/lib/hooks/useGlobalState";
@@ -9,12 +10,18 @@ import { PRECISION } from "@/lib/solana/constants";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
 
 export function ConfirmStep() {
-  const { amount, days, setStep } = useStakeWizard();
+  const { amount, days, referrer, setStep } = useStakeWizard();
   const { data: globalState } = useGlobalState();
   const { mutateAsync, isPending, error } = useCreateStake();
+  const {
+    mutateAsync: mutateReferral,
+    isPending: isReferralPending,
+    error: referralError,
+  } = useCreateStakeWithReferral();
 
   // Show loading skeleton while globalState is not yet available (F-10)
   // Using a fallback shareRate of 1 would silently display incorrect T-share calculations
@@ -22,10 +29,17 @@ export function ConfirmStep() {
     return <div className="animate-pulse h-48 bg-zinc-800 rounded" />;
   }
 
+  const isLoading = isPending || isReferralPending;
+  const displayError = error || referralError;
+
   const handleConfirm = async () => {
     try {
       const amountBn = parseHelix(amount);
-      await mutateAsync({ amount: amountBn, days });
+      if (referrer) {
+        await mutateReferral({ amount: amountBn, days, referrer: new PublicKey(referrer) });
+      } else {
+        await mutateAsync({ amount: amountBn, days });
+      }
       setStep("success");
     } catch (err) {
       console.error("Create stake error:", err);
@@ -105,6 +119,13 @@ export function ConfirmStep() {
             {formatHelix(new BN(shareRate.toString()), false)}
           </span>
         </div>
+
+        {referrer && (
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Referral Bonus</span>
+            <span className="text-green-400">+10% T-Shares</span>
+          </div>
+        )}
       </div>
 
       {/* Penalty Warning */}
@@ -145,9 +166,9 @@ export function ConfirmStep() {
       </div>
 
       {/* Error Display */}
-      {error && (
+      {displayError && (
         <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-4">
-          <p className="text-sm text-red-400">{error.message}</p>
+          <p className="text-sm text-red-400">{displayError.message}</p>
         </div>
       )}
 
@@ -156,7 +177,7 @@ export function ConfirmStep() {
         <Button
           variant="outline"
           onClick={() => setStep(2)}
-          disabled={isPending}
+          disabled={isLoading}
           size="lg"
         >
           Back
@@ -166,11 +187,11 @@ export function ConfirmStep() {
             <span>
               <Button
                 onClick={handleConfirm}
-                disabled={isPending || !!isPaused}
+                disabled={isLoading || !!isPaused}
                 size="lg"
                 className="min-w-40"
               >
-                {isPending ? (
+                {isLoading ? (
                   <span className="flex items-center gap-2">
                     <svg
                       className="h-4 w-4 animate-spin"

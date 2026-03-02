@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { PublicKey } from "@solana/web3.js";
 import { useStakeWizard } from "@/lib/store/ui-store";
 import { AmountStep } from "@/components/stake/stake-wizard/amount-step";
 import { DurationStep } from "@/components/stake/stake-wizard/duration-step";
@@ -9,7 +11,24 @@ import { SuccessScreen } from "@/components/stake/stake-wizard/success-screen";
 import { ErrorBoundary } from "@/components/error-boundary";
 
 export default function StakePage() {
-  const { step, reset } = useStakeWizard();
+  const { step, reset, setReferrer } = useStakeWizard();
+  const searchParams = useSearchParams();
+
+  // Read ?ref= from URL and pre-populate referrer in wizard state
+  useEffect(() => {
+    const refParam = searchParams.get("ref");
+    if (refParam) {
+      try {
+        new PublicKey(refParam); // Validate it's a valid pubkey
+        setReferrer(refParam);
+      } catch {
+        // Invalid pubkey — silently ignore, proceed without referrer
+        setReferrer(null);
+      }
+    } else {
+      setReferrer(null);
+    }
+  }, [searchParams, setReferrer]);
 
   // Reset wizard on unmount or navigate away
   useEffect(() => {
