@@ -1,8 +1,12 @@
 import type { FastifyInstance, FastifyPluginCallback } from 'fastify';
-import { sql } from 'drizzle-orm';
+import { sql, desc } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import { checkpoints } from '../../db/schema.js';
-import { desc } from 'drizzle-orm';
+import {
+  checkpoints,
+  bpdBatchFinalizedEvents,
+  bigPayDayDistributedEvents,
+  bpdAbortedEvents,
+} from '../../db/schema.js';
 
 /**
  * Phase 8.1 (L3/FR-012): Lightweight health check.
@@ -58,6 +62,111 @@ export const healthRoutes: FastifyPluginCallback = (
       processedCount,
       uptime: process.uptime(),
       timestamp: new Date().toISOString(),
+    });
+  });
+
+  /**
+   * OPS-08: BPD lifecycle health check.
+   *
+   * Uses indexed DB events to detect stalled BPD operations without
+   * requiring an RPC client in the health endpoint (preserves L3/FR-012).
+   *
+   * Stall detection rules:
+   * - If the latest BpdBatchFinalized event is > 1 hour old and no
+   *   BigPayDayDistributed or BpdAborted event exists after it, the
+   *   finalize phase may be stuck.
+   * - If BigPayDayDistributed exists but bpdStakesDistributed <
+   *   bpdStakesFinalized (from latest batch), distribution is in-progress.
+   */
+  fastify.get('/health/bpd', async (_request, reply) => {
+    // Last BPD finalize batch
+    const latestBatch = await db
+      .select()
+      .from(bpdBatchFinalizedEvents)
+      .orderBy(desc(bpdBatchFinalizedEvents.slot))
+      .limit(1);
+
+    if (latestBatch.length === 0) {
+      // No finalize activity yet
+      return reply.send({
+        bpdActive: false,
+        health: 'ok',
+        message: 'No BPD finalize activity recorded',
+      });
+    }
+
+    const batch = latestBatch[0];
+    const stakesFinalized = batch.totalStakesFinalized;
+    const claimPeriodId = batch.claimPeriodId;
+    const batchSlot = batch.slot;
+
+    // Check if distribution has started for this claim period
+    const latestDistribution = await db
+      .select()
+      .from(bigPayDayDistributedEvents)
+      .orderBy(desc(bigPayDayDistributedEvents.slot))
+      .limit(1);
+
+    const distributionEvent =
+      latestDistribution.length > 0 &&
+      latestDistribution[0].claimPeriodId === claimPeriodId
+        ? latestDistribution[0]
+        : null;
+
+    const stakesDistributed = distributionEvent
+      ? distributionEvent.eligibleStakers
+      : 0;
+
+    // Check if BPD was aborted for this period
+    const latestAbort = await db
+      .select()
+      .from(bpdAbortedEvents)
+      .orderBy(desc(bpdAbortedEvents.slot))
+      .limit(1);
+
+    const aborted =
+      latestAbort.length > 0 &&
+      latestAbort[0].claimPeriodId === claimPeriodId;
+
+    if (aborted) {
+      return reply.send({
+        bpdActive: false,
+        claimPeriodId,
+        stakesFinalized,
+        stakesDistributed,
+        health: 'ok',
+        message: 'BPD aborted for this period',
+      });
+    }
+
+    // Determine stall: finalize batch > 1 hour ago with no distribution completion
+    const ONE_HOUR_MS = 60 * 60 * 1000;
+    const batchAge = Date.now() - (batchSlot * 400); // approximate: 400ms/slot
+    const distributionComplete = stakesDistributed >= stakesFinalized;
+
+    let health: 'ok' | 'in_progress' | 'stalled';
+    let message: string;
+
+    if (distributionComplete) {
+      health = 'ok';
+      message = 'BPD distribution complete';
+    } else if (!distributionComplete && batchAge > ONE_HOUR_MS) {
+      health = 'stalled';
+      message = `BPD finalize batch ${stakesFinalized - stakesDistributed} stakes pending distribution for over 1 hour`;
+    } else {
+      health = 'in_progress';
+      message = `BPD distribution in progress: ${stakesDistributed}/${stakesFinalized} stakes distributed`;
+    }
+
+    return reply.send({
+      bpdActive: !distributionComplete && !aborted,
+      claimPeriodId,
+      stakesFinalized,
+      stakesDistributed,
+      remaining: stakesFinalized - stakesDistributed,
+      batchSlot,
+      health,
+      message,
     });
   });
 
