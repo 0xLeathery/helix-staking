@@ -1,5 +1,6 @@
 "use client";
 
+import BN from "bn.js";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useClaimConfig } from "@/lib/hooks/useClaimConfig";
@@ -11,6 +12,7 @@ import { useGlobalState } from "@/lib/hooks/useGlobalState";
  * Shows BPD status across all phases:
  * - Not Started: claim period active
  * - Finalization In Progress: calculating distribution
+ * - Awaiting Observation Window: 24h delay before distribution can be sealed
  * - Sealed / Ready for Distribution: calculation complete
  * - Distribution In Progress: distributing to stakes
  * - Completed: all eligible stakers received bonus
@@ -55,8 +57,11 @@ export function BpdStatus() {
   const bpdCalculationComplete = claimConfig.bpdCalculationComplete || false;
   const bpdStakesFinalized = claimConfig.bpdStakesFinalized || 0;
   const bpdStakesDistributed = claimConfig.bpdStakesDistributed || 0;
+  const bpdFinalizeStartTimestampRaw = claimConfig.bpdFinalizeStartTimestamp;
+  const bpdFinalizeStartTimestamp = new BN(bpdFinalizeStartTimestampRaw?.toString() ?? "0");
+  const isSealExecuted = !bpdFinalizeStartTimestamp.isZero();
 
-  let phase: "not_started" | "finalization" | "sealed" | "distributing" | "completed" = "not_started";
+  let phase: "not_started" | "finalization" | "observation_window" | "sealed" | "distributing" | "completed" = "not_started";
   let statusColor = "text-muted-foreground";
   let statusBadge = "Not Started";
 
@@ -68,7 +73,11 @@ export function BpdStatus() {
     phase = "finalization";
     statusColor = "text-blue-400";
     statusBadge = "Finalization In Progress";
-  } else if (bpdCalculationComplete && bpdStakesDistributed === 0) {
+  } else if (bpdCalculationComplete && !isSealExecuted && bpdStakesDistributed === 0) {
+    phase = "observation_window";
+    statusColor = "text-orange-400";
+    statusBadge = "Awaiting Observation Window";
+  } else if (bpdCalculationComplete && isSealExecuted && bpdStakesDistributed === 0) {
     phase = "sealed";
     statusColor = "text-yellow-400";
     statusBadge = "Ready for Distribution";
@@ -116,6 +125,20 @@ export function BpdStatus() {
               </p>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Stakes Processed:</span>
+                <span className="font-mono">{bpdStakesFinalized.toLocaleString()}</span>
+              </div>
+            </div>
+          )}
+
+          {phase === "observation_window" && (
+            <div className="space-y-2">
+              <Alert className="border-orange-500/50 bg-orange-500/10">
+                <AlertDescription className="text-orange-400">
+                  <strong>Awaiting 24h Observation Window</strong> — Finalization complete. The protocol requires a 24-hour observation period before distribution can be sealed.
+                </AlertDescription>
+              </Alert>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Stakes Finalized:</span>
                 <span className="font-mono">{bpdStakesFinalized.toLocaleString()}</span>
               </div>
             </div>
