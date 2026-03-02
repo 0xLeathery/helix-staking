@@ -1,9 +1,15 @@
 "use client";
 
 import BN from "bn.js";
-import { calculateEarlyPenalty, calculateLatePenalty, calculatePendingRewards } from "@/lib/solana/math";
+import {
+  calculateEarlyPenalty,
+  calculateLatePenalty,
+  calculatePendingRewards,
+  calculateLoyaltyBonus,
+  applyLoyaltyMultiplier,
+} from "@/lib/solana/math";
 import { formatHelix, formatBps } from "@/lib/utils/format";
-import { GRACE_PERIOD_DAYS, SLOTS_PER_DAY, LATE_PENALTY_WINDOW_DAYS, LABELS } from "@/lib/solana/constants";
+import { GRACE_PERIOD_DAYS, SLOTS_PER_DAY, LATE_PENALTY_WINDOW_DAYS, LABELS, PRECISION } from "@/lib/solana/constants";
 
 interface PenaltyCalculatorProps {
   stakedAmount: BN;
@@ -38,6 +44,14 @@ export function PenaltyCalculator({
   slotsPerDay,
 }: PenaltyCalculatorProps) {
   const currentSlotBN = new BN(currentSlot);
+
+  const loyaltyBonus = calculateLoyaltyBonus(
+    startSlot,
+    currentSlotBN,
+    new BN(endSlot.sub(startSlot).div(slotsPerDay).toString()), // committed days derived from slot range
+    slotsPerDay
+  );
+
   const gracePeriodSlots = new BN(GRACE_PERIOD_DAYS).mul(slotsPerDay);
   const graceEndSlot = endSlot.add(gracePeriodSlots);
 
@@ -74,10 +88,12 @@ export function PenaltyCalculator({
     statusColor = "text-red-400 bg-red-400/10"; // Late penalty
   }
 
-  // Calculate pending rewards
-  const pendingRewards = calculatePendingRewards(tShares, currentShareRate, rewardDebt);
+  // Calculate pending rewards (loyalty-adjusted)
+  const rawPendingRewards = calculatePendingRewards(tShares, currentShareRate, rewardDebt);
+  const pendingRewards = applyLoyaltyMultiplier(rawPendingRewards, loyaltyBonus);
+  const loyaltyPct = loyaltyBonus.muln(100).div(PRECISION).toNumber();
 
-  // Calculate total receive amount
+  // Calculate total receive amount (use loyalty-adjusted rewards)
   const returnAmount = stakedAmount.sub(penalty);
   const totalReceive = returnAmount.add(pendingRewards).add(bpdBonusPending);
 
@@ -164,6 +180,13 @@ export function PenaltyCalculator({
           <div className="flex justify-between">
             <span className="text-zinc-400">Pending Rewards</span>
             <span className="text-green-400 font-medium">+{formatHelix(pendingRewards)}</span>
+          </div>
+        )}
+
+        {loyaltyPct > 0 && (
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Loyalty Bonus</span>
+            <span className="font-mono text-green-400">+{loyaltyPct}%</span>
           </div>
         )}
 
