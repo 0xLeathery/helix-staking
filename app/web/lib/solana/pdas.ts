@@ -8,6 +8,7 @@ import {
   STAKE_SEED,
   CLAIM_CONFIG_SEED,
   CLAIM_STATUS_SEED,
+  REFERRAL_RECORD_SEED,
 } from "./constants";
 
 /**
@@ -72,6 +73,20 @@ export function deriveClaimStatus(
 
   return PublicKey.findProgramAddressSync(
     [CLAIM_STATUS_SEED, prefix, snapshotWallet.toBuffer()],
+    PROGRAM_ID
+  );
+}
+
+/**
+ * Derive a ReferralRecord PDA for a referrer-referee pair.
+ * Seeds: ["referral", referrer_pubkey, referee_pubkey]
+ */
+export function deriveReferralRecord(
+  referrer: PublicKey,
+  referee: PublicKey
+): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync(
+    [REFERRAL_RECORD_SEED, referrer.toBuffer(), referee.toBuffer()],
     PROGRAM_ID
   );
 }

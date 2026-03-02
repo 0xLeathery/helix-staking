@@ -3,6 +3,7 @@ import { ComputeBudgetProgram, TransactionInstruction } from "@solana/web3.js";
 // CU limits per instruction type (measured from bankrun + safety margin)
 export const CU_LIMITS = {
   createStake: 200_000,
+  createStakeWithReferral: 300_000, // Extra PDA init + mint CPI
   unstake: 200_000,
   claimRewards: 200_000,
   freeClaim: 400_000, // Ed25519 verify + merkle proof

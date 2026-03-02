@@ -78,6 +78,7 @@ export const MINT_AUTHORITY_SEED = Buffer.from("mint_authority");
 export const STAKE_SEED = Buffer.from("stake");
 export const CLAIM_CONFIG_SEED = Buffer.from("claim_config");
 export const CLAIM_STATUS_SEED = Buffer.from("claim_status");
+export const REFERRAL_RECORD_SEED = Buffer.from("referral");
 
 // ============================================================================
 // Display Labels (user-facing terminology from CONTEXT.md)
