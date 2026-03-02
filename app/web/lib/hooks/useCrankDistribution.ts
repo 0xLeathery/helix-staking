@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { Transaction } from "@solana/web3.js";
+import { getComputeBudgetInstructions, CU_LIMITS } from "@/lib/solana/compute-budget";
 import { TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 import { useProgram } from "./useProgram";
 import { deriveGlobalState, deriveMint, deriveMintAuthority } from "@/lib/solana/pdas";
@@ -40,8 +41,10 @@ export function useCrankDistribution() {
         } as any)
         .instruction();
 
-      // Build transaction
-      const tx = new Transaction().add(crankIx);
+      // Build transaction with ComputeBudget instructions prepended (RT-03)
+      const tx = new Transaction();
+      tx.add(...getComputeBudgetInstructions(CU_LIMITS.crankDistribution));
+      tx.add(crankIx);
 
       // Get recent blockhash
       const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();

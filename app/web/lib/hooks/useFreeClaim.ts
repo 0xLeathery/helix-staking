@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey, Transaction, TransactionInstruction, SYSVAR_INSTRUCTIONS_PUBKEY, Ed25519Program } from "@solana/web3.js";
+import { getComputeBudgetInstructions, CU_LIMITS } from "@/lib/solana/compute-budget";
 import { getAssociatedTokenAddressSync, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 import BN from "bn.js";
 import { useProgram } from "./useProgram";
@@ -86,8 +87,11 @@ export function useFreeClaim() {
         } as any)
         .instruction();
 
-      // Build transaction with Ed25519 instruction FIRST, then free_claim
+      // Build transaction with ComputeBudget FIRST, then Ed25519 verify, then free_claim
+      // Note: Ed25519 instruction must immediately precede free_claim per on-chain requirement.
+      // ComputeBudget is a sysvar instruction and does not affect that ordering constraint.
       const tx = new Transaction();
+      tx.add(...getComputeBudgetInstructions(CU_LIMITS.freeClaim));
       tx.add(ed25519Ix);
       tx.add(freeClaimIx);
 

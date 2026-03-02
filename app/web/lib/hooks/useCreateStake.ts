@@ -7,6 +7,7 @@ import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import BN from "bn.js";
 import { useProgram } from "./useProgram";
 import { deriveGlobalState, deriveMint, deriveMintAuthority, deriveStakeAccount } from "@/lib/solana/pdas";
+import { getComputeBudgetInstructions, CU_LIMITS } from "@/lib/solana/compute-budget";
 
 // Token-2022 program ID
 const TOKEN_2022_PROGRAM_ID = new PublicKey(
@@ -87,6 +88,9 @@ export function useCreateStake() {
               tokenProgram: TOKEN_2022_PROGRAM_ID,
             })
             .transaction();
+
+          // Prepend ComputeBudget instructions (RT-03: CU limit + priority fee)
+          tx.instructions.unshift(...getComputeBudgetInstructions(CU_LIMITS.createStake));
 
           // Set recent blockhash and fee payer
           const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
