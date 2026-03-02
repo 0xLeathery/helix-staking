@@ -2,9 +2,12 @@ import { describe, it, expect } from 'vitest';
 import BN from 'bn.js';
 import {
   formatHelix,
+  formatHelixCompact,
+  parseHelix,
   formatTShares,
   formatDays,
   formatBps,
+  truncateAddress,
 } from '@/lib/utils/format';
 import { TSHARE_DISPLAY_FACTOR } from '@/lib/solana/constants';
 
@@ -133,5 +136,90 @@ describe('formatBps', () => {
 
   it('formats 1 bps as "0.01%"', () => {
     expect(formatBps(1)).toBe('0.01%');
+  });
+});
+
+describe('formatHelixCompact', () => {
+  it('formats small amounts without suffix', () => {
+    const result = formatHelixCompact(new BN('100000000')); // 1 HELIX
+    expect(result).toMatch(/\d+\.\d\d/);
+    expect(result).not.toContain('K');
+    expect(result).not.toContain('M');
+    expect(result).not.toContain('B');
+  });
+
+  it('formats thousands with K suffix', () => {
+    // 5000 HELIX = 5000 * 10^8 = 500_000_000_000
+    const result = formatHelixCompact(new BN('500000000000'));
+    expect(result).toContain('K');
+  });
+
+  it('formats millions with M suffix', () => {
+    // 2_000_000 HELIX = 2_000_000 * 10^8
+    const result = formatHelixCompact(new BN('200000000000000'));
+    expect(result).toContain('M');
+  });
+
+  it('formats billions with B suffix', () => {
+    // 2B HELIX = 2_000_000_000 * 10^8
+    const result = formatHelixCompact(new BN('200000000000000000'));
+    expect(result).toContain('B');
+  });
+
+  it('formats zero', () => {
+    const result = formatHelixCompact(new BN(0));
+    expect(result).toBe('0.00');
+  });
+});
+
+describe('parseHelix', () => {
+  it('parses empty string as 0', () => {
+    expect(parseHelix('').toString()).toBe('0');
+  });
+
+  it('parses "." as 0', () => {
+    expect(parseHelix('.').toString()).toBe('0');
+  });
+
+  it('parses whole number', () => {
+    expect(parseHelix('1').toString()).toBe('100000000');
+  });
+
+  it('parses decimal with 2 places', () => {
+    expect(parseHelix('1.50').toString()).toBe('150000000');
+  });
+
+  it('parses decimal with full 8 places', () => {
+    expect(parseHelix('1.12345678').toString()).toBe('112345678');
+  });
+
+  it('truncates extra decimal places', () => {
+    // 9 decimal places -> truncate to 8
+    expect(parseHelix('1.123456789').toString()).toBe('112345678');
+  });
+
+  it('parses integer without decimal', () => {
+    expect(parseHelix('100').toString()).toBe('10000000000');
+  });
+
+  it('throws on invalid format (multiple dots)', () => {
+    expect(() => parseHelix('1.2.3')).toThrow();
+  });
+});
+
+describe('truncateAddress', () => {
+  it('returns address unchanged if <= 8 chars', () => {
+    expect(truncateAddress('AbCd1234')).toBe('AbCd1234');
+  });
+
+  it('truncates long address to first 4 + last 4 chars', () => {
+    const result = truncateAddress('AbCdEfGhIjKlMnOpQrStUvWxYz123456789');
+    expect(result).toBe('AbCd...6789');
+  });
+
+  it('truncates standard 44-char Solana address', () => {
+    const addr = 'So11111111111111111111111111111111111111112';
+    const result = truncateAddress(addr);
+    expect(result).toMatch(/^So11\.\.\.1112$/);
   });
 });
