@@ -300,6 +300,47 @@ export const badgeEligibility = pgTable(
 );
 
 // ---------------------------------------------------------------------------
+// Phase 12: Push Subscriptions
+// ---------------------------------------------------------------------------
+export const pushSubscriptions = pgTable(
+  'push_subscriptions',
+  {
+    id: serial('id').primaryKey(),
+    wallet: text('wallet').notNull(),
+    endpoint: text('endpoint').notNull().unique(),
+    p256dh: text('p256dh').notNull(),
+    auth: text('auth').notNull(),
+    notifyMaturity: boolean('notify_maturity').notNull().default(true),
+    notifyLatePenalty: boolean('notify_late_penalty').notNull().default(true),
+    notifyRewards: boolean('notify_rewards').notNull().default(true),
+    notifyBpd: boolean('notify_bpd').notNull().default(true),
+    lastRewardsNotifiedAt: timestamp('last_rewards_notified_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('push_subscriptions_wallet_idx').on(table.wallet),
+  ],
+);
+
+// ---------------------------------------------------------------------------
+// Phase 12: Notification State (prevents duplicate notifications per stake per event type)
+// ---------------------------------------------------------------------------
+export const notificationState = pgTable(
+  'notification_state',
+  {
+    id: serial('id').primaryKey(),
+    wallet: text('wallet').notNull(),
+    stakeId: bigint('stake_id', { mode: 'number' }).notNull(),
+    eventType: text('event_type').notNull(), // 'maturity_7d' | 'late_penalty' | 'rewards_available'
+    sentAt: timestamp('sent_at').defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex('notification_state_unique_idx').on(table.wallet, table.stakeId, table.eventType),
+  ],
+);
+
+// ---------------------------------------------------------------------------
 // Operational: Checkpoints (polling state)
 // ---------------------------------------------------------------------------
 export const checkpoints = pgTable('checkpoints', {

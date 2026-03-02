@@ -11,6 +11,10 @@ const envSchema = z.object({
   POLL_INTERVAL_MS: z.coerce.number().int().positive().default(5000),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
   FRONTEND_URL: z.string().default('http://localhost:3000'),
+  // Phase 12: VAPID keys for Web Push — optional so indexer starts without push configured
+  VAPID_PUBLIC_KEY: z.string().min(1).optional(),
+  VAPID_PRIVATE_KEY: z.string().min(1).optional(),
+  VAPID_SUBJECT: z.string().default('mailto:admin@helix.staking'),
 });
 
 export type Env = z.infer<typeof envSchema>;
