@@ -1,7 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { useBadges } from "@/lib/hooks/useBadges";
 import { BadgeCard } from "./badge-card";
+import { BadgeClaimDialog } from "./badge-claim-dialog";
+import { BadgeCelebration } from "./badge-celebration";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert } from "@/components/ui/alert";
 import {
@@ -14,6 +17,12 @@ import type { BadgeInfo } from "@/lib/hooks/useBadges";
 
 export function BadgeGallery() {
   const { data: badges, isLoading, error, refetch } = useBadges();
+  const [selectedBadge, setSelectedBadge] = useState<BadgeInfo | null>(null);
+  const [celebrationData, setCelebrationData] = useState<{
+    badgeName: string;
+    badgeType: BadgeType;
+    signature: string;
+  } | null>(null);
 
   if (isLoading) {
     return (
@@ -66,56 +75,86 @@ export function BadgeGallery() {
   }
 
   return (
-    <div className="space-y-10">
-      {/* Milestones Section */}
-      <section>
-        <h2 className="text-lg font-semibold text-zinc-200 mb-4">Milestones</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {MILESTONE_BADGES.map((badgeType) => {
-            const badge = badgeMap.get(badgeType);
-            return (
-              <BadgeCard
-                key={badgeType}
-                badgeType={badgeType as BadgeType}
-                name={badge?.name ?? badgeType}
-                description={badge?.description ?? ""}
-                requirement={badge?.requirement ?? ""}
-                eligible={badge?.eligible ?? false}
-                claimed={badge?.claimed ?? false}
-                earnedAt={badge?.earnedAt ?? null}
-                stakeAmount={badge?.stakeAmount ?? null}
-                claimSignature={badge?.claimSignature}
-              />
-            );
-          })}
-        </div>
-      </section>
+    <>
+      <div className="space-y-10">
+        {/* Milestones Section */}
+        <section>
+          <h2 className="text-lg font-semibold text-zinc-200 mb-4">Milestones</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {MILESTONE_BADGES.map((badgeType) => {
+              const badge = badgeMap.get(badgeType);
+              return (
+                <BadgeCard
+                  key={badgeType}
+                  badgeType={badgeType as BadgeType}
+                  name={badge?.name ?? badgeType}
+                  description={badge?.description ?? ""}
+                  requirement={badge?.requirement ?? ""}
+                  eligible={badge?.eligible ?? false}
+                  claimed={badge?.claimed ?? false}
+                  earnedAt={badge?.earnedAt ?? null}
+                  stakeAmount={badge?.stakeAmount ?? null}
+                  claimSignature={badge?.claimSignature}
+                  onClaim={() => badge && setSelectedBadge(badge)}
+                />
+              );
+            })}
+          </div>
+        </section>
 
-      {/* Tier Badges Section */}
-      <section>
-        <h2 className="text-lg font-semibold text-zinc-200 mb-4">Tier Badges</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {TIER_BADGES.map((badgeType) => {
-            const badge = badgeMap.get(badgeType);
-            return (
-              <BadgeCard
-                key={badgeType}
-                badgeType={badgeType as BadgeType}
-                name={badge?.name ?? badgeType}
-                description={badge?.description ?? ""}
-                requirement={badge?.requirement ?? ""}
-                eligible={badge?.eligible ?? false}
-                claimed={badge?.claimed ?? false}
-                earnedAt={badge?.earnedAt ?? null}
-                stakeAmount={badge?.stakeAmount ?? null}
-                claimSignature={badge?.claimSignature}
-                currentMaxStake={currentMaxStake}
-              />
-            );
-          })}
-        </div>
-      </section>
-    </div>
+        {/* Tier Badges Section */}
+        <section>
+          <h2 className="text-lg font-semibold text-zinc-200 mb-4">Tier Badges</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {TIER_BADGES.map((badgeType) => {
+              const badge = badgeMap.get(badgeType);
+              return (
+                <BadgeCard
+                  key={badgeType}
+                  badgeType={badgeType as BadgeType}
+                  name={badge?.name ?? badgeType}
+                  description={badge?.description ?? ""}
+                  requirement={badge?.requirement ?? ""}
+                  eligible={badge?.eligible ?? false}
+                  claimed={badge?.claimed ?? false}
+                  earnedAt={badge?.earnedAt ?? null}
+                  stakeAmount={badge?.stakeAmount ?? null}
+                  claimSignature={badge?.claimSignature}
+                  currentMaxStake={currentMaxStake}
+                  onClaim={() => badge && setSelectedBadge(badge)}
+                />
+              );
+            })}
+          </div>
+        </section>
+      </div>
+
+      {/* Claim dialog */}
+      <BadgeClaimDialog
+        badge={selectedBadge}
+        open={!!selectedBadge}
+        onOpenChange={(open) => { if (!open) setSelectedBadge(null); }}
+        onSuccess={(result) => {
+          setSelectedBadge(null);
+          setCelebrationData({
+            badgeName: result.badgeName,
+            badgeType: result.badgeType as BadgeType,
+            signature: result.signature,
+          });
+        }}
+      />
+
+      {/* Celebration overlay */}
+      {celebrationData && (
+        <BadgeCelebration
+          show={!!celebrationData}
+          badgeName={celebrationData.badgeName}
+          badgeType={celebrationData.badgeType}
+          signature={celebrationData.signature}
+          onDismiss={() => setCelebrationData(null)}
+        />
+      )}
+    </>
   );
 }
 
