@@ -16,6 +16,7 @@
 4. [Penalty Redistribution Mechanics](#4-penalty-redistribution-mechanics)
 5. [Risk Scenarios](#5-risk-scenarios)
 6. [Protocol Parameters Reference](#6-protocol-parameters-reference)
+7. [Sensitivity Analysis](#7-sensitivity-analysis)
 
 ---
 
@@ -309,6 +310,88 @@ All values below are exact copies from `constants.rs` as of the current program 
 | `HELIX_PER_SOL` | `10_000` | HLX distributed per SOL in the genesis free-claim snapshot |
 | `DEFAULT_STARTING_SHARE_RATE` | `10_000` | Initial share rate at protocol launch (1:1 base ratio) |
 | `DEFAULT_MIN_STAKE_AMOUNT` | `10_000_000` | Minimum stake: 0.1 HLX (raw units with 8 decimals) |
+
+---
+
+## 7. Sensitivity Analysis
+
+> This section extends the supply projections and penalty mechanics from Sections 2 and 4 with multi-variable scenario analysis. All figures are derived from the same on-chain formulas — no new assumptions are introduced.
+
+### 7.1 Participation-Adjusted Supply Growth
+
+The Section 2 supply projection table assumes 100% staking participation as an upper bound. Real supply growth scales with the fraction of tokens actually staked.
+
+**Formula:**
+
+```
+Effective annual inflation on total supply = 3.69% × participation_ratio
+
+Effective supply multiplier at year t = (1 + 0.0369 × P)^t
+```
+
+where `P` is the participation ratio (0 to 1.0) and `t` is years. All values below are computed using exact arithmetic: `(1 + 0.0369 × P) ** t`.
+
+| Horizon | 25% Participation | 50% Participation | 75% Participation | 100% Participation |
+|---------|:-----------------:|:-----------------:|:-----------------:|:------------------:|
+| Year 1  | 1.0092            | 1.0185            | 1.0277            | 1.0369             |
+| Year 5  | 1.0470            | 1.0957            | 1.1462            | 1.1986             |
+| Year 10 | 1.0962            | 1.2006            | 1.3139            | 1.4367             |
+| Year 20 | 1.2016            | 1.4414            | 1.7263            | 2.0641             |
+| Year 50 | 1.5827            | 2.4945            | 3.9155            | 6.1213             |
+
+> At 25% participation, total supply grows only ~58% over 50 years versus ~512% at full participation. Lower participation constrains supply growth but means individual stakers capture higher effective APY (see Section 7.2).
+
+### 7.2 Effective Staker APY by Participation Rate
+
+> **This section contains analytical reasoning.** The figures below are derived from the economic mechanics of the share-rate system, not hardcoded on-chain parameters.
+
+Because inflation is distributed proportionally among all T-shares, individual staker yield scales inversely with total participation. At low participation, each staker's effective APY is high — acting as a self-correcting recruitment signal.
+
+| Participation Rate | Effective Staker APY | Formula              |
+|:------------------:|:--------------------:|----------------------|
+| 10%                | 36.90%               | `3.69% / 0.10`       |
+| 25%                | 14.76%               | `3.69% / 0.25`       |
+| 50%                | 7.38%                | `3.69% / 0.50`       |
+| 75%                | 4.92%                | `3.69% / 0.75`       |
+| 100%               | 3.69%                | `3.69% / 1.00` (base rate) |
+
+> The self-correcting nature of this system means participation tends toward an equilibrium where staker APY is attractive enough to retain participants but not so high that it signals systemic risk. This feedback loop is the same mechanism described in Section 3 (Self-Correcting Mechanism).
+
+### 7.3 Penalty-Driven Deflationary Pressure Scenarios
+
+> **This section contains analytical reasoning.** The penalty rates below are computed from the on-chain formula in `math.rs` (`calculate_early_penalty`) but the pool-level impact figures are scenario models, not on-chain events.
+
+The following scenarios model the impact on a pool of **1,000,000 staked HLX** when 100,000 HLX (10% of the pool) exits early at different points in a 365-day stake term.
+
+Penalty formula (integer arithmetic, matching on-chain `BPS_SCALER = 10,000`):
+
+```
+served_bps = floor(elapsed_days × 10,000 / total_days)
+penalty_bps = 10,000 − served_bps
+final_penalty_bps = max(penalty_bps, MIN_PENALTY_BPS)   # MIN_PENALTY_BPS = 5,000
+```
+
+| Exit Scenario               | served_bps | penalty_bps | Final Penalty Rate | HLX Forfeited per 100,000 Exit | Effect on Remaining Pool   |
+|-----------------------------|:----------:|:-----------:|:------------------:|:------------------------------:|----------------------------|
+| Day 1 of 365-day stake      | 27         | 9,973       | 99.73%             | 99,730 HLX                     | `share_rate` increase      |
+| Day 90 of 365-day stake     | 2,465      | 7,535       | 75.35%             | 75,350 HLX                     | `share_rate` increase      |
+| Day 180 of 365-day stake    | 4,931      | 5,069       | 50.69%             | 50,690 HLX                     | `share_rate` increase      |
+| Day 270 of 365-day stake    | 7,397      | 2,603       | 50.00% (floor)     | 50,000 HLX                     | `share_rate` increase      |
+
+> The 50% minimum penalty floor (`MIN_PENALTY_BPS = 5000`) is the key anti-death-spiral mechanism. Even stakers who have served 99% of their term forfeit half their principal on early exit, ensuring meaningful redistribution at all times. At day 270 (73.97% of term served), the linear formula would produce 26.03% — the floor overrides it to 50%, doubling the redistribution benefit for remaining stakers.
+
+### 7.4 Comparative Inflation Context
+
+> **For context only — external reference data for calibration purposes. Not protocol parameters, not financial advice, and not protocol guarantees.**
+
+| Reference                         | Rate / Yield                            | Notes                                                  |
+|-----------------------------------|-----------------------------------------|--------------------------------------------------------|
+| Solana native staking yield       | ~6–8% APY (variable)                   | Dependent on validator performance and epoch rewards   |
+| Ethereum post-merge staking yield | ~3–5% APY (variable)                   | Variable; depends on validator count and MEV           |
+| US Federal Reserve inflation target | 2% per year                           | Target rate, not guaranteed                            |
+| **HELIX base inflation**          | **3.69% per year on staked supply**    | Fixed on-chain: `DEFAULT_ANNUAL_INFLATION_BP = 3_690_000` |
+
+HELIX's inflation rate is fixed on-chain (`DEFAULT_ANNUAL_INFLATION_BP = 3_690_000`), unlike validator-dependent yields. The predictability is a design feature: stakers know the exact inflation rate before committing. The effective APY seen by individual stakers depends on participation (Section 7.2), but the total emission rate does not.
 
 ---
 
