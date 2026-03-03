@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
-import { dasApi } from '@metaplex-foundation/digital-asset-standard-api';
-import { publicKey as umiPubkey } from '@metaplex-foundation/umi';
+import { dasApi, type DasApiInterface } from '@metaplex-foundation/digital-asset-standard-api';
+import { publicKey as umiPubkey, type RpcInterface } from '@metaplex-foundation/umi';
 import { BADGE_NAMES, BADGE_TYPES, type BadgeType } from '@/lib/badges/badge-types';
 
 export async function GET(req: NextRequest) {
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
   try {
     const umi = createUmi(process.env.HELIUS_RPC_URL!).use(dasApi());
 
-    const ownerAssets = await umi.rpc.getAssetsByOwner({
+    const ownerAssets = await (umi.rpc as RpcInterface & DasApiInterface).getAssetsByOwner({
       owner: umiPubkey(wallet),
       limit: 100,
     });

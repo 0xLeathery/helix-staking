@@ -13,8 +13,9 @@ import {
   createSignerFromKeypair,
   some,
   publicKey as umiPubkey,
+  type RpcInterface,
 } from '@metaplex-foundation/umi';
-import { dasApi } from '@metaplex-foundation/digital-asset-standard-api';
+import { dasApi, type DasApiInterface } from '@metaplex-foundation/digital-asset-standard-api';
 import { fromWeb3JsKeypair } from '@metaplex-foundation/umi-web3js-adapters';
 import { Keypair } from '@solana/web3.js';
 import { generateBadgeSvg } from '@/lib/badges/badge-svg-server';
@@ -71,7 +72,7 @@ export async function POST(req: NextRequest) {
       .use(mplCore())
       .use(dasApi());
 
-    const ownerAssets = await umiForDas.rpc.getAssetsByOwner({
+    const ownerAssets = await (umiForDas.rpc as RpcInterface & DasApiInterface).getAssetsByOwner({
       owner: umiPubkey(wallet),
       limit: 1000,
     });
@@ -129,7 +130,7 @@ export async function POST(req: NextRequest) {
         name: badgeName,
         uri: svgDataUri,
         sellerFeeBasisPoints: 0,
-        collection: some({ key: BADGE_COLLECTION, verified: false }),
+        collection: some(BADGE_COLLECTION),
         creators: [],
       },
     }).sendAndConfirm(umi, { confirm: { commitment: 'finalized' } });
@@ -143,7 +144,10 @@ export async function POST(req: NextRequest) {
     let lastError: unknown;
     for (let attempt = 0; attempt < 5; attempt++) {
       try {
-        assetWithProof = await getAssetWithProof(umi, leaf.id);
+        assetWithProof = await getAssetWithProof(
+          umi as typeof umi & { rpc: RpcInterface & DasApiInterface },
+          leaf.id
+        );
         break;
       } catch (err) {
         lastError = err;

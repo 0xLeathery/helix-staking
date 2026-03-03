@@ -160,7 +160,7 @@ export function BadgeClaimDialog({
         <DialogFooter className="gap-2 sm:gap-0">
           <DialogClose asChild>
             <Button
-              variant="secondary"
+              variant="outline"
               disabled={claimBadge.isPending}
               onClick={() => setMintError(null)}
             >
