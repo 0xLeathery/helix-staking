@@ -206,7 +206,7 @@ export function PenaltyCalculator({
       </div>
 
       {/* Note about auto-claim */}
-      <p className="text-xs text-zinc-500 italic">
+      <p className="text-xs text-zinc-400 italic">
         Note: Ending your stake will also claim all pending rewards in the same transaction.
       </p>
     </div>

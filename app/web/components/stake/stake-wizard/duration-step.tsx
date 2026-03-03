@@ -70,7 +70,7 @@ export function DurationStep() {
             step={1}
             className="w-full"
           />
-          <div className="mt-2 flex justify-between text-xs text-zinc-500">
+          <div className="mt-2 flex justify-between text-xs text-zinc-400">
             <span>1 day</span>
             <span>5,555 days</span>
           </div>

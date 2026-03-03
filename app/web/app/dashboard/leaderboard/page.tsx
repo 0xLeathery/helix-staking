@@ -23,7 +23,7 @@ export default function LeaderboardPage() {
         <p className="text-zinc-400">
           Top stakers ranked by active T-shares
           {totalParticipants > 0 && (
-            <span className="ml-2 text-zinc-500">
+            <span className="ml-2 text-zinc-400">
               • {totalParticipants} {totalParticipants === 1 ? 'participant' : 'participants'}
             </span>
           )}

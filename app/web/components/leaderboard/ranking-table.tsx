@@ -33,7 +33,7 @@ export function RankingTable({ data, currentUser, isLoading }: RankingTableProps
     <Card className="bg-surface border-zinc-800 p-0 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="border-b border-zinc-800 text-sm text-zinc-500 uppercase tracking-wider">
+          <thead className="border-b border-zinc-800 text-sm text-zinc-400 uppercase tracking-wider">
             <tr>
               <th className="px-6 py-3 text-left font-medium">Rank</th>
               <th className="px-6 py-3 text-left font-medium">Wallet</th>

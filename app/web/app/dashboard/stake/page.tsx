@@ -48,7 +48,7 @@ export default function StakePage() {
                 className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition-colors ${
                   step >= stepNum
                     ? "bg-blue-500 text-white"
-                    : "bg-zinc-800 text-zinc-500"
+                    : "bg-zinc-800 text-zinc-400"
                 }`}
               >
                 {stepNum}

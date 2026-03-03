@@ -52,7 +52,7 @@ export function JupiterWidget() {
       <div className="w-full max-w-[440px] bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-2xl">
         <div id="jupiter-terminal" className="min-h-[600px] w-full" />
       </div>
-      <p className="mt-4 text-xs text-zinc-500 text-center max-w-[400px]">
+      <p className="mt-4 text-xs text-zinc-400 text-center max-w-[400px]">
         Swaps are powered by Jupiter. HELIX is a community-driven protocol. 
         Always verify token addresses before swapping.
       </p>

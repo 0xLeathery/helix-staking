@@ -75,7 +75,7 @@ export default function DashboardLayout({
           ))}
         </nav>
         <div className="border-t border-zinc-800 p-4">
-          <div className="text-xs text-zinc-500 mb-2">Connected Wallet</div>
+          <div className="text-xs text-zinc-400 mb-2">Connected Wallet</div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-zinc-300 font-mono">
               {publicKey ? truncateAddress(publicKey.toBase58()) : 'Test Mode'}

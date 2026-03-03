@@ -88,7 +88,7 @@ export function PortfolioSummary() {
         <div className="grid grid-cols-2 gap-4">
           {summaryItems.map((item) => (
             <div key={item.label}>
-              <p className="text-xs text-zinc-500 mb-1">{item.label}</p>
+              <p className="text-xs text-zinc-400 mb-1">{item.label}</p>
               {isLoading ? (
                 <Skeleton className="h-6 w-20" />
               ) : (

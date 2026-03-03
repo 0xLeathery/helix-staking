@@ -17,7 +17,7 @@ export default function WhaleTrackerPage() {
         <h1 className="text-3xl font-bold text-zinc-100">Whale Tracker</h1>
         <p className="text-zinc-400">
           Large stake movements
-          <span className="ml-2 text-xs text-zinc-500">
+          <span className="ml-2 text-xs text-zinc-400">
             Showing transactions &gt;= 100 HELIX
           </span>
         </p>
