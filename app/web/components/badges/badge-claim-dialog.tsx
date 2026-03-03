@@ -114,7 +114,7 @@ export function BadgeClaimDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-sm">
+      <DialogContent open={open} className="max-w-sm">
         <DialogHeader>
           <DialogTitle className="text-center">Claim Badge</DialogTitle>
           <DialogDescription className="text-center">

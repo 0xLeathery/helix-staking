@@ -83,7 +83,7 @@ export function UnstakeConfirmation({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent open={isOpen} className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Confirm End Stake</DialogTitle>
           <DialogDescription>
