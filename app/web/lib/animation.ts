@@ -17,3 +17,10 @@ export const staggerItem = {
     transition: { type: "tween" as const, duration: 0.25, ease: "easeOut" },
   },
 } as const;
+
+export const scrollReveal = {
+  initial: { opacity: 0, y: 24 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, margin: "-80px" } as const,
+  transition: { duration: 0.5, ease: "easeOut" },
+} as const;
