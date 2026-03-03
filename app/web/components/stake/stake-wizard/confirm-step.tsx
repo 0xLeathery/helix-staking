@@ -114,8 +114,8 @@ export function ConfirmStep() {
         </div>
 
         <div className="flex items-center justify-between">
-          <span className="text-xs text-zinc-500">T-Share Price</span>
-          <span className="font-mono text-xs text-zinc-500">
+          <span className="text-xs text-zinc-400">T-Share Price</span>
+          <span className="font-mono text-xs text-zinc-400">
             {formatHelix(new BN(shareRate.toString()), false)}
           </span>
         </div>

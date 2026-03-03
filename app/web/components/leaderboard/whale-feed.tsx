@@ -62,20 +62,20 @@ export function WhaleFeed({ data, isLoading }: WhaleFeedProps) {
                 <span className="font-mono text-sm text-zinc-300">
                   {activity.user.slice(0, 8)}...{activity.user.slice(-6)}
                 </span>
-                <span className="text-zinc-500">•</span>
+                <span className="text-zinc-400">•</span>
                 <span className="text-sm font-semibold text-zinc-100">
                   {(parseFloat(activity.amount) / 1e9).toFixed(2)} HELIX
                 </span>
               </div>
               {activity.type === 'stake' && activity.days && activity.t_shares && (
-                <div className="text-xs text-zinc-500 mt-1">
+                <div className="text-xs text-zinc-400 mt-1">
                   {activity.days} days • {(parseFloat(activity.t_shares) / 1e9).toFixed(2)} T-shares
                 </div>
               )}
             </div>
 
             {/* Right: Time */}
-            <div className="flex-shrink-0 text-xs text-zinc-500">
+            <div className="flex-shrink-0 text-xs text-zinc-400">
               {formatTimeAgo(activity.created_at)}
             </div>
           </div>

@@ -28,7 +28,7 @@ function ToggleRow({ label, description, checked, disabled, onChange }: ToggleRo
     <div className="flex items-center justify-between py-4">
       <div className="flex-1 mr-4">
         <p className="text-sm font-medium text-zinc-200">{label}</p>
-        <p className="text-xs text-zinc-500 mt-0.5">{description}</p>
+        <p className="text-xs text-zinc-400 mt-0.5">{description}</p>
       </div>
       <button
         type="button"
@@ -155,7 +155,7 @@ export function NotificationSettings() {
       </div>
 
       {!isSupported && (
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-zinc-400">
           Your browser does not support push notifications.
         </p>
       )}

@@ -123,12 +123,12 @@ export default function AnalyticsPage() {
 function StatCard({ label, value, loading, unit }: { label: string, value: any, loading: boolean, unit?: string }) {
   return (
     <Card className="p-4 bg-surface border-zinc-800 shadow-sm">
-      <div className="text-sm text-zinc-500 font-medium">{label}</div>
+      <div className="text-sm text-zinc-400 font-medium">{label}</div>
       {loading ? (
         <Skeleton className="h-8 w-24 mt-2" />
       ) : (
         <div className="text-2xl font-bold text-zinc-100 mt-2">
-          {value ?? '0'} {unit && <span className="text-xs font-normal text-zinc-500 ml-1">{unit}</span>}
+          {value ?? '0'} {unit && <span className="text-xs font-normal text-zinc-400 ml-1">{unit}</span>}
         </div>
       )}
     </Card>

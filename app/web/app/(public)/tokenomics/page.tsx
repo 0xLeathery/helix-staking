@@ -76,7 +76,7 @@ export default async function TokenomicsPage() {
           {/* Key Metric Callout */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 text-center">
             <div className="text-4xl font-bold text-helix-400">3.69%</div>
-            <div className="text-sm text-zinc-500 mt-2">
+            <div className="text-sm text-zinc-400 mt-2">
               Annual Inflation Rate
             </div>
           </div>
@@ -102,7 +102,7 @@ export default async function TokenomicsPage() {
               <div className="text-4xl font-bold text-helix-400">
                 {currentShareRate}
               </div>
-              <div className="text-sm text-zinc-500 mt-2">
+              <div className="text-sm text-zinc-400 mt-2">
                 Current Share Rate (tokens per T-share)
               </div>
             </div>

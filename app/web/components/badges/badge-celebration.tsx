@@ -244,7 +244,7 @@ export function BadgeCelebration({
         </div>
 
         {/* Dismiss */}
-        <Button variant="ghost" size="sm" onClick={onDismiss} className="text-zinc-500">
+        <Button variant="ghost" size="sm" onClick={onDismiss} className="text-zinc-400">
           Done
         </Button>
       </div>

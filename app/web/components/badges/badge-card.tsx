@@ -70,7 +70,7 @@ function BadgeVisual({
       )}
       {!eligible && !claimed && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <LockIcon className="h-8 w-8 text-zinc-500" />
+          <LockIcon className="h-8 w-8 text-zinc-400" />
         </div>
       )}
     </div>
@@ -144,7 +144,7 @@ export function BadgeCard({
         <h3
           className={cn(
             "text-sm font-semibold text-center",
-            eligible || claimed ? "text-zinc-100" : "text-zinc-500"
+            eligible || claimed ? "text-zinc-100" : "text-zinc-400"
           )}
         >
           {name}
@@ -158,7 +158,7 @@ export function BadgeCard({
           {claimed ? (
             <>
               {formattedEarnedDate && (
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-zinc-400">
                   Claimed {formattedEarnedDate}
                 </p>
               )}
@@ -183,14 +183,14 @@ export function BadgeCard({
               Claim
             </Button>
           ) : (
-            <p className="text-xs text-zinc-500 text-center">{requirement}</p>
+            <p className="text-xs text-zinc-400 text-center">{requirement}</p>
           )}
         </div>
 
         {/* Tier progress bar (only for unclaimed tier badges) */}
         {isTierBadge && !claimed && threshold && (
           <div className="w-full mt-1">
-            <div className="flex justify-between text-xs text-zinc-500 mb-1">
+            <div className="flex justify-between text-xs text-zinc-400 mb-1">
               <span>Progress</span>
               <span>
                 {progressPercent.toFixed(0)}% of{" "}

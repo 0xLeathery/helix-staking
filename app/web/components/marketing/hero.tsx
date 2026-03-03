@@ -53,7 +53,7 @@ export function Hero({ totalStakes, currentDay, totalShares }: HeroProps) {
             <div className="text-2xl font-bold text-zinc-100">
               {formattedStakes}
             </div>
-            <div className="text-xs text-zinc-500 uppercase tracking-wider mt-1">
+            <div className="text-xs text-zinc-400 uppercase tracking-wider mt-1">
               Total Stakes
             </div>
           </div>
@@ -61,7 +61,7 @@ export function Hero({ totalStakes, currentDay, totalShares }: HeroProps) {
             <div className="text-2xl font-bold text-zinc-100">
               {currentDay ?? "--"}
             </div>
-            <div className="text-xs text-zinc-500 uppercase tracking-wider mt-1">
+            <div className="text-xs text-zinc-400 uppercase tracking-wider mt-1">
               Protocol Day
             </div>
           </div>
@@ -69,7 +69,7 @@ export function Hero({ totalStakes, currentDay, totalShares }: HeroProps) {
             <div className="text-2xl font-bold text-zinc-100">
               {formattedShares}
             </div>
-            <div className="text-xs text-zinc-500 uppercase tracking-wider mt-1">
+            <div className="text-xs text-zinc-400 uppercase tracking-wider mt-1">
               Total T-Shares
             </div>
           </div>
