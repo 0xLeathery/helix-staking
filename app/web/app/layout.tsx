@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { Providers } from "./providers";
 import { Toaster } from "@/components/ui/toaster";
 import { ErrorBoundary } from "@/components/error-boundary";
@@ -29,6 +30,7 @@ export default function RootLayout({
           </ErrorBoundary>
           <Toaster />
         </Providers>
+        <Analytics />
       </body>
     </html>
   );
