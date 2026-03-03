@@ -16,9 +16,9 @@ dist/
 test-ledger/
 
 # Environment
-.env
-.env.local
-.env.mainnet
+.env*
+!.env.local.example
+!.env.example
 
 # System files
 .DS_Store
