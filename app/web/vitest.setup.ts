@@ -58,5 +58,19 @@ vi.mock("framer-motion", async () => {
     useAnimation: () => ({ start: vi.fn(), stop: vi.fn() }),
     useInView: () => true,
     useReducedMotion: () => false,
+    useMotionValue: (initial: number) => {
+      let value = initial;
+      const listeners = new Set<(v: number) => void>();
+      return {
+        get: () => value,
+        set: (v: number) => { value = v; listeners.forEach((l) => l(v)); },
+        on: (_event: string, cb: (v: number) => void) => { listeners.add(cb); return () => { listeners.delete(cb); }; },
+        destroy: () => { listeners.clear(); },
+      };
+    },
+    animate: (_motionValue: { set: (v: number) => void }, to: number) => {
+      _motionValue.set(to);
+      return { stop: vi.fn() };
+    },
   };
 });
