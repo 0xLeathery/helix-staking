@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { LazyMotion, domAnimation, MotionConfig } from "framer-motion";
 import {
   ConnectionProvider,
   WalletProvider,
@@ -64,27 +65,31 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const endpoint = useMemo(() => getRpcEndpoint(), []);
 
   return (
-    <ConnectionProvider endpoint={endpoint}>
-      <WalletProvider
-          wallets={wallets}
-          autoConnect
-          onError={(error) => console.error("[WalletProvider]", error)}
-        >
-        <WalletModalProvider>
-          <QueryClientProvider client={queryClient}>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="dark"
-              forcedTheme="dark"
-              enableSystem={false}
+    <LazyMotion features={domAnimation}>
+      <MotionConfig reducedMotion="user">
+        <ConnectionProvider endpoint={endpoint}>
+          <WalletProvider
+              wallets={wallets}
+              autoConnect
+              onError={(error) => console.error("[WalletProvider]", error)}
             >
-              <TooltipProvider delayDuration={300}>
-                {children}
-              </TooltipProvider>
-            </ThemeProvider>
-          </QueryClientProvider>
-        </WalletModalProvider>
-      </WalletProvider>
-    </ConnectionProvider>
+            <WalletModalProvider>
+              <QueryClientProvider client={queryClient}>
+                <ThemeProvider
+                  attribute="class"
+                  defaultTheme="dark"
+                  forcedTheme="dark"
+                  enableSystem={false}
+                >
+                  <TooltipProvider delayDuration={300}>
+                    {children}
+                  </TooltipProvider>
+                </ThemeProvider>
+              </QueryClientProvider>
+            </WalletModalProvider>
+          </WalletProvider>
+        </ConnectionProvider>
+      </MotionConfig>
+    </LazyMotion>
   );
 }
