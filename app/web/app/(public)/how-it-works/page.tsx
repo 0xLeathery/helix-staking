@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 
 export const metadata: Metadata = {
   title: "How HELIX Staking Works",
@@ -25,13 +26,24 @@ export default function HowItWorksPage() {
           <h2 className="text-2xl font-semibold text-zinc-100 mb-4">
             What is HELIX Staking?
           </h2>
-          <p className="text-zinc-400 leading-relaxed text-base">
-            Lock HELIX tokens for a chosen duration (1-5,555 days). Receive
-            T-shares representing your claim on daily rewards. The longer and
-            larger your stake, the more T-shares you earn. Your tokens are
-            burned when you stake and minted back when you unstake or claim
-            rewards.
-          </p>
+          <div className="flex flex-col md:flex-row gap-8 items-start">
+            <p className="text-zinc-400 leading-relaxed text-base flex-1">
+              Lock HELIX tokens for a chosen duration (1-5,555 days). Receive
+              T-shares representing your claim on daily rewards. The longer and
+              larger your stake, the more T-shares you earn. Your tokens are
+              burned when you stake and minted back when you unstake or claim
+              rewards.
+            </p>
+            <div className="flex-shrink-0 mx-auto md:mx-0">
+              <Image
+                src="/brand/stake-card-preview.jpg"
+                alt="Example: 5,555 Day Stake earning 1,234.56 T-Shares"
+                width={320}
+                height={200}
+                className="rounded-xl border border-zinc-800"
+              />
+            </div>
+          </div>
         </section>
 
         <div className="border-b border-zinc-800/50 pb-16" />

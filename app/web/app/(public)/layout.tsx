@@ -11,6 +11,21 @@ export const metadata: Metadata = {
     description:
       "Stake HELIX tokens with time-locked commitments. Earn T-shares and claim daily inflation rewards.",
     siteName: "HELIX Protocol",
+    images: [
+      {
+        url: "/brand/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "HELIX - Time-Locked Staking on Solana",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "HELIX Protocol - Time-Locked Staking on Solana",
+    description:
+      "Stake HELIX tokens with time-locked commitments. Earn T-shares and claim daily inflation rewards.",
+    images: ["/brand/twitter-card.jpg"],
   },
 };
 

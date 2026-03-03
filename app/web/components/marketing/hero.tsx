@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 interface HeroProps {
   totalStakes: number;
@@ -18,8 +19,32 @@ export function Hero({ totalStakes, currentDay, totalShares }: HeroProps) {
   const formattedStakes = totalStakes.toLocaleString();
 
   return (
-    <section className="bg-gradient-to-b from-helix-600/5 to-transparent">
-      <div className="max-w-4xl mx-auto py-24 px-4 text-center">
+    <section className="relative overflow-hidden">
+      {/* Background banner image */}
+      <div className="absolute inset-0">
+        <Image
+          src="/brand/hero-banner.jpg"
+          alt=""
+          fill
+          className="object-cover opacity-30"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/60 via-zinc-950/80 to-zinc-950" />
+      </div>
+
+      <div className="relative max-w-4xl mx-auto py-24 px-4 text-center">
+        {/* Helix Icon */}
+        <div className="flex justify-center mb-8">
+          <Image
+            src="/brand/helix-icon-glow.jpg"
+            alt="HELIX"
+            width={80}
+            height={80}
+            className="rounded-full"
+            priority
+          />
+        </div>
+
         {/* Main Heading */}
         <h1 className="text-5xl sm:text-6xl font-bold text-zinc-50 tracking-tight">
           Stake HELIX. Earn Every Day.

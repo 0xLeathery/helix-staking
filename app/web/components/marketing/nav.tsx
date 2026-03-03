@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export function MarketingNav() {
   return (
@@ -6,8 +7,15 @@ export function MarketingNav() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link href="/" className="text-xl font-bold text-helix-400">
-            HELIX
+          <Link href="/" className="flex items-center">
+            <Image
+              src="/brand/logo-horizontal.jpg"
+              alt="HELIX"
+              width={140}
+              height={36}
+              className="h-8 w-auto rounded-sm"
+              priority
+            />
           </Link>
 
           {/* Navigation Links */}

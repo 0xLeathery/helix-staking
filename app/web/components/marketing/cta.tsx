@@ -1,11 +1,23 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ScrollReveal } from "./scroll-reveal";
 
 export function CallToAction() {
   return (
-    <section className="py-24 px-4">
+    <section className="relative py-24 px-4 overflow-hidden">
+      {/* Background helix strands */}
+      <div className="absolute inset-0">
+        <Image
+          src="/brand/helix-strands.jpg"
+          alt=""
+          fill
+          className="object-cover opacity-20"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-zinc-950 via-transparent to-zinc-950" />
+      </div>
+
       <ScrollReveal>
-        <div className="max-w-2xl mx-auto text-center">
+        <div className="relative max-w-2xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-zinc-100 mb-4">
             Ready to Start Earning?
           </h2>
