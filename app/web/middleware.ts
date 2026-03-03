@@ -2,13 +2,15 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
-  const nonce = crypto.randomUUID();
   const isDev = process.env.NODE_ENV === "development";
 
   // Build CSP directives
+  // Note: 'unsafe-inline' is required for script-src because Next.js emits
+  // inline scripts (__NEXT_DATA__, flight data) that cannot be nonced without
+  // additional framework-level configuration.
   const cspDirectives = [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""}`,
+    `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' blob: data:",
     "font-src 'self'",
@@ -22,14 +24,7 @@ export function middleware(request: NextRequest) {
 
   const csp = cspDirectives.join("; ");
 
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-nonce", nonce);
-
-  const response = NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  });
+  const response = NextResponse.next();
 
   // Security headers
   response.headers.set("Content-Security-Policy", csp);
