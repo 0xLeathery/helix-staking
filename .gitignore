@@ -41,6 +41,9 @@ app/web/e2e/.test-wallet.json
 scripts/
 docker/test-wallet.json
 
+# Private ops runbook — never commit
+.private/
+
 # Planning & audit docs (local only)
 .planning/
 .specify/
