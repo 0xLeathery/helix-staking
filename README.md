@@ -4,6 +4,10 @@
 
 ### Time-Locked Staking on Solana
 
+> **🚧 Pre-Launch — This project is under active development and has not launched yet.**
+> The protocol has not been deployed to mainnet. All code, parameters, and documentation
+> are subject to change. Do not send real funds to any addresses in this repository.
+
 **Stake longer. Stake bigger. Earn more.**
 
 Lock HLX tokens for up to **5,555 days**, earn **T-shares** that compound daily,
@@ -13,6 +17,7 @@ and collect your cut of **3.69% annual inflation** — all enforced trustlessly 
 [![Solana](https://img.shields.io/badge/Solana-Token--2022-9945FF?logo=solana&logoColor=white)](https://solana.com)
 [![Anchor](https://img.shields.io/badge/Anchor-0.32.1-blue)](https://www.anchor-lang.com)
 [![Tests](https://img.shields.io/badge/Tests-622_passing-brightgreen)]()
+[![Status](https://img.shields.io/badge/Status-Pre--Launch-orange)]()
 
 </div>
 
@@ -158,7 +163,7 @@ HELIX is designed for a world where the deployer can't be trusted either:
 
 ---
 
-**Program ID**: `E9B7BsxdPS89M66CRGGbsCzQ9LkiGv6aNsra3cNBJha7`
+**Program ID (devnet)**: `E9B7BsxdPS89M66CRGGbsCzQ9LkiGv6aNsra3cNBJha7`
 
 ## License
 
