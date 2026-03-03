@@ -66,6 +66,22 @@ const config: Config = {
       fontFamily: {
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],
       },
+      boxShadow: {
+        'card':              '0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3)',
+        'card-hover':        '0 8px 24px rgba(0,0,0,0.5), 0 4px 8px rgba(0,0,0,0.4)',
+        'card-active':       '0 1px 2px rgba(0,0,0,0.5)',
+        'glow-helix':        '0 0 16px rgba(16, 185, 129, 0.25)',
+        'glow-helix-strong': '0 0 32px rgba(16, 185, 129, 0.35)',
+      },
+      keyframes: {
+        shimmer: {
+          '0%':   { backgroundPosition: '-200% 0' },
+          '100%': { backgroundPosition: '200% 0' },
+        },
+      },
+      animation: {
+        shimmer: 'shimmer 2s linear infinite',
+      },
     },
   },
   plugins: [tailwindcssAnimate],
