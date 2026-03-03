@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
+
+// Badge mint: eligibility check (~2s) + DAS check (~2s) + mint TX (~10s) +
+// DAS retry loop (up to 10s) + freeze TX (~5s) = ~28s worst case.
+// 60s gives 2x headroom. Requires Vercel Fluid Compute (300s max on Hobby).
+export const maxDuration = 60;
 import {
   mplBubblegum,
   mintV2,
