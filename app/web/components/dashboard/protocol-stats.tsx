@@ -75,7 +75,7 @@ export function ProtocolStats() {
           <CardContent className="p-4">
             <Tooltip>
               <TooltipTrigger asChild>
-                <p className="text-xs text-zinc-500 mb-1 cursor-help border-b border-dashed border-zinc-700 inline-block">
+                <p className="text-xs uppercase tracking-widest text-zinc-400 mb-1 cursor-help border-b border-dashed border-zinc-700 inline-block">
                   {stat.label}
                 </p>
               </TooltipTrigger>
@@ -86,7 +86,7 @@ export function ProtocolStats() {
             {isLoading || stat.value === null ? (
               <Skeleton className="h-7 w-24" />
             ) : (
-              <p className="text-lg font-semibold text-zinc-100 truncate">
+              <p className="text-2xl font-bold tabular-nums text-zinc-50 truncate">
                 {stat.value}
               </p>
             )}

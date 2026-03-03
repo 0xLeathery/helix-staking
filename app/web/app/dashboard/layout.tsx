@@ -123,8 +123,11 @@ export default function DashboardLayout({
         )}
 
         {/* Main Content */}
-        <main id="main-content" className="flex-1 p-4 lg:p-8 overflow-auto" role="main">
-          {children}
+        <main id="main-content" className="flex-1 p-4 lg:p-8 overflow-auto relative" role="main">
+          <div className="fixed inset-0 gradient-helix opacity-20 pointer-events-none" aria-hidden="true" />
+          <div className="relative z-10">
+            {children}
+          </div>
         </main>
       </div>
     </div>

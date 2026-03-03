@@ -170,7 +170,7 @@ export function StakeCard({
         {/* Main Metrics */}
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div>
-            <p className="text-xs text-zinc-500">Staked Amount</p>
+            <p className="text-xs text-zinc-400">Staked Amount</p>
             <p className="font-medium text-zinc-200">
               {formatHelix(stakedAmount)}
             </p>
@@ -178,7 +178,7 @@ export function StakeCard({
           <div>
             <Tooltip>
               <TooltipTrigger asChild>
-                <p className="text-xs text-zinc-500 cursor-help border-b border-dashed border-zinc-700 inline-block">
+                <p className="text-xs text-zinc-400 cursor-help border-b border-dashed border-zinc-700 inline-block">
                   {LABELS.T_SHARES}
                 </p>
               </TooltipTrigger>
@@ -194,13 +194,13 @@ export function StakeCard({
             </p>
           </div>
           <div>
-            <p className="text-xs text-zinc-500">Duration</p>
+            <p className="text-xs text-zinc-400">Duration</p>
             <p className="font-medium text-zinc-200">
               {formatDays(account.stakeDays)}
             </p>
           </div>
           <div>
-            <p className="text-xs text-zinc-500">Remaining</p>
+            <p className="text-xs text-zinc-400">Remaining</p>
             <p className="font-medium text-zinc-200">
               {remainingDays > 0
                 ? formatDays(remainingDays)
@@ -216,7 +216,7 @@ export function StakeCard({
         {/* Rewards */}
         <div className="border-t border-zinc-800 pt-3 space-y-1">
           <div className="flex justify-between text-sm">
-            <span className="text-zinc-500">Pending Rewards</span>
+            <span className="text-zinc-400">Pending Rewards</span>
             <span className="text-zinc-200 font-medium">
               {formatHelix(pendingRewards)}
             </span>
@@ -236,7 +236,7 @@ export function StakeCard({
           )}
           {!bpdBonus.isZero() && (
             <div className="flex justify-between text-sm">
-              <span className="text-zinc-500">{LABELS.BIG_PAY_DAY} Bonus</span>
+              <span className="text-zinc-400">{LABELS.BIG_PAY_DAY} Bonus</span>
               <span className="text-helix-400 font-medium">
                 {formatHelix(bpdBonus)}
               </span>
@@ -262,11 +262,11 @@ export function StakeCard({
         </div>
 
         {/* Actions */}
-        <div className="flex gap-2 pt-1">
-          <Button asChild variant="outline" size="sm" className="flex-1">
+        <div className="flex flex-col gap-2 pt-1 sm:flex-row sm:gap-3">
+          <Button asChild variant="outline" size="sm" className="w-full sm:w-auto sm:flex-1">
             <Link href={stakeDetailUrl}>End Stake</Link>
           </Button>
-          <Button asChild variant="ghost" size="sm" className="flex-1">
+          <Button asChild variant="ghost" size="sm" className="w-full sm:w-auto sm:flex-1">
             <Link href={stakeDetailUrl}>Claim Rewards</Link>
           </Button>
         </div>
