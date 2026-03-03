@@ -48,3 +48,17 @@ services:
       timeout: 5s
       retries: 10
     restart: "no"
+
+  crank:
+    build:
+      context: ../services/crank
+      dockerfile: Dockerfile
+    env_file: .env.crank
+    depends_on:
+      validator:
+        condition: service_healthy
+    restart: unless-stopped
+    volumes:
+      - ../target/idl:/mnt/idl:ro
+    environment:
+      - IDL_PATH=/mnt/idl/helix_staking.json

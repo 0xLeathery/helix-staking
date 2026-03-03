@@ -19,6 +19,7 @@ test-ledger/
 .env*
 !.env.local.example
 !.env.example
+!.env.crank.example
 
 # System files
 .DS_Store
@@ -59,3 +60,4 @@ check*.png
 
 # Claude Code
 .claude/
+.vercel
