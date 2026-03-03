@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { animate, useMotionValue, useReducedMotion } from "framer-motion";
+import type { Easing } from "motion-utils";
 
 export const staggerContainer = {
   hidden: { opacity: 0 },
@@ -31,7 +32,7 @@ export const scrollReveal = {
 interface CountUpOptions {
   duration?: number; // default: 1.5
   delay?: number; // stagger offset in seconds, default: 0
-  ease?: string; // default: "easeOut"
+  ease?: Easing; // default: "easeOut"
 }
 
 /**

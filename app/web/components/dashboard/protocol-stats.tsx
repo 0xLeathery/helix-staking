@@ -14,7 +14,67 @@ import {
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import BN from "bn.js";
-import { staggerContainer, staggerItem } from "@/lib/animation";
+import { staggerContainer, staggerItem, useCountUp } from "@/lib/animation";
+import { TOKEN_DECIMALS, TSHARE_DISPLAY_FACTOR } from "@/lib/solana/constants";
+
+// Stagger offset: each stat starts 100ms after the previous
+const STAGGER_OFFSET = 0.1;
+const DECIMALS_FACTOR = new BN(10).pow(new BN(TOKEN_DECIMALS)); // 10^8
+
+/**
+ * Safely convert a BN to a JS number by dividing by a given factor first,
+ * then using parseFloat to handle values that still exceed Number.MAX_SAFE_INTEGER.
+ * Animation only needs approximate frame values, so float precision loss is acceptable.
+ */
+function bnDivToNumber(bn: BN, factor: BN): number {
+  const quotient = bn.div(factor);
+  try {
+    return quotient.toNumber();
+  } catch {
+    return parseFloat(quotient.toString());
+  }
+}
+
+interface StatCardProps {
+  label: string;
+  tooltip: string;
+  targetNumber: number | null;
+  format: (v: number) => string;
+  staggerIndex: number;
+  isLoading: boolean;
+}
+
+function StatCard({ label, tooltip, targetNumber, format, staggerIndex, isLoading }: StatCardProps) {
+  const animatedValue = useCountUp(targetNumber, format, {
+    duration: 1.5,
+    delay: staggerIndex * STAGGER_OFFSET,
+    ease: "easeOut",
+  });
+
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <p className="text-xs uppercase tracking-widest text-zinc-400 mb-1 cursor-help border-b border-dashed border-zinc-700 inline-block">
+              {label}
+            </p>
+          </TooltipTrigger>
+          <TooltipContent className="max-w-xs">
+            <p>{tooltip}</p>
+          </TooltipContent>
+        </Tooltip>
+        {isLoading || targetNumber === null ? (
+          <Skeleton className="h-7 w-24" />
+        ) : (
+          <p className="text-2xl font-bold tabular-nums text-zinc-50 truncate">
+            {animatedValue}
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 export function ProtocolStats() {
   const { data: globalState, isLoading, error, refetch } = useGlobalState();
@@ -42,35 +102,40 @@ export function ProtocolStats() {
     );
   }
 
-  const stats = [
+  // Normalize large BN values to display-scale before converting to JS number.
+  // - Token amounts (HELIX): divide by DECIMALS_FACTOR (10^8); format reconstructs BN
+  // - T-shares: divide by TSHARE_DISPLAY_FACTOR (10^12); format reconstructs BN
+  // - Share rate (typically ~10^9): safe to call .toNumber() directly
+  const statDefs = globalState ? [
     {
       label: "Total Staked",
-      value: globalState
-        ? formatHelixCompact(new BN(globalState.totalTokensStaked.toString()))
-        : null,
+      targetNumber: bnDivToNumber(new BN(globalState.totalTokensStaked.toString()), DECIMALS_FACTOR),
+      format: (v: number) => formatHelixCompact(new BN(Math.round(v).toString()).mul(DECIMALS_FACTOR)),
       tooltip: "Total HELIX tokens currently locked in active stakes",
     },
     {
       label: `Total ${LABELS.T_SHARES}`,
-      value: globalState
-        ? formatTShares(new BN(globalState.totalShares.toString()))
-        : null,
-      tooltip:
-        "Total T-Shares across all active stakes. T-Shares determine your share of daily inflation rewards.",
+      targetNumber: bnDivToNumber(new BN(globalState.totalShares.toString()), TSHARE_DISPLAY_FACTOR),
+      format: (v: number) => formatTShares(new BN(Math.round(v).toString()).mul(TSHARE_DISPLAY_FACTOR)),
+      tooltip: "Total T-Shares across all active stakes. T-Shares determine your share of daily inflation rewards.",
     },
     {
       label: LABELS.SHARE_RATE,
-      value: globalState
-        ? formatHelix(new BN(globalState.shareRate.toString()), false)
-        : null,
-      tooltip:
-        "The current cost per T-Share. Increases over time as inflation is distributed.",
+      targetNumber: new BN(globalState.shareRate.toString()).toNumber(),
+      format: (v: number) => formatHelix(new BN(Math.round(v).toString()), false),
+      tooltip: "The current cost per T-Share. Increases over time as inflation is distributed.",
     },
     {
       label: "Current Day",
-      value: globalState ? globalState.currentDay.toString() : null,
+      targetNumber: new BN(globalState.currentDay.toString()).toNumber(),
+      format: (v: number) => Math.round(v).toString(),
       tooltip: "Number of days since protocol launch",
     },
+  ] : [
+    { label: "Total Staked", targetNumber: null, format: () => "", tooltip: "Total HELIX tokens currently locked in active stakes" },
+    { label: `Total ${LABELS.T_SHARES}`, targetNumber: null, format: () => "", tooltip: "Total T-Shares across all active stakes. T-Shares determine your share of daily inflation rewards." },
+    { label: LABELS.SHARE_RATE, targetNumber: null, format: () => "", tooltip: "The current cost per T-Share. Increases over time as inflation is distributed." },
+    { label: "Current Day", targetNumber: null, format: () => "", tooltip: "Number of days since protocol launch" },
   ];
 
   return (
@@ -80,29 +145,16 @@ export function ProtocolStats() {
       initial="hidden"
       animate="show"
     >
-      {stats.map((stat) => (
+      {statDefs.map((stat, i) => (
         <m.div key={stat.label} variants={staggerItem}>
-          <Card>
-            <CardContent className="p-4">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <p className="text-xs uppercase tracking-widest text-zinc-400 mb-1 cursor-help border-b border-dashed border-zinc-700 inline-block">
-                    {stat.label}
-                  </p>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">
-                  <p>{stat.tooltip}</p>
-                </TooltipContent>
-              </Tooltip>
-              {isLoading || stat.value === null ? (
-                <Skeleton className="h-7 w-24" />
-              ) : (
-                <p className="text-2xl font-bold tabular-nums text-zinc-50 truncate">
-                  {stat.value}
-                </p>
-              )}
-            </CardContent>
-          </Card>
+          <StatCard
+            label={stat.label}
+            tooltip={stat.tooltip}
+            targetNumber={stat.targetNumber}
+            format={stat.format}
+            staggerIndex={i}
+            isLoading={isLoading}
+          />
         </m.div>
       ))}
     </m.div>
