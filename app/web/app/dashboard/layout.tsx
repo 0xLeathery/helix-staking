@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AnimatePresence, m } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -110,17 +111,25 @@ export default function DashboardLayout({
         </header>
 
         {/* Mobile Nav Dropdown */}
-        {mobileMenuOpen && (
-          <nav className="lg:hidden border-b border-zinc-800 bg-zinc-900 px-4 py-2 space-y-1">
-            {NAV_ITEMS.map((item) => (
-              <NavLink
-                key={item.href}
-                item={item}
-                onClick={() => setMobileMenuOpen(false)}
-              />
-            ))}
-          </nav>
-        )}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <m.nav
+              className="lg:hidden border-b border-zinc-800 bg-zinc-900 px-4 py-2 space-y-1 overflow-hidden"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ type: "tween", duration: 0.18, ease: "easeOut" }}
+            >
+              {NAV_ITEMS.map((item) => (
+                <NavLink
+                  key={item.href}
+                  item={item}
+                  onClick={() => setMobileMenuOpen(false)}
+                />
+              ))}
+            </m.nav>
+          )}
+        </AnimatePresence>
 
         {/* Main Content */}
         <main id="main-content" className="flex-1 p-4 lg:p-8 overflow-auto relative" role="main">
