@@ -1,14 +1,19 @@
+import { ScrollReveal } from "./scroll-reveal";
+
 export function Features() {
   return (
     <section className="py-24 px-4">
       <div className="max-w-6xl mx-auto">
         {/* Section Heading */}
-        <h2 className="text-3xl font-bold text-zinc-100 text-center mb-16">
-          Why Stake with HELIX?
-        </h2>
+        <ScrollReveal>
+          <h2 className="text-3xl font-bold text-zinc-100 text-center mb-16">
+            Why Stake with HELIX?
+          </h2>
+        </ScrollReveal>
 
         {/* Feature Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <ScrollReveal delay={0.1}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Feature 1: Duration Bonus */}
           <div className="p-6 rounded-xl border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-900 transition-colors">
             <div className="w-10 h-10 bg-helix-600/10 rounded-lg flex items-center justify-center mb-4">
@@ -111,7 +116,8 @@ export function Features() {
               stakers.
             </p>
           </div>
-        </div>
+          </div>
+        </ScrollReveal>
       </div>
     </section>
   );
