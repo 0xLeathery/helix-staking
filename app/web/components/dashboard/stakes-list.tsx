@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import BN from "bn.js";
+import { m } from "framer-motion";
 import { useStakes } from "@/lib/hooks/useStakes";
 import { StakeCard } from "@/components/stake/stake-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { SLOTS_PER_DAY } from "@/lib/solana/constants";
+import { staggerContainer, staggerItem } from "@/lib/animation";
 
 export function StakesList() {
   const { data: stakes, isLoading, error, refetch } = useStakes();
@@ -88,15 +90,21 @@ export function StakesList() {
       <h2 className="text-lg font-semibold text-zinc-100">
         Your Stakes ({activeStakes.length})
       </h2>
-      <div className="grid gap-4 md:grid-cols-2">
+      <m.div
+        className="grid gap-4 md:grid-cols-2"
+        variants={staggerContainer}
+        initial="hidden"
+        animate="show"
+      >
         {sorted.map((stake) => (
-          <StakeCard
-            key={stake.publicKey.toBase58()}
-            stakePublicKey={stake.publicKey}
-            account={stake.account}
-          />
+          <m.div key={stake.publicKey.toBase58()} variants={staggerItem}>
+            <StakeCard
+              stakePublicKey={stake.publicKey}
+              account={stake.account}
+            />
+          </m.div>
         ))}
-      </div>
+      </m.div>
     </div>
   );
 }

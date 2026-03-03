@@ -1,5 +1,6 @@
 "use client";
 
+import { m } from "framer-motion";
 import { useGlobalState } from "@/lib/hooks/useGlobalState";
 import { formatHelixCompact, formatTShares, formatHelix } from "@/lib/utils/format";
 import { LABELS } from "@/lib/solana/constants";
@@ -12,6 +13,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import BN from "bn.js";
+import { staggerContainer, staggerItem } from "@/lib/animation";
 
 export function ProtocolStats() {
   const { data: globalState, isLoading, error, refetch } = useGlobalState();
@@ -69,30 +71,37 @@ export function ProtocolStats() {
   ];
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <m.div
+      className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+      variants={staggerContainer}
+      initial="hidden"
+      animate="show"
+    >
       {stats.map((stat) => (
-        <Card key={stat.label}>
-          <CardContent className="p-4">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <p className="text-xs uppercase tracking-widest text-zinc-400 mb-1 cursor-help border-b border-dashed border-zinc-700 inline-block">
-                  {stat.label}
+        <m.div key={stat.label} variants={staggerItem}>
+          <Card>
+            <CardContent className="p-4">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <p className="text-xs uppercase tracking-widest text-zinc-400 mb-1 cursor-help border-b border-dashed border-zinc-700 inline-block">
+                    {stat.label}
+                  </p>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p>{stat.tooltip}</p>
+                </TooltipContent>
+              </Tooltip>
+              {isLoading || stat.value === null ? (
+                <Skeleton className="h-7 w-24" />
+              ) : (
+                <p className="text-2xl font-bold tabular-nums text-zinc-50 truncate">
+                  {stat.value}
                 </p>
-              </TooltipTrigger>
-              <TooltipContent className="max-w-xs">
-                <p>{stat.tooltip}</p>
-              </TooltipContent>
-            </Tooltip>
-            {isLoading || stat.value === null ? (
-              <Skeleton className="h-7 w-24" />
-            ) : (
-              <p className="text-2xl font-bold tabular-nums text-zinc-50 truncate">
-                {stat.value}
-              </p>
-            )}
-          </CardContent>
-        </Card>
+              )}
+            </CardContent>
+          </Card>
+        </m.div>
       ))}
-    </div>
+    </m.div>
   );
 }
