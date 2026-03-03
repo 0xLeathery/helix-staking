@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { AlertCircle, Trophy } from "lucide-react";
 import { useBadges } from "@/lib/hooks/useBadges";
 import { BadgeCard } from "./badge-card";
 import { BadgeClaimDialog } from "./badge-claim-dialog";
 import { BadgeCelebration } from "./badge-celebration";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Alert } from "@/components/ui/alert";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   MILESTONE_BADGES,
   TIER_BADGES,
@@ -35,28 +38,32 @@ export function BadgeGallery() {
 
   if (error) {
     return (
-      <Alert variant="destructive">
-        <p className="text-sm font-medium">Failed to load badges</p>
-        <p className="text-sm text-zinc-400 mt-1">
-          {error instanceof Error ? error.message : "Unknown error"}
-        </p>
-        <button
-          onClick={() => refetch()}
-          className="mt-3 text-sm text-helix-400 hover:text-helix-300 underline underline-offset-2"
-        >
-          Try again
-        </button>
-      </Alert>
+      <Card className="border-penalty-800">
+        <CardContent className="p-6">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-penalty-400 mt-0.5 shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-penalty-300">Failed to load badges</p>
+              <p className="text-xs text-zinc-400 mt-0.5">
+                {error instanceof Error ? error.message : "Unknown error"}
+              </p>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => refetch()}>
+              Try Again
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   if (!badges) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center">
-        <p className="text-zinc-400 text-sm">
-          Connect your wallet to view your badge collection.
-        </p>
-      </div>
+      <EmptyState
+        icon={Trophy}
+        headline="Badge Collection"
+        description="Connect your wallet to view your badge collection."
+      />
     );
   }
 
@@ -161,7 +168,7 @@ export function BadgeGallery() {
 function SkeletonSection({ title, count }: { title: string; count: number }) {
   return (
     <section>
-      <div className="h-7 w-32 bg-zinc-800 rounded mb-4 animate-pulse" />
+      <Skeleton className="h-7 w-32 mb-4" />
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {Array.from({ length: count }).map((_, i) => (
           <div key={i} className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 space-y-3">

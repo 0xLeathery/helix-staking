@@ -1,6 +1,7 @@
 "use client";
 
 import { m } from "framer-motion";
+import { AlertCircle } from "lucide-react";
 import { useGlobalState } from "@/lib/hooks/useGlobalState";
 import { formatHelixCompact, formatTShares, formatHelix } from "@/lib/utils/format";
 import { LABELS } from "@/lib/solana/constants";
@@ -20,12 +21,14 @@ export function ProtocolStats() {
 
   if (error) {
     return (
-      <Card>
+      <Card className="border-penalty-800">
         <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-penalty-400">
-              Failed to load protocol stats
-            </p>
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-penalty-400 mt-0.5 shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-penalty-300">Failed to load protocol stats</p>
+              <p className="text-xs text-zinc-400 mt-0.5">Check your connection and try again.</p>
+            </div>
             <Button
               variant="outline"
               size="sm"

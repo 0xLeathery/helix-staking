@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import BN from "bn.js";
+import { Coins } from "lucide-react";
 import { useStakes } from "@/lib/hooks/useStakes";
 import { useTokenBalance } from "@/lib/hooks/useTokenBalance";
 import { useGlobalState } from "@/lib/hooks/useGlobalState";
@@ -11,6 +11,8 @@ import { LABELS } from "@/lib/solana/constants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import Link from "next/link";
 
 export function PortfolioSummary() {
   const { data: stakes, isLoading: stakesLoading } = useStakes();
@@ -44,14 +46,12 @@ export function PortfolioSummary() {
     return (
       <Card>
         <CardContent className="p-6">
-          <div className="text-center space-y-4 py-4">
-            <p className="text-zinc-400">
-              No active stakes. Create your first stake to start earning.
-            </p>
-            <Button asChild>
-              <Link href="/dashboard/stake">Create Stake</Link>
-            </Button>
-          </div>
+          <EmptyState
+            icon={Coins}
+            headline="No active stakes"
+            description="Create your first stake to start earning T-shares and daily rewards."
+            action={{ label: "Create Stake", href: "/dashboard/stake" }}
+          />
         </CardContent>
       </Card>
     );
