@@ -3,12 +3,12 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import cron from 'node-cron';
-import { Connection, Keypair } from '@solana/web3.js';
-import { AnchorProvider, Program, Wallet } from '@coral-xyz/anchor';
-import pRetry, { type FailedAttemptError } from 'p-retry';
+import { Keypair } from '@solana/web3.js';
+import { Program, Wallet } from '@coral-xyz/anchor';
 import { logger } from './logger.js';
 import { env } from './env.js';
 import { executeCrank, loadCrankerKeypair, checkSolBalance } from './crank.js';
+import { withRpcFallback, createCrankProgram } from './rpc.js';
 
 // ---------------------------------------------------------------------------
 // IDL loading
@@ -20,13 +20,14 @@ const idlPath =
   process.env.IDL_PATH ??
   path.resolve(__dirname, '../../../target/idl/helix_staking.json');
 
-const idl = JSON.parse(readFileSync(idlPath, 'utf-8'));
+let idl: any = JSON.parse(readFileSync(idlPath, 'utf-8'));
 
 // ---------------------------------------------------------------------------
 // Module-level state
 // ---------------------------------------------------------------------------
 let isShuttingDown = false;
 let crankerKeypair!: Keypair;
+let wallet!: Wallet;
 let program!: Program;
 
 // ---------------------------------------------------------------------------
@@ -35,12 +36,8 @@ let program!: Program;
 
 async function setupProgram(): Promise<void> {
   crankerKeypair = loadCrankerKeypair();
-  const connection = new Connection(env.RPC_URL, 'confirmed');
-  const provider = new AnchorProvider(connection, new Wallet(crankerKeypair), {
-    commitment: 'confirmed',
-    preflightCommitment: 'confirmed',
-  });
-  program = new Program(idl, provider);
+  wallet = new Wallet(crankerKeypair);
+  program = createCrankProgram(env.RPC_URL, wallet, idl);
 
   // Log masked RPC URL at startup
   const maskedUrl = env.RPC_URL.replace(/^(https?:\/\/[^/]{4}).*/, '$1***');
@@ -71,7 +68,7 @@ async function pingHeartbeat(suffix = ''): Promise<void> {
 async function tick(): Promise<void> {
   if (isShuttingDown) return;
 
-  // CRANK-04: Check SOL balance on each tick
+  // CRANK-04: Check SOL balance on each tick (read-only, primary endpoint only)
   const balanceCheck = await checkSolBalance(
     program.provider.connection,
     crankerKeypair.publicKey,
@@ -82,28 +79,13 @@ async function tick(): Promise<void> {
     await pingHeartbeat('/fail');
   }
 
-  // CRANK-03: Wrap executeCrank in p-retry for transient RPC errors
-  const TICK_RETRY_OPTIONS = {
-    retries: 3,
-    factor: 2,
-    minTimeout: 2_000,
-    maxTimeout: 30_000,
-    onFailedAttempt: (error: FailedAttemptError) => {
-      logger.warn(
-        {
-          attempt: error.attemptNumber,
-          retriesLeft: error.retriesLeft,
-          message: error.message,
-        },
-        'executeCrank failed, retrying...',
-      );
-    },
-  };
-
+  // CRANK-03: Wrap executeCrank in withRpcFallback for automatic RPC failover.
+  // Primary: 5 retries (1s-60s). Fallback: 3 retries (1s-30s) if RPC_URL_FALLBACK set.
   try {
-    const result = await pRetry(
-      () => executeCrank(program, crankerKeypair),
-      TICK_RETRY_OPTIONS,
+    const result = await withRpcFallback(
+      (prog) => executeCrank(prog, crankerKeypair),
+      wallet,
+      idl,
     );
 
     if (result === 'cranked') {
