@@ -43,3 +43,18 @@
 .wallet-adapter-modal-wrapper {
   @apply !bg-zinc-900 !border !border-zinc-700;
 }
+
+@layer utilities {
+  .gradient-helix {
+    background: linear-gradient(135deg, #065f46 0%, #022c22 100%);
+  }
+  .gradient-card {
+    background: linear-gradient(180deg, #27272a 0%, #18181b 100%);
+  }
+  .text-gradient-helix {
+    background: linear-gradient(90deg, #34d399, #10b981);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
