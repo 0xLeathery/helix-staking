@@ -49,5 +49,13 @@ Auto Run Docs/
 # Merkle tree data
 voicetree-9-2/
 
+# Test artifacts
+coverage/
+playwright-report/
+test-results/
+
+# Debug screenshots
+check*.png
+
 # Claude Code
 .claude/
