@@ -23,7 +23,7 @@ Requirements for milestone v3.0. Each maps to roadmap phases.
 - [x] **BOOST-05**: Boost revocation is permanent per stake — buying back seed tokens does not restore it
 - [x] **BOOST-06**: Boost multiplier of 10% (1,000 BPS) mints extra tokens at claim time (real rewards, not display-only)
 - [x] **BOOST-07**: Buying more seed tokens after staking provides headroom above snapshot threshold
-- [ ] **BOOST-08**: Crank checks all boosted stakers every 6 hours and revokes if balance dropped below snapshot
+- [x] **BOOST-08**: Crank checks all boosted stakers every 6 hours and revokes if balance dropped below snapshot
 
 ### Frontend
 
@@ -95,7 +95,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BOOST-05 | Phase 24 | Complete |
 | BOOST-06 | Phase 24 | Complete |
 | BOOST-07 | Phase 24 | Complete |
-| BOOST-08 | Phase 25 | Pending |
+| BOOST-08 | Phase 25 | Complete |
 | FRONT-01 | Phase 26 | Pending |
 | FRONT-02 | Phase 26 | Pending |
 | FRONT-03 | Phase 26 | Pending |

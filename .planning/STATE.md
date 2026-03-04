@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Seed Launch & LP Funding
 status: planning
-stopped_at: Completed 24-anchor-program-boost-system 24-03-PLAN.md
-last_updated: "2026-03-04T04:43:04.386Z"
+stopped_at: Completed 25-crank-boost-monitoring 25-01-PLAN.md
+last_updated: "2026-03-04T05:32:22.635Z"
 last_activity: 2026-03-04 — Roadmap created for v3.0 (Phases 23-27)
 progress:
   total_phases: 5
-  completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
+  completed_phases: 3
+  total_plans: 6
+  completed_plans: 6
   percent: 0
 ---
 
@@ -51,6 +51,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 24-anchor-program-boost-system P01 | 458 | 2 tasks | 13 files |
 | Phase 24-anchor-program-boost-system P02 | 357 | 2 tasks | 7 files |
 | Phase 24-anchor-program-boost-system P03 | 1349 | 2 tasks | 2 files |
+| Phase 25-crank-boost-monitoring P01 | 420 | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -80,6 +81,9 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 24-anchor-program-boost-system]: BoostRecord boosted_stake_id write-back via direct byte manipulation at offset 49 in remaining_accounts
 - [Phase 24-anchor-program-boost-system]: BPD bonus not amplified by boost: formula is (loyalty_adjusted * 1.10) + bpd_bonus, not (loyalty_adjusted + bpd_bonus) * 1.10
 - [Phase 24-anchor-program-boost-system]: claim_rewards boost client opt-in via remaining_accounts[0]: omitting seed ATA gives base rewards gracefully, no error
+- [Phase 25-crank-boost-monitoring]: SEED_TOKEN_PROGRAM_ID defaults to standard SPL Token for pump.fun tokens, configurable via env for Token-2022
+- [Phase 25-crank-boost-monitoring]: result.sent counts transactions sent (not revocations confirmed) — on-chain no-ops indistinguishable without log parsing, acceptable for v3.0
+- [Phase 25-crank-boost-monitoring]: LiteSVM AlreadyProcessed rejection requires client.expireBlockhash() between identical transactions in same test
 
 ### Pending Todos
 
@@ -90,6 +94,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-04T04:43:04.384Z
-Stopped at: Completed 24-anchor-program-boost-system 24-03-PLAN.md
+Last session: 2026-03-04T05:32:22.634Z
+Stopped at: Completed 25-crank-boost-monitoring 25-01-PLAN.md
 Resume file: None

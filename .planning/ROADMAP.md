@@ -41,7 +41,7 @@ Framer Motion with LazyMotion, visual depth overhaul, page transitions, loading/
 
 - [x] **Phase 23: Communication & Boost Rules** — Seed launch page messaging and plain-language boost rules live before any staking action (completed 2026-03-04)
 - [x] **Phase 24: Anchor Program Boost System** — On-chain boost registration, snapshot enforcement, reward multiplier, and proactive crank revocation (completed 2026-03-04)
-- [ ] **Phase 25: Crank Boost Monitoring** — Automated 6-hour crank job that proactively revokes boosts when seed balance drops below snapshot
+- [x] **Phase 25: Crank Boost Monitoring** — Automated 6-hour crank job that proactively revokes boosts when seed balance drops below snapshot (completed 2026-03-04)
 - [ ] **Phase 26: Frontend Boost UI** — Dashboard boost indicator, boosted APY display, wallet registration flow, and revocation push notification
 - [ ] **Phase 27: LP Stats, Docs & Transparency** — LP pool stats widget, published end-to-end documentation, SOL flow dashboard, and on-chain Explorer links
 
@@ -87,7 +87,7 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. The crank service runs a boost-check job every 6 hours, fetches all active BoostRecord PDAs, reads each user's seed ATA balance, and calls `update_boost_status(false)` for any user whose balance dropped below their snapshot — the on-chain BoostRecord is updated, not just a DB flag
   2. A user who sold their seed tokens sees their boost status updated to "revoked" in the dashboard within 6 hours, without needing to trigger a claim transaction
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
 - [ ] 25-01-PLAN.md — Boost check sweep function and 6-hour cron schedule in crank service
@@ -133,6 +133,6 @@ Phases execute in numeric order: 23 → 24 → 25 → 26 → 27
 | 22. Production Runbook | v2.0 | 2/2 | Complete | 2026-03-04 |
 | 23. Communication & Boost Rules | v3.0 | 2/2 | Complete | 2026-03-04 |
 | 24. Anchor Program Boost System | v3.0 | 3/3 | Complete | 2026-03-04 |
-| 25. Crank Boost Monitoring | v3.0 | 0/1 | Not started | - |
+| 25. Crank Boost Monitoring | 1/1 | Complete   | 2026-03-04 | - |
 | 26. Frontend Boost UI | v3.0 | 0/TBD | Not started | - |
 | 27. LP Stats, Docs & Transparency | v3.0 | 0/TBD | Not started | - |
