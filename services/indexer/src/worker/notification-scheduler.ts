@@ -412,6 +412,34 @@ export async function sendRewardsNotification(): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Phase 26: BoostRevoked push notification (event-driven)
+// ---------------------------------------------------------------------------
+
+/**
+ * Dispatch a push notification to the affected wallet when their seed boost is revoked.
+ * Called directly from the event processor on BoostRevoked events.
+ * Deduplication is handled by the boostRevokedEvents table in processor.ts.
+ */
+export async function sendBoostRevokedNotification(wallet: string, stakeId: number): Promise<void> {
+  if (!isPushEnabled()) return;
+
+  const payload: PushPayload = {
+    title: 'Boost Revoked',
+    body: `Your seed boost on Stake #${stakeId} has been revoked. Your seed token balance dropped below your snapshot. Future claims on this stake earn base APY only.`,
+    tag: `boost-revoked-${stakeId}`,
+    data: {
+      url: '/dashboard',
+      eventType: 'boost_revoked',
+      stakeId,
+    },
+  };
+
+  await dispatchToSubscribers([wallet], payload, 'notifyBoostRevoked');
+
+  logger.info({ wallet, stakeId }, 'Boost revoked notification dispatched');
+}
+
+// ---------------------------------------------------------------------------
 // Scheduler startup
 // ---------------------------------------------------------------------------
 

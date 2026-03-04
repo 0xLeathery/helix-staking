@@ -314,6 +314,7 @@ export const pushSubscriptions = pgTable(
     notifyLatePenalty: boolean('notify_late_penalty').notNull().default(true),
     notifyRewards: boolean('notify_rewards').notNull().default(true),
     notifyBpd: boolean('notify_bpd').notNull().default(true),
+    notifyBoostRevoked: boolean('notify_boost_revoked').notNull().default(true),
     lastRewardsNotifiedAt: timestamp('last_rewards_notified_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -337,6 +338,24 @@ export const notificationState = pgTable(
   },
   (table) => [
     uniqueIndex('notification_state_unique_idx').on(table.wallet, table.stakeId, table.eventType),
+  ],
+);
+
+// ---------------------------------------------------------------------------
+// Phase 26: BoostRevoked events (deduplication table)
+// ---------------------------------------------------------------------------
+export const boostRevokedEvents = pgTable(
+  'boost_revoked_events',
+  {
+    id: serial('id').primaryKey(),
+    signature: text('signature').notNull().unique(),
+    slot: bigint('slot', { mode: 'number' }).notNull(),
+    userWallet: text('user_wallet').notNull(),
+    stakeId: bigint('stake_id', { mode: 'number' }).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('boost_revoked_events_user_idx').on(table.userWallet),
   ],
 );
 

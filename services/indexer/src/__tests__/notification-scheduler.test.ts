@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // Mock push library
 vi.mock('../lib/push.js', () => ({
   isPushEnabled: vi.fn().mockReturnValue(true),
-  dispatchToSubscribers: vi.fn().mockResolvedValue(undefined),
+  dispatchToSubscribers: vi.fn().mockResolvedValue({ sent: 0, expired: 0, errors: 0 }),
 }));
 
 // Mock logger
@@ -60,7 +60,7 @@ describe('sendBpdTransitionNotification', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(isPushEnabled).mockReturnValue(true);
-    vi.mocked(dispatchToSubscribers).mockResolvedValue(undefined);
+    vi.mocked(dispatchToSubscribers).mockResolvedValue({ sent: 0, expired: 0, errors: 0 });
   });
 
   it('returns early when push is not enabled', async () => {

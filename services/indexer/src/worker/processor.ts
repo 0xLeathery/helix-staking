@@ -1,6 +1,6 @@
 import { desc } from 'drizzle-orm';
 import { db, type DbClient } from '../db/client.js';
-import { sendBpdTransitionNotification, sendRewardsNotification } from './notification-scheduler.js';
+import { sendBpdTransitionNotification, sendRewardsNotification, sendBoostRevokedNotification } from './notification-scheduler.js';
 import {
   protocolInitializedEvents,
   stakeCreatedEvents,
@@ -19,6 +19,7 @@ import {
   authorityTransferCancelledEvents,
   authorityTransferCompletedEvents,
   referralStakedEvents,
+  boostRevokedEvents,
 } from '../db/schema.js';
 import { logger } from '../lib/logger.js';
 
@@ -376,6 +377,23 @@ export async function processEvent(
           })
           .onConflictDoNothing();
         break;
+
+      case 'BoostRevoked': {
+        // 1. Idempotently insert event for deduplication
+        await db
+          .insert(boostRevokedEvents)
+          .values({
+            signature,
+            slot,
+            userWallet: toStr(data.user),
+            stakeId: toNum(data.stakeId),
+          })
+          .onConflictDoNothing();
+
+        // 2. Dispatch push notification (event-driven, no scheduler needed)
+        await sendBoostRevokedNotification(toStr(data.user), toNum(data.stakeId));
+        break;
+      }
 
       default:
         logger.warn({ eventName: name, signature }, 'Unknown event type, skipping');

@@ -88,7 +88,8 @@ export async function dispatchToSubscribers(
     | 'notifyMaturity'
     | 'notifyLatePenalty'
     | 'notifyRewards'
-    | 'notifyBpd',
+    | 'notifyBpd'
+    | 'notifyBoostRevoked',
 ): Promise<{ sent: number; expired: number; errors: number }> {
   if (!pushEnabled) {
     return { sent: 0, expired: 0, errors: 0 };
