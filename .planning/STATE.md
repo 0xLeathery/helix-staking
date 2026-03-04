@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Seed Launch & LP Funding
 status: planning
-stopped_at: Completed 26-frontend-boost-ui 26-01-PLAN.md
-last_updated: "2026-03-04T09:02:43.398Z"
+stopped_at: Completed 26-frontend-boost-ui 26-02-PLAN.md
+last_updated: "2026-03-04T09:09:55.744Z"
 last_activity: 2026-03-04 — Roadmap created for v3.0 (Phases 23-27)
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 9
-  completed_plans: 8
+  completed_plans: 9
   percent: 0
 ---
 
@@ -54,6 +54,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 25-crank-boost-monitoring P01 | 420 | 3 tasks | 5 files |
 | Phase 26-frontend-boost-ui P03 | 4066 | 2 tasks | 8 files |
 | Phase 26-frontend-boost-ui P01 | 4107 | 2 tasks | 11 files |
+| Phase 26-frontend-boost-ui P02 | 256 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -90,6 +91,8 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 26-frontend-boost-ui]: notifyBoostRevoked defaults to true (opt-out): boost revocation is high-urgency financial event
 - [Phase 26-frontend-boost-ui]: BoostBadge eligible state is wallet-level only, not per-stake; per-stake only has none/active/revoked
 - [Phase 26-frontend-boost-ui]: applyBoostMultiplier mirrors on-chain math.rs: amount + floor(amount * 1000 / 10000)
+- [Phase 26-frontend-boost-ui]: buildRegisterBoostTx exported as testable pure function — mirrors simulateTransactionOrThrow pattern, tests verify behavior without React hook machinery
+- [Phase 26-frontend-boost-ui]: BoostStatusCard returns null when boost is not enabled (reserved[7] is zero) — graceful degradation if GlobalState not yet configured
 
 ### Pending Todos
 
@@ -100,6 +103,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-04T09:02:43.397Z
-Stopped at: Completed 26-frontend-boost-ui 26-01-PLAN.md
+Last session: 2026-03-04T09:09:55.742Z
+Stopped at: Completed 26-frontend-boost-ui 26-02-PLAN.md
 Resume file: None
