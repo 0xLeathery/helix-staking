@@ -63,3 +63,9 @@ pub use unpause::*;
 
 pub mod create_stake_with_referral;
 pub use create_stake_with_referral::*;
+
+pub mod admin_set_seed_mint;
+pub use admin_set_seed_mint::*;
+
+pub mod admin_toggle_boost;
+pub use admin_toggle_boost::*;

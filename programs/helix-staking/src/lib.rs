@@ -193,6 +193,21 @@ pub mod helix_staking {
     ) -> Result<()> {
         instructions::create_stake_with_referral::create_stake_with_referral(ctx, amount, days, referrer)
     }
+
+    pub fn admin_set_seed_mint(
+        ctx: Context<AdminSetSeedMint>,
+        new_seed_mint: Pubkey,
+        min_seed_balance: u64,
+    ) -> Result<()> {
+        instructions::admin_set_seed_mint::admin_set_seed_mint(ctx, new_seed_mint, min_seed_balance)
+    }
+
+    pub fn admin_toggle_boost(
+        ctx: Context<AdminToggleBoost>,
+        enabled: bool,
+    ) -> Result<()> {
+        instructions::admin_toggle_boost::admin_toggle_boost(ctx, enabled)
+    }
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
