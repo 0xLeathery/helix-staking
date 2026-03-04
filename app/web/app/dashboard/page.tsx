@@ -11,6 +11,7 @@ import { ReferralStatsPanel } from "@/components/dashboard/referral-stats-panel"
 import { BadgeMiniStrip } from "@/components/badges/badge-mini-strip";
 import { useGlobalState } from "@/lib/hooks/useGlobalState";
 import { staggerContainer, staggerItem } from "@/lib/animation";
+import { BoostStatusCard } from "@/components/dashboard/boost-status-card";
 
 export default function DashboardPage() {
   const { data: globalState } = useGlobalState();
@@ -32,6 +33,13 @@ export default function DashboardPage() {
       {/* Protocol Paused Banner */}
       <m.div variants={staggerItem}>
         <ProtocolPausedBanner isPaused={!!isPaused} />
+      </m.div>
+
+      {/* Boost Status */}
+      <m.div variants={staggerItem}>
+        <ErrorBoundary>
+          <BoostStatusCard />
+        </ErrorBoundary>
       </m.div>
 
       {/* Protocol Stats - full width */}
