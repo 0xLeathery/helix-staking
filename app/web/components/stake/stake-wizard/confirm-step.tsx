@@ -176,7 +176,7 @@ export function ConfirmStep() {
       <div className="flex justify-between pt-4">
         <Button
           variant="outline"
-          onClick={() => setStep(2)}
+          onClick={() => setStep(3)}
           disabled={isLoading}
           size="lg"
         >
