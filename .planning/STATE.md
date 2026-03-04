@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Seed Launch & LP Funding
 status: planning
-stopped_at: Completed 23-01-PLAN.md
-last_updated: "2026-03-04T03:09:30.659Z"
+stopped_at: Completed 24-anchor-program-boost-system 24-01-PLAN.md
+last_updated: "2026-03-04T04:05:33.658Z"
 last_activity: 2026-03-04 — Roadmap created for v3.0 (Phases 23-27)
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 5
+  completed_plans: 3
   percent: 0
 ---
 
@@ -48,6 +48,7 @@ Progress: [░░░░░░░░░░] 0%
 *Updated after each plan completion*
 | Phase 23-communication-boost-rules P02 | 6 | 2 tasks | 5 files |
 | Phase 23 P01 | 449s | 2 tasks | 9 files |
+| Phase 24-anchor-program-boost-system P01 | 458 | 2 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -69,6 +70,9 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 23-communication-boost-rules]: Confirm Back changed to setStep(3): ensures boost rules disclosure is seen when navigating back from Confirm step
 - [Phase 23]: Used CSS/Tailwind flexbox flow diagram for SOL flow nodes — matches existing component patterns, no SVG dependency
 - [Phase 23]: Pre-existing test TypeScript errors (missing vitest-dom types) are out of scope and deferred
+- [Phase 24-anchor-program-boost-system]: GlobalState reserved extended [u64;6]->[u64;10]; Pubkey encoded as 4 LE u64s in reserved[2..5]
+- [Phase 24-anchor-program-boost-system]: admin_toggle_boost guards enable path with Pubkey::default check; re-callable admin_set_seed_mint
+- [Phase 24-anchor-program-boost-system]: BoostRecord.boosted_stake_id uses u64::MAX sentinel for not-yet-linked state
 
 ### Pending Todos
 
@@ -79,6 +83,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-04T03:09:30.657Z
-Stopped at: Completed 23-01-PLAN.md
+Last session: 2026-03-04T04:05:33.656Z
+Stopped at: Completed 24-anchor-program-boost-system 24-01-PLAN.md
 Resume file: None

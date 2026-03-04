@@ -16,12 +16,12 @@ Requirements for milestone v3.0. Each maps to roadmap phases.
 
 ### On-Chain Boost
 
-- [ ] **BOOST-01**: Admin can set seed token mint address and minimum balance threshold in program GlobalState (admin-adjustable)
+- [x] **BOOST-01**: Admin can set seed token mint address and minimum balance threshold in program GlobalState (admin-adjustable)
 - [ ] **BOOST-02**: User can register for APY boost by proving seed token ownership on-chain (one boosted stake per wallet)
 - [ ] **BOOST-03**: Seed token balance is snapshotted in StakeAccount at stake time
 - [ ] **BOOST-04**: `claim_rewards` verifies current seed balance >= snapshot before applying boost multiplier
 - [ ] **BOOST-05**: Boost revocation is permanent per stake — buying back seed tokens does not restore it
-- [ ] **BOOST-06**: Boost multiplier of 10% (1,000 BPS) mints extra tokens at claim time (real rewards, not display-only)
+- [x] **BOOST-06**: Boost multiplier of 10% (1,000 BPS) mints extra tokens at claim time (real rewards, not display-only)
 - [ ] **BOOST-07**: Buying more seed tokens after staking provides headroom above snapshot threshold
 - [ ] **BOOST-08**: Crank checks all boosted stakers every 6 hours and revokes if balance dropped below snapshot
 
@@ -88,12 +88,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | COMM-02 | Phase 23 | Complete |
 | COMM-03 | Phase 23 | Complete |
 | COMM-04 | Phase 23 | Complete |
-| BOOST-01 | Phase 24 | Pending |
+| BOOST-01 | Phase 24 | Complete |
 | BOOST-02 | Phase 24 | Pending |
 | BOOST-03 | Phase 24 | Pending |
 | BOOST-04 | Phase 24 | Pending |
 | BOOST-05 | Phase 24 | Pending |
-| BOOST-06 | Phase 24 | Pending |
+| BOOST-06 | Phase 24 | Complete |
 | BOOST-07 | Phase 24 | Pending |
 | BOOST-08 | Phase 25 | Pending |
 | FRONT-01 | Phase 26 | Pending |
