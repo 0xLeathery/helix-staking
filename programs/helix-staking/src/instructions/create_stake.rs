@@ -5,7 +5,7 @@ use anchor_spl::token_2022;
 use crate::constants::*;
 use crate::error::HelixError;
 use crate::events::StakeCreated;
-use crate::state::{GlobalState, StakeAccount, ClaimConfig};
+use crate::state::{BoostRecord, ClaimConfig, GlobalState, StakeAccount};
 use crate::instructions::math::{calculate_t_shares, calculate_reward_debt};
 use crate::instructions::crank_distribution::distribute_pending_inflation;
 
@@ -142,6 +142,75 @@ pub fn create_stake<'info>(
 
     stake_account.bpd_eligible = bpd_eligible;
     stake_account.claim_period_start_slot = claim_period_start_slot;
+
+    // === Phase 24: Boost auto-link ===
+    // Check remaining_accounts for a BoostRecord by scanning for the expected PDA key.
+    // This approach is index-independent: ClaimConfig may or may not be present at [0].
+    let mut seed_balance_at_stake: u64 = 0;
+
+    let expected_boost_pda = Pubkey::find_program_address(
+        &[BOOST_RECORD_SEED, ctx.accounts.user.key().as_ref()],
+        ctx.program_id,
+    ).0;
+
+    // Find BoostRecord in remaining_accounts by key match
+    let boost_accounts: Vec<_> = ctx.remaining_accounts.iter()
+        .enumerate()
+        .collect();
+
+    let mut boost_record_idx: Option<usize> = None;
+    let mut seed_ata_idx: Option<usize> = None;
+
+    for (i, acct) in &boost_accounts {
+        if acct.key() == expected_boost_pda {
+            boost_record_idx = Some(*i);
+            // seed ATA is the next account after the BoostRecord
+            if *i + 1 < ctx.remaining_accounts.len() {
+                seed_ata_idx = Some(*i + 1);
+            }
+            break;
+        }
+    }
+
+    if let (Some(br_idx), Some(ata_idx)) = (boost_record_idx, seed_ata_idx) {
+        let boost_record_info = &ctx.remaining_accounts[br_idx];
+        let seed_ata_info = &ctx.remaining_accounts[ata_idx];
+
+        if let Ok(boost_record) = Account::<BoostRecord>::try_from(boost_record_info) {
+            if boost_record.boosted_stake_id == u64::MAX
+                && global_state.get_boost_enabled()
+                && global_state.get_seed_mint() != Pubkey::default()
+            {
+                // Read seed ATA balance (amount is at offset 64, 8 bytes LE per SPL token layout)
+                let data = seed_ata_info.try_borrow_data()?;
+                if data.len() >= 72 {
+                    seed_balance_at_stake = u64::from_le_bytes(
+                        data[64..72].try_into().unwrap()
+                    );
+                }
+
+                if seed_balance_at_stake >= global_state.get_min_seed_balance() {
+                    // Write boosted_stake_id back to BoostRecord via direct byte manipulation.
+                    // Offset: 8 (discriminator) + 32 (user) + 8 (slot) + 1 (bump) = 49
+                    // boosted_stake_id: u64 LE at offsets [49..57]
+                    drop(data);
+                    let mut boost_data = boost_record_info.try_borrow_mut_data()?;
+                    let stake_id_bytes = stake_account.stake_id.to_le_bytes();
+                    boost_data[49..57].copy_from_slice(&stake_id_bytes);
+                } else {
+                    seed_balance_at_stake = 0; // Below minimum, don't link
+                }
+            }
+        }
+    }
+
+    stake_account.seed_balance_at_stake = seed_balance_at_stake;
+    stake_account.boost_revoked = false;
+    stake_account.boosted_stake_id = if seed_balance_at_stake > 0 {
+        stake_account.stake_id
+    } else {
+        u64::MAX
+    };
 
     // Update GlobalState counters
     global_state.total_stakes_created = global_state.total_stakes_created

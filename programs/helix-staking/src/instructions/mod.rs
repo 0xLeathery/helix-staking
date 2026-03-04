@@ -69,3 +69,9 @@ pub use admin_set_seed_mint::*;
 
 pub mod admin_toggle_boost;
 pub use admin_toggle_boost::*;
+
+pub mod register_seed_boost;
+pub use register_seed_boost::*;
+
+pub mod update_boost_status;
+pub use update_boost_status::*;

@@ -208,6 +208,14 @@ pub mod helix_staking {
     ) -> Result<()> {
         instructions::admin_toggle_boost::admin_toggle_boost(ctx, enabled)
     }
+
+    pub fn register_seed_boost(ctx: Context<RegisterSeedBoost>) -> Result<()> {
+        instructions::register_seed_boost::register_seed_boost(ctx)
+    }
+
+    pub fn update_boost_status(ctx: Context<UpdateBoostStatus>) -> Result<()> {
+        instructions::update_boost_status::update_boost_status(ctx)
+    }
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
