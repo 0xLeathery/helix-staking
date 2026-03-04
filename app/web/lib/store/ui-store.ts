@@ -1,15 +1,17 @@
 import { create } from "zustand";
 
 interface StakeWizardState {
-  step: 1 | 2 | 3 | "success";
+  step: 1 | 2 | 3 | 4 | "success";
   amount: string; // User input, decimal format (e.g., "100.5")
   days: number; // 1-5555
   referrer: string | null; // base58 pubkey of referrer, null = no referrer
+  boostRulesAcknowledged: boolean; // true after user checks disclosure and clicks Continue
 
-  setStep: (step: 1 | 2 | 3 | "success") => void;
+  setStep: (step: 1 | 2 | 3 | 4 | "success") => void;
   setAmount: (amount: string) => void;
   setDays: (days: number) => void;
   setReferrer: (referrer: string | null) => void;
+  setBoostRulesAcknowledged: (v: boolean) => void;
   reset: () => void;
 }
 
@@ -18,6 +20,7 @@ const initialState = {
   amount: "",
   days: 365,
   referrer: null as string | null,
+  boostRulesAcknowledged: false,
 };
 
 /**
@@ -37,5 +40,6 @@ export const useStakeWizard = create<StakeWizardState>((set) => ({
     set({ days: clamped });
   },
   setReferrer: (referrer) => set({ referrer }),
+  setBoostRulesAcknowledged: (v) => set({ boostRulesAcknowledged: v }),
   reset: () => set(initialState),
 }));
