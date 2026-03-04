@@ -91,3 +91,8 @@ pub const REFERRAL_RECORD_SEED: &[u8] = b"referral";
 pub const REFEREE_BONUS_BPS: u64 = 1_000;
 /// +5% token bonus for referrer in basis points
 pub const REFERRER_BONUS_BPS: u64 = 500;
+
+// === Phase 24: Boost System ===
+pub const BOOST_RECORD_SEED: &[u8] = b"boost_record";
+/// 10% boost multiplier in basis points (locked per user decision)
+pub const BOOST_MULTIPLIER_BPS: u64 = 1_000;

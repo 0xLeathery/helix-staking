@@ -32,6 +32,14 @@ pub struct StakeAccount {
     pub bpd_claim_period_id: u32,
     /// Last claim period where stake was counted in BPD finalize (0 = never)
     pub bpd_finalize_period_id: u32,
+
+    // === Phase 24: Boost System ===
+    /// Seed token balance snapshotted at stake creation (0 = not boosted)
+    pub seed_balance_at_stake: u64,
+    /// True if boost was permanently revoked (repurchasing seed does NOT restore)
+    pub boost_revoked: bool,
+    /// Mirrors BoostRecord.boosted_stake_id for this stake (u64::MAX = not boosted)
+    pub boosted_stake_id: u64,
 }
 
 impl StakeAccount {
@@ -39,6 +47,8 @@ impl StakeAccount {
     pub const OLD_LEN: usize = 92;
     /// Phase 3 account size (before Phase 3.3)
     pub const PHASE3_LEN: usize = 113;
+    /// Phase 3.3 account size (before Phase 24 boost fields)
+    pub const PHASE3_3_LEN: usize = 117;
 
     pub const LEN: usize = 8    // discriminator
         + 32   // user (Pubkey)
@@ -55,6 +65,24 @@ impl StakeAccount {
         + 1    // bpd_eligible (NEW)
         + 8    // claim_period_start_slot (NEW)
         + 4    // bpd_claim_period_id (NEW)
-        + 4;   // bpd_finalize_period_id (Phase 3.3)
-    // Total: 117 bytes
+        + 4    // bpd_finalize_period_id (Phase 3.3)
+        + 8    // seed_balance_at_stake (Phase 24)
+        + 1    // boost_revoked (Phase 24)
+        + 8;   // boosted_stake_id (Phase 24)
+    // Total: 134 bytes
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_stake_account_len() {
+        assert_eq!(StakeAccount::LEN, 134);
+    }
+
+    #[test]
+    fn test_stake_account_phase3_3_len() {
+        assert_eq!(StakeAccount::PHASE3_3_LEN, 117);
+    }
 }

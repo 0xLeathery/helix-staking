@@ -70,7 +70,7 @@ pub fn make_test_global_state(
         current_day,
         total_admin_minted: 0,
         max_admin_mint: 0,
-        reserved: [0u64; 6],
+        reserved: [0u64; 10],
     }
 }
 

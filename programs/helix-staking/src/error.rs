@@ -112,4 +112,20 @@ pub enum HelixError {
     SelfReferral,
     #[msg("Program ID mismatch — chain binding violated")]
     ProgramIdMismatch,
+    #[msg("Seed token account not found for user")]
+    SeedTokenAccountNotFound,
+    #[msg("Seed balance below minimum required for boost")]
+    SeedBalanceBelowMinimum,
+    #[msg("Boost system is not enabled")]
+    BoostNotEnabled,
+    #[msg("Boost already registered for this wallet")]
+    BoostAlreadyRegistered,
+    #[msg("Boost already linked to a stake")]
+    BoostAlreadyLinked,
+    #[msg("Seed mint not configured in GlobalState")]
+    SeedMintNotConfigured,
+    #[msg("Invalid seed token account (not canonical ATA)")]
+    InvalidSeedTokenAccount,
+    #[msg("Boost has been permanently revoked for this stake")]
+    BoostPermanentlyRevoked,
 }

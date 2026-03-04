@@ -54,7 +54,7 @@ pub mod helix_staking {
         global_state.current_day = 0;
         global_state.total_admin_minted = 0;
         global_state.max_admin_mint = params.max_admin_mint;
-        global_state.reserved = [0; 6];
+        global_state.reserved = [0; 10];
 
         // Emit initialization event with slot (indexer-expert requirement)
         emit!(ProtocolInitialized {

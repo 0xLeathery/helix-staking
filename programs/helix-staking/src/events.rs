@@ -168,3 +168,31 @@ pub struct ReferralStaked {
     pub referee_t_share_bonus: u64,
     pub referrer_token_bonus: u64,
 }
+
+// === Phase 24: Boost System Events ===
+
+#[event]
+pub struct BoostRegistered {
+    pub slot: u64,
+    pub user: Pubkey,
+    pub seed_balance: u64,
+}
+
+#[event]
+pub struct BoostRevoked {
+    pub slot: u64,
+    pub user: Pubkey,
+    pub stake_id: u64,
+    pub current_balance: u64,
+    pub required_balance: u64,
+}
+
+#[event]
+pub struct BoostedRewardsClaimed {
+    pub slot: u64,
+    pub user: Pubkey,
+    pub stake_id: u64,
+    pub base_amount: u64,
+    pub boost_amount: u64,
+    pub total_amount: u64,
+}

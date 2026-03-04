@@ -17,6 +17,7 @@ use anchor_lang::prelude::*;
 use crate::constants::*;
 use crate::error::HelixError;
 use crate::state::StakeAccount;
+use crate::state::BoostRecord;
 
 /// Validates a StakeAccount PDA is correctly derived with canonical bump.
 ///
@@ -63,6 +64,44 @@ pub fn validate_stake_pda(
     // Verify bump is canonical (critical for preventing seed canonicalization attacks)
     require_eq!(
         stake.bump,
+        expected_bump,
+        HelixError::InvalidBumpSeed
+    );
+
+    Ok(())
+}
+
+/// Validates a BoostRecord PDA is correctly derived with canonical bump.
+///
+/// Seeds: ["boost_record", user]
+///
+/// Used in bulk operations that accept remaining_accounts and cannot rely
+/// on Anchor's declarative constraints for PDA validation.
+///
+/// # Arguments
+/// * `account_info` - The AccountInfo to validate
+/// * `boost_record` - The deserialized BoostRecord (already validated for size/ownership)
+///
+/// # Returns
+/// - `Ok(())` if PDA is valid
+/// - `Err(HelixError)` if validation fails
+pub fn validate_boost_record_pda(
+    account_info: &AccountInfo,
+    boost_record: &BoostRecord,
+) -> Result<()> {
+    let (expected_pda, expected_bump) = Pubkey::try_find_program_address(
+        &[BOOST_RECORD_SEED, boost_record.user.as_ref()],
+        &crate::id(),
+    ).ok_or(error!(HelixError::InvalidPDA))?;
+
+    require_keys_eq!(
+        account_info.key(),
+        expected_pda,
+        HelixError::InvalidPDA
+    );
+
+    require_eq!(
+        boost_record.bump,
         expected_bump,
         HelixError::InvalidBumpSeed
     );
@@ -149,5 +188,78 @@ mod tests {
         ).unwrap();
 
         assert_eq!(pda, recreated, "Canonical bump recreates the same PDA");
+    }
+
+    // === Phase 24: BoostRecord PDA tests ===
+
+    #[test]
+    fn test_boost_pda_derivation_is_deterministic() {
+        let user = Pubkey::new_unique();
+
+        let (pda1, bump1) = Pubkey::try_find_program_address(
+            &[BOOST_RECORD_SEED, user.as_ref()],
+            &crate::id(),
+        ).unwrap();
+
+        let (pda2, bump2) = Pubkey::try_find_program_address(
+            &[BOOST_RECORD_SEED, user.as_ref()],
+            &crate::id(),
+        ).unwrap();
+
+        assert_eq!(pda1, pda2, "BoostRecord PDA derivation is deterministic");
+        assert_eq!(bump1, bump2, "BoostRecord canonical bump is deterministic");
+    }
+
+    #[test]
+    fn test_different_users_yield_different_boost_pdas() {
+        let user1 = Pubkey::new_unique();
+        let user2 = Pubkey::new_unique();
+
+        let (pda1, _) = Pubkey::try_find_program_address(
+            &[BOOST_RECORD_SEED, user1.as_ref()],
+            &crate::id(),
+        ).unwrap();
+
+        let (pda2, _) = Pubkey::try_find_program_address(
+            &[BOOST_RECORD_SEED, user2.as_ref()],
+            &crate::id(),
+        ).unwrap();
+
+        assert_ne!(pda1, pda2, "Different users yield different BoostRecord PDAs");
+    }
+
+    #[test]
+    fn test_boost_canonical_bump_is_valid() {
+        let user = Pubkey::new_unique();
+
+        let (pda, bump) = Pubkey::try_find_program_address(
+            &[BOOST_RECORD_SEED, user.as_ref()],
+            &crate::id(),
+        ).unwrap();
+
+        let recreated = Pubkey::create_program_address(
+            &[BOOST_RECORD_SEED, user.as_ref(), &[bump]],
+            &crate::id(),
+        ).unwrap();
+
+        assert_eq!(pda, recreated, "BoostRecord canonical bump recreates the same PDA");
+    }
+
+    #[test]
+    fn test_boost_seed_differs_from_stake_seed() {
+        // Ensure BOOST_RECORD_SEED and STAKE_SEED derive different PDAs for the same user
+        let user = Pubkey::new_unique();
+
+        let (stake_pda, _) = Pubkey::try_find_program_address(
+            &[STAKE_SEED, user.as_ref(), &0u64.to_le_bytes()],
+            &crate::id(),
+        ).unwrap();
+
+        let (boost_pda, _) = Pubkey::try_find_program_address(
+            &[BOOST_RECORD_SEED, user.as_ref()],
+            &crate::id(),
+        ).unwrap();
+
+        assert_ne!(stake_pda, boost_pda, "Stake PDA and Boost PDA must be distinct");
     }
 }

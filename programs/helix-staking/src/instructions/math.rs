@@ -341,6 +341,25 @@ pub fn get_current_day(
     Ok(day)
 }
 
+/// Apply 10% boost multiplier to a reward amount.
+///
+/// Formula: amount * (BPS_SCALER + BOOST_MULTIPLIER_BPS) / BPS_SCALER
+/// Example: 1_000_000 * 11_000 / 10_000 = 1_100_000
+///
+/// Uses u128 intermediate to prevent overflow.
+/// Returns Overflow error if amount * 11_000 exceeds u128 capacity or result exceeds u64::MAX.
+pub fn apply_boost_multiplier(amount: u64) -> Result<u64> {
+    if amount == 0 {
+        return Ok(0);
+    }
+    let boosted = (amount as u128)
+        .checked_mul((BPS_SCALER + BOOST_MULTIPLIER_BPS) as u128)
+        .ok_or(error!(HelixError::Overflow))?
+        .checked_div(BPS_SCALER as u128)
+        .ok_or(error!(HelixError::DivisionByZero))?;
+    u64::try_from(boosted).map_err(|_| error!(HelixError::Overflow))
+}
+
 /// Calculate loyalty bonus based on proportion of committed term already served.
 /// Returns bonus in PRECISION units (0 to LOYALTY_MAX_BONUS).
 ///
@@ -804,5 +823,49 @@ mod tests {
         // Division by zero
         assert!(mul_div(1, 2, 0).is_err());
         assert!(mul_div_up(1, 2, 0).is_err());
+    }
+
+    #[test]
+    fn test_apply_boost_multiplier_ten_percent() {
+        // 1_000_000 * 1.10 = 1_100_000 (exactly 10% boost)
+        assert_eq!(apply_boost_multiplier(1_000_000).unwrap(), 1_100_000);
+    }
+
+    #[test]
+    fn test_apply_boost_multiplier_zero() {
+        // 0 input returns 0
+        assert_eq!(apply_boost_multiplier(0).unwrap(), 0);
+    }
+
+    #[test]
+    fn test_apply_boost_multiplier_overflow() {
+        // u64::MAX * 11_000 overflows u128? Let's check:
+        // u64::MAX = 18_446_744_073_709_551_615
+        // 18_446_744_073_709_551_615 * 11_000 > u128::MAX?
+        // u128::MAX = 340_282_366_920_938_463_463_374_607_431_768_211_455
+        // 18_446_744_073_709_551_615 * 11_000 = ~202T which fits in u128
+        // But result / 10_000 = ~2.03 * u64::MAX which overflows u64
+        let result = apply_boost_multiplier(u64::MAX);
+        assert!(result.is_err(), "u64::MAX boost should overflow u64 output");
+    }
+
+    #[test]
+    fn test_apply_boost_multiplier_small_values() {
+        // 100 * 1.10 = 110
+        assert_eq!(apply_boost_multiplier(100).unwrap(), 110);
+        // 1 * 1.10 = 1 (floor division — 11/10 = 1)
+        assert_eq!(apply_boost_multiplier(1).unwrap(), 1);
+        // 10 * 1.10 = 11
+        assert_eq!(apply_boost_multiplier(10).unwrap(), 11);
+    }
+
+    #[test]
+    fn test_apply_boost_multiplier_large_safe_value() {
+        // A value that can be boosted without overflow
+        // max safe: u64::MAX / 11_000 * 10_000 ≈ 16_769_767_339_735_956_922
+        // Let's use a value well within range
+        let safe_amount = 1_000_000_000_000_000_000u64; // 10^18
+        let boosted = apply_boost_multiplier(safe_amount).unwrap();
+        assert_eq!(boosted, 1_100_000_000_000_000_000u64);
     }
 }

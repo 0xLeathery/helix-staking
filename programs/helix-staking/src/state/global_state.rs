@@ -54,7 +54,13 @@ pub struct GlobalState {
     pub max_admin_mint: u64,
 
     // === Reserved for future expansion ===
-    pub reserved: [u64; 6],
+    // reserved[0] = BPD window active flag
+    // reserved[1] = is_paused flag
+    // reserved[2..5] = seed_mint (Pubkey encoded as 4 LE u64s)
+    // reserved[6] = min_seed_balance
+    // reserved[7] = boost_enabled (0 = false, 1 = true)
+    // reserved[8..9] = free for future use
+    pub reserved: [u64; 10],
 }
 
 impl GlobalState {
@@ -80,6 +86,45 @@ impl GlobalState {
         self.reserved[1] = if paused { 1 } else { 0 };
     }
 
+    // === Phase 24: Boost System helpers ===
+
+    /// Get seed token mint from reserved[2..5] (Pubkey encoded as 4 LE u64s)
+    pub fn get_seed_mint(&self) -> Pubkey {
+        let mut bytes = [0u8; 32];
+        for (i, &val) in self.reserved[2..6].iter().enumerate() {
+            bytes[i * 8..(i + 1) * 8].copy_from_slice(&val.to_le_bytes());
+        }
+        Pubkey::from(bytes)
+    }
+
+    /// Set seed token mint into reserved[2..5]
+    pub fn set_seed_mint(&mut self, mint: &Pubkey) {
+        let bytes = mint.to_bytes();
+        for i in 0..4 {
+            self.reserved[2 + i] = u64::from_le_bytes(bytes[i * 8..(i + 1) * 8].try_into().unwrap());
+        }
+    }
+
+    /// Get minimum seed balance threshold from reserved[6]
+    pub fn get_min_seed_balance(&self) -> u64 {
+        self.reserved[6]
+    }
+
+    /// Set minimum seed balance threshold in reserved[6]
+    pub fn set_min_seed_balance(&mut self, balance: u64) {
+        self.reserved[6] = balance;
+    }
+
+    /// Check if boost system is enabled (reserved[7] != 0)
+    pub fn get_boost_enabled(&self) -> bool {
+        self.reserved[7] != 0
+    }
+
+    /// Set boost enabled flag in reserved[7]
+    pub fn set_boost_enabled(&mut self, enabled: bool) {
+        self.reserved[7] = if enabled { 1 } else { 0 };
+    }
+
     pub const LEN: usize = 8    // discriminator
         + 32   // authority
         + 32   // mint
@@ -101,7 +146,7 @@ impl GlobalState {
         + 8    // current_day
         + 8    // total_admin_minted
         + 8    // max_admin_mint
-        + 48;  // reserved (6 * u64)
+        + 80;  // reserved (10 * u64)
 }
 
 #[cfg(test)]
@@ -130,7 +175,7 @@ mod tests {
             current_day: 0,
             total_admin_minted: 0,
             max_admin_mint: 0,
-            reserved: [0u64; 6],
+            reserved: [0u64; 10],
         }
     }
 
@@ -191,5 +236,74 @@ mod tests {
         gs.set_bpd_window_active(false);
         assert!(!gs.is_bpd_window_active());
         assert!(gs.is_paused(), "Paused state should be unaffected by BPD window clear");
+    }
+
+    // === Phase 24: Boost helper tests ===
+
+    #[test]
+    fn test_seed_mint_round_trip() {
+        let mut gs = default_global_state();
+        let mint = Pubkey::new_unique();
+        gs.set_seed_mint(&mint);
+        assert_eq!(gs.get_seed_mint(), mint, "seed_mint should round-trip through reserved[2..5]");
+    }
+
+    #[test]
+    fn test_seed_mint_default_is_zero() {
+        let gs = default_global_state();
+        assert_eq!(gs.get_seed_mint(), Pubkey::default(), "default seed_mint should be Pubkey::default()");
+    }
+
+    #[test]
+    fn test_min_seed_balance_round_trip() {
+        let mut gs = default_global_state();
+        gs.set_min_seed_balance(1_000_000_000);
+        assert_eq!(gs.get_min_seed_balance(), 1_000_000_000);
+    }
+
+    #[test]
+    fn test_min_seed_balance_default_is_zero() {
+        let gs = default_global_state();
+        assert_eq!(gs.get_min_seed_balance(), 0);
+    }
+
+    #[test]
+    fn test_boost_enabled_round_trip() {
+        let mut gs = default_global_state();
+        assert!(!gs.get_boost_enabled(), "boost should be disabled by default");
+        gs.set_boost_enabled(true);
+        assert!(gs.get_boost_enabled());
+        gs.set_boost_enabled(false);
+        assert!(!gs.get_boost_enabled());
+    }
+
+    #[test]
+    fn test_boost_fields_do_not_interfere_with_bpd_pause() {
+        // Verify reserved slots are independent
+        let mut gs = default_global_state();
+        gs.set_bpd_window_active(true);
+        gs.set_paused(true);
+
+        let mint = Pubkey::new_unique();
+        gs.set_seed_mint(&mint);
+        gs.set_min_seed_balance(500_000);
+        gs.set_boost_enabled(true);
+
+        // BPD and pause flags still intact after setting boost fields
+        assert!(gs.is_bpd_window_active(), "BPD window flag should be unaffected");
+        assert!(gs.is_paused(), "Pause flag should be unaffected");
+        assert_eq!(gs.get_seed_mint(), mint);
+        assert_eq!(gs.get_min_seed_balance(), 500_000);
+        assert!(gs.get_boost_enabled());
+    }
+
+    #[test]
+    fn test_global_state_len_includes_extended_reserved() {
+        // reserved is now [u64; 10] = 80 bytes (was [u64; 6] = 48 bytes).
+        // LEN should be old_len - 48 + 80 = old_len + 32.
+        // Actual computed constant: 275
+        assert_eq!(GlobalState::LEN, 275);
+        // Verify reserved portion is 80 bytes (10 * 8)
+        // Total: 8+32+32+1+1+8+8+8+8+8+1+8+8+8+8+8+8+8+8+8+8+80 = 275
     }
 }
