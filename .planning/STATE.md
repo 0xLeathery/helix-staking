@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Seed Launch & LP Funding
 status: planning
-stopped_at: Completed 26-frontend-boost-ui 26-03-PLAN.md
-last_updated: "2026-03-04T09:02:37.706Z"
+stopped_at: Completed 26-frontend-boost-ui 26-01-PLAN.md
+last_updated: "2026-03-04T09:02:43.398Z"
 last_activity: 2026-03-04 — Roadmap created for v3.0 (Phases 23-27)
 progress:
   total_phases: 5
@@ -88,6 +88,8 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 25-crank-boost-monitoring]: LiteSVM AlreadyProcessed rejection requires client.expireBlockhash() between identical transactions in same test
 - [Phase 26-frontend-boost-ui]: BoostRevoked uses event-driven dispatch (not scheduler): on-chain event is the trigger, no periodic check needed
 - [Phase 26-frontend-boost-ui]: notifyBoostRevoked defaults to true (opt-out): boost revocation is high-urgency financial event
+- [Phase 26-frontend-boost-ui]: BoostBadge eligible state is wallet-level only, not per-stake; per-stake only has none/active/revoked
+- [Phase 26-frontend-boost-ui]: applyBoostMultiplier mirrors on-chain math.rs: amount + floor(amount * 1000 / 10000)
 
 ### Pending Todos
 
@@ -98,6 +100,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-04T09:02:15.455Z
-Stopped at: Completed 26-frontend-boost-ui 26-03-PLAN.md
+Last session: 2026-03-04T09:02:43.397Z
+Stopped at: Completed 26-frontend-boost-ui 26-01-PLAN.md
 Resume file: None

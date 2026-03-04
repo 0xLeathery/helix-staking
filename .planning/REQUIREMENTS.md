@@ -27,8 +27,8 @@ Requirements for milestone v3.0. Each maps to roadmap phases.
 
 ### Frontend
 
-- [ ] **FRONT-01**: Boost indicator on staking dashboard showing eligible/active/revoked states
-- [ ] **FRONT-02**: Boosted APY display shows actual multiplied rate when boost is active
+- [x] **FRONT-01**: Boost indicator on staking dashboard showing eligible/active/revoked states
+- [x] **FRONT-02**: Boosted APY display shows actual multiplied rate when boost is active
 - [ ] **FRONT-03**: Wallet interaction to register for boost (calls `register_seed_boost` on-chain)
 - [x] **FRONT-04**: Push notification when boost is revoked (using existing notification infrastructure)
 - [ ] **FRONT-05**: LP pool stats widget showing TVL, price, volume when pool exists
@@ -96,8 +96,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BOOST-06 | Phase 24 | Complete |
 | BOOST-07 | Phase 24 | Complete |
 | BOOST-08 | Phase 25 | Complete |
-| FRONT-01 | Phase 26 | Pending |
-| FRONT-02 | Phase 26 | Pending |
+| FRONT-01 | Phase 26 | Complete |
+| FRONT-02 | Phase 26 | Complete |
 | FRONT-03 | Phase 26 | Pending |
 | FRONT-04 | Phase 26 | Complete |
 | FRONT-05 | Phase 27 | Pending |
