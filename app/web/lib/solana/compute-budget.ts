@@ -11,6 +11,7 @@ export const CU_LIMITS = {
   triggerBigPayDay: 600_000, // 20 remaining_accounts
   finalizeBpd: 600_000, // 20 remaining_accounts
   claimBadge: 400_000, // Bubblegum V2 mintV2 + proof accounts
+  registerSeedBoost: 150_000, // PDA init for BoostRecord
 } as const;
 
 // Default priority fee in micro-lamports per CU
