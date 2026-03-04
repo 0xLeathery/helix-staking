@@ -101,7 +101,7 @@ Plans:
   2. When boost is active, the APY display on the dashboard shows the actual multiplied rate (e.g., base × 1.25) — not the base rate
   3. A user with seed tokens can click a button on the dashboard to call `register_seed_boost` on-chain via their connected wallet — the transaction completes and the UI updates to "active" state
   4. A user whose boost is revoked receives a push notification via the existing notification infrastructure — the notification explains what happened and links to the boost rules
-**Plans:** 3 plans
+**Plans:** 2/3 plans executed
 
 Plans:
 - [ ] 26-01-PLAN.md — IDL sync, boost utilities, BoostBadge component, StakeCard boost integration
@@ -139,5 +139,5 @@ Phases execute in numeric order: 23 → 24 → 25 → 26 → 27
 | 23. Communication & Boost Rules | v3.0 | 2/2 | Complete | 2026-03-04 |
 | 24. Anchor Program Boost System | v3.0 | 3/3 | Complete | 2026-03-04 |
 | 25. Crank Boost Monitoring | v3.0 | 1/1 | Complete | 2026-03-04 |
-| 26. Frontend Boost UI | v3.0 | 0/3 | Not started | - |
+| 26. Frontend Boost UI | 2/3 | In Progress|  | - |
 | 27. LP Stats, Docs & Transparency | v3.0 | 0/TBD | Not started | - |

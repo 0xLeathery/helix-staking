@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Seed Launch & LP Funding
 status: planning
-stopped_at: Completed 25-crank-boost-monitoring 25-01-PLAN.md
-last_updated: "2026-03-04T05:32:22.635Z"
+stopped_at: Completed 26-frontend-boost-ui 26-03-PLAN.md
+last_updated: "2026-03-04T09:02:37.706Z"
 last_activity: 2026-03-04 — Roadmap created for v3.0 (Phases 23-27)
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 9
+  completed_plans: 8
   percent: 0
 ---
 
@@ -52,6 +52,8 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 24-anchor-program-boost-system P02 | 357 | 2 tasks | 7 files |
 | Phase 24-anchor-program-boost-system P03 | 1349 | 2 tasks | 2 files |
 | Phase 25-crank-boost-monitoring P01 | 420 | 3 tasks | 5 files |
+| Phase 26-frontend-boost-ui P03 | 4066 | 2 tasks | 8 files |
+| Phase 26-frontend-boost-ui P01 | 4107 | 2 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -84,6 +86,8 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 25-crank-boost-monitoring]: SEED_TOKEN_PROGRAM_ID defaults to standard SPL Token for pump.fun tokens, configurable via env for Token-2022
 - [Phase 25-crank-boost-monitoring]: result.sent counts transactions sent (not revocations confirmed) — on-chain no-ops indistinguishable without log parsing, acceptable for v3.0
 - [Phase 25-crank-boost-monitoring]: LiteSVM AlreadyProcessed rejection requires client.expireBlockhash() between identical transactions in same test
+- [Phase 26-frontend-boost-ui]: BoostRevoked uses event-driven dispatch (not scheduler): on-chain event is the trigger, no periodic check needed
+- [Phase 26-frontend-boost-ui]: notifyBoostRevoked defaults to true (opt-out): boost revocation is high-urgency financial event
 
 ### Pending Todos
 
@@ -94,6 +98,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-04T05:32:22.634Z
-Stopped at: Completed 25-crank-boost-monitoring 25-01-PLAN.md
+Last session: 2026-03-04T09:02:15.455Z
+Stopped at: Completed 26-frontend-boost-ui 26-03-PLAN.md
 Resume file: None
