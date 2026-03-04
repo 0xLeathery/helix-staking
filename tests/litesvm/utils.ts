@@ -229,3 +229,156 @@ export async function getTokenBalance(
   const data = Buffer.from(accountInfo.data);
   return data.readBigUInt64LE(64);
 }
+
+// === Phase 24: Boost helpers ===
+
+/** PDA seed for BoostRecord (mirrors BOOST_RECORD_SEED in constants.rs) */
+export const BOOST_RECORD_SEED = Buffer.from("boost_record");
+
+/**
+ * Derives the BoostRecord PDA address.
+ * Seeds: [b"boost_record", user]
+ */
+export function findBoostRecordPDA(
+  programId: PublicKey,
+  user: PublicKey
+): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync(
+    [BOOST_RECORD_SEED, user.toBuffer()],
+    programId
+  );
+}
+
+/**
+ * Creates a new SPL Token (Token-2022) seed mint, creates an ATA for the user,
+ * and mints the given amount to that ATA.
+ *
+ * Returns the seed mint PublicKey and the user's seed ATA PublicKey.
+ */
+export async function createSeedMintAndFund(
+  program: any,
+  payer: any,
+  user: PublicKey,
+  amount: bigint
+): Promise<{ seedMint: PublicKey; seedAta: PublicKey }> {
+  const {
+    createMint,
+    createAssociatedTokenAccount,
+    mintTo,
+    getAssociatedTokenAddressSync,
+    TOKEN_2022_PROGRAM_ID: SPL_TOKEN_2022_PROGRAM_ID,
+  } = require("@solana/spl-token");
+
+  const client = (program.provider as any).client as LiteSVM;
+  const connection = (program.provider as any).connection;
+
+  // Create a new mint (decimals=6 for the seed token, separate from HLX)
+  const seedMintKeypair = require("@solana/web3.js").Keypair.generate();
+  const seedMint = seedMintKeypair.publicKey;
+
+  // Use the program's provider to send transactions
+  const provider = program.provider;
+
+  // Build create-mint + create-ATA + mint-to in a batch
+  const web3 = require("@solana/web3.js");
+  const splToken = require("@solana/spl-token");
+
+  // Create mint instruction (Token-2022)
+  const mintSpace = splToken.getMintLen([]);
+  const mintLamports = await splToken.getMinimumBalanceForRentExemptMint(connection);
+
+  const createMintTx = new web3.Transaction().add(
+    web3.SystemProgram.createAccount({
+      fromPubkey: payer.publicKey,
+      newAccountPubkey: seedMint,
+      space: mintSpace,
+      lamports: mintLamports,
+      programId: new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"),
+    }),
+    splToken.createInitializeMintInstruction(
+      seedMint,
+      6, // decimals
+      payer.publicKey, // mint authority
+      null, // freeze authority
+      new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb")
+    )
+  );
+  await provider.sendAndConfirm(createMintTx, [payer, seedMintKeypair]);
+
+  // Derive seed ATA address for user
+  const seedAta = splToken.getAssociatedTokenAddressSync(
+    seedMint,
+    user,
+    false,
+    new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb")
+  );
+
+  // Create ATA for user
+  const createAtaTx = new web3.Transaction().add(
+    splToken.createAssociatedTokenAccountInstruction(
+      payer.publicKey,
+      seedAta,
+      user,
+      seedMint,
+      new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb")
+    )
+  );
+  await provider.sendAndConfirm(createAtaTx, [payer]);
+
+  // Mint tokens to user's ATA
+  if (amount > 0n) {
+    const mintToTx = new web3.Transaction().add(
+      splToken.createMintToInstruction(
+        seedMint,
+        seedAta,
+        payer.publicKey,
+        amount,
+        [],
+        new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb")
+      )
+    );
+    await provider.sendAndConfirm(mintToTx, [payer]);
+  }
+
+  return { seedMint, seedAta };
+}
+
+/**
+ * Transfers seed tokens from one ATA to another using Token-2022.
+ * Used in tests to adjust balances and test headroom / revocation scenarios.
+ */
+export async function transferSeedTokens(
+  program: any,
+  payer: any,
+  fromAta: PublicKey,
+  toAta: PublicKey,
+  seedMint: PublicKey,
+  authority: any, // Keypair that owns fromAta
+  amount: bigint
+): Promise<void> {
+  const web3 = require("@solana/web3.js");
+  const splToken = require("@solana/spl-token");
+
+  const provider = program.provider;
+  const tx = new web3.Transaction().add(
+    splToken.createTransferInstruction(
+      fromAta,
+      toAta,
+      authority.publicKey,
+      amount,
+      [],
+      new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb")
+    )
+  );
+  await provider.sendAndConfirm(tx, [payer, authority]);
+}
+
+/**
+ * Get seed token balance from a Token-2022 account (reuses getTokenBalance pattern).
+ */
+export async function getSeedTokenBalance(
+  client: LiteSVM,
+  seedAta: PublicKey
+): Promise<bigint> {
+  return getTokenBalance(client, seedAta);
+}
