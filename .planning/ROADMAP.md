@@ -76,9 +76,9 @@ Plans:
 **Plans:** 3/3 plans complete
 
 Plans:
-- [ ] 24-01-PLAN.md — Foundation: state accounts, constants, errors, events, math, admin instructions
-- [ ] 24-02-PLAN.md — Registration: register_seed_boost, update_boost_status, create_stake boost auto-link
-- [ ] 24-03-PLAN.md — Enforcement: claim_rewards boost check, revocation, complete LiteSVM test suite
+- [x] 24-01-PLAN.md — Foundation: state accounts, constants, errors, events, math, admin instructions
+- [x] 24-02-PLAN.md — Registration: register_seed_boost, update_boost_status, create_stake boost auto-link
+- [x] 24-03-PLAN.md — Enforcement: claim_rewards boost check, revocation, complete LiteSVM test suite
 
 ### Phase 25: Crank Boost Monitoring
 **Goal**: The crank proactively detects and records on-chain boost revocations every 6 hours so the frontend reflects true boost status without waiting for the user to claim
@@ -87,7 +87,10 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. The crank service runs a boost-check job every 6 hours, fetches all active BoostRecord PDAs, reads each user's seed ATA balance, and calls `update_boost_status(false)` for any user whose balance dropped below their snapshot — the on-chain BoostRecord is updated, not just a DB flag
   2. A user who sold their seed tokens sees their boost status updated to "revoked" in the dashboard within 6 hours, without needing to trigger a claim transaction
-**Plans**: TBD
+**Plans:** 1 plan
+
+Plans:
+- [ ] 25-01-PLAN.md — Boost check sweep function and 6-hour cron schedule in crank service
 
 ### Phase 26: Frontend Boost UI
 **Goal**: Users can see their boost status, register for boost via wallet interaction, view their boosted APY, and receive a push notification if their boost is revoked
@@ -129,7 +132,7 @@ Phases execute in numeric order: 23 → 24 → 25 → 26 → 27
 | 21. Tokenomics Documentation | v2.0 | 3/3 | Complete | 2026-03-03 |
 | 22. Production Runbook | v2.0 | 2/2 | Complete | 2026-03-04 |
 | 23. Communication & Boost Rules | v3.0 | 2/2 | Complete | 2026-03-04 |
-| 24. Anchor Program Boost System | 3/3 | Complete   | 2026-03-04 | - |
-| 25. Crank Boost Monitoring | v3.0 | 0/TBD | Not started | - |
+| 24. Anchor Program Boost System | v3.0 | 3/3 | Complete | 2026-03-04 |
+| 25. Crank Boost Monitoring | v3.0 | 0/1 | Not started | - |
 | 26. Frontend Boost UI | v3.0 | 0/TBD | Not started | - |
 | 27. LP Stats, Docs & Transparency | v3.0 | 0/TBD | Not started | - |
