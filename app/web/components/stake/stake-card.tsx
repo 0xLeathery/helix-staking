@@ -4,7 +4,7 @@ import Link from "next/link";
 import BN from "bn.js";
 import { PublicKey } from "@solana/web3.js";
 import { useGlobalState } from "@/lib/hooks/useGlobalState";
-import { calculatePendingRewards, calculateLoyaltyBonus, applyLoyaltyMultiplier } from "@/lib/solana/math";
+import { calculatePendingRewards, calculateLoyaltyBonus, applyLoyaltyMultiplier, applyBoostMultiplier } from "@/lib/solana/math";
 import { formatHelix, formatTShares, formatDays } from "@/lib/utils/format";
 import { LABELS, SLOTS_PER_DAY, PRECISION } from "@/lib/solana/constants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +15,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/cn";
+import { BoostBadge, getBoostState } from "./boost-badge";
 
 // Account type returned by Anchor's .all() method
 interface StakeAccountData {
@@ -28,6 +29,10 @@ interface StakeAccountData {
   rewardDebt: BN | { toString(): string };
   isActive: boolean;
   bpdBonusPending: BN | { toString(): string };
+  // Phase 24: Boost fields (optional for backward compat with existing test mocks)
+  seedBalanceAtStake?: BN | { toString(): string };
+  boostRevoked?: boolean;
+  boostedStakeId?: BN | { toString(): string };
 }
 
 interface StakeCardProps {
@@ -150,9 +155,17 @@ export function StakeCard({
       )
     : new BN(0);
 
-  const pendingRewards = globalState
+  const loyaltyAdjustedRewards = globalState
     ? applyLoyaltyMultiplier(rawPendingRewards, loyaltyBonus)
     : new BN(0);
+
+  // Phase 24: Apply boost multiplier if stake has active boost
+  // Formula: boostedTotal = applyBoostMultiplier(loyaltyAdjusted) + bpdBonus (BPD not amplified)
+  const boostState = getBoostState(account);
+  const pendingRewards =
+    boostState === "active"
+      ? applyBoostMultiplier(loyaltyAdjustedRewards)
+      : loyaltyAdjustedRewards;
 
   const loyaltyPct = loyaltyBonus.muln(100).div(PRECISION).toNumber();
 
@@ -164,7 +177,10 @@ export function StakeCard({
         <CardTitle className="text-base">
           Stake #{stakeId}
         </CardTitle>
-        <StatusBadge status={status} />
+        <div className="flex items-center gap-1.5">
+          <StatusBadge status={status} />
+          <BoostBadge state={boostState} />
+        </div>
       </CardHeader>
       <CardContent className="space-y-3">
         {/* Main Metrics */}
@@ -219,6 +235,9 @@ export function StakeCard({
             <span className="text-zinc-400">Pending Rewards</span>
             <span className="text-zinc-200 font-medium">
               {formatHelix(pendingRewards)}
+              {boostState === "active" && (
+                <span className="ml-1 text-xs text-green-400">(Boosted)</span>
+              )}
             </span>
           </div>
           {loyaltyPct > 0 && (
