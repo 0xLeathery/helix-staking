@@ -73,7 +73,7 @@ Plans:
   4. `claim_rewards` reads the user's current seed ATA balance at call time and only applies the boost multiplier if current balance >= snapshot — a user who sold their seed tokens receives zero boost on that claim, even if they repurchase before calling claim
   5. The boost multiplier actually mints extra HLX tokens — a LiteSVM test confirms `RewardsClaimed.amount` is strictly higher for a seed holder vs an identical non-seed stake
   6. Revocation is permanent per stake — a stake whose boost was revoked (due to sell) cannot have the boost restored by any on-chain action, even after repurchasing seed
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 Plans:
 - [ ] 24-01-PLAN.md — Foundation: state accounts, constants, errors, events, math, admin instructions
@@ -129,7 +129,7 @@ Phases execute in numeric order: 23 → 24 → 25 → 26 → 27
 | 21. Tokenomics Documentation | v2.0 | 3/3 | Complete | 2026-03-03 |
 | 22. Production Runbook | v2.0 | 2/2 | Complete | 2026-03-04 |
 | 23. Communication & Boost Rules | v3.0 | 2/2 | Complete | 2026-03-04 |
-| 24. Anchor Program Boost System | 1/3 | In Progress|  | - |
+| 24. Anchor Program Boost System | 2/3 | In Progress|  | - |
 | 25. Crank Boost Monitoring | v3.0 | 0/TBD | Not started | - |
 | 26. Frontend Boost UI | v3.0 | 0/TBD | Not started | - |
 | 27. LP Stats, Docs & Transparency | v3.0 | 0/TBD | Not started | - |
