@@ -9,6 +9,7 @@ import { logger } from './logger.js';
 import { env } from './env.js';
 import { executeCrank, loadCrankerKeypair, checkSolBalance } from './crank.js';
 import { withRpcFallback, createCrankProgram } from './rpc.js';
+import { executeBoostCheck } from './boostCheck.js';
 
 // ---------------------------------------------------------------------------
 // IDL loading
@@ -110,6 +111,27 @@ async function tick(): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Boost check tick (BOOST-08)
+// ---------------------------------------------------------------------------
+
+async function boostCheckTick(): Promise<void> {
+  if (isShuttingDown) return;
+  try {
+    const result = await withRpcFallback(
+      (prog) => executeBoostCheck(prog, crankerKeypair),
+      wallet,
+      idl,
+    );
+    logger.info(result, 'Boost check tick complete');
+  } catch (err) {
+    logger.error(
+      { err: err instanceof Error ? err.message : String(err) },
+      'Boost check tick failed after all retries',
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Graceful shutdown (CRANK-09)
 // ---------------------------------------------------------------------------
 
@@ -128,6 +150,9 @@ process.on('SIGINT', () => void shutdown('SIGINT'));
 // Four daily attempts at UTC midnight + buffer to ensure distribution fires
 // ---------------------------------------------------------------------------
 const CRANK_TIMES = ['5 0 * * *', '20 0 * * *', '35 0 * * *', '50 0 * * *'];
+
+// BOOST-08: 6-hour boost check — fires at UTC 00:00, 06:00, 12:00, 18:00
+const BOOST_CHECK_TIMES = ['0 0,6,12,18 * * *'];
 
 // ---------------------------------------------------------------------------
 // Startup
@@ -150,10 +175,18 @@ const CRANK_TIMES = ['5 0 * * *', '20 0 * * *', '35 0 * * *', '50 0 * * *'];
     logger.warn('HEARTBEAT_URL not configured — liveness monitoring disabled');
   }
 
-  logger.info({ schedules: CRANK_TIMES }, 'Crank service started — scheduling cron jobs');
+  logger.info(
+    { crankSchedules: CRANK_TIMES, boostCheckSchedules: BOOST_CHECK_TIMES },
+    'Crank service started — scheduling cron jobs',
+  );
 
   // Schedule 4 daily attempts with noOverlap to prevent concurrent executions
   for (const expr of CRANK_TIMES) {
     cron.schedule(expr, () => void tick(), { timezone: 'UTC', noOverlap: true });
+  }
+
+  // BOOST-08: Schedule 6-hour boost check sweep
+  for (const expr of BOOST_CHECK_TIMES) {
+    cron.schedule(expr, () => void boostCheckTick(), { timezone: 'UTC', noOverlap: true });
   }
 })();
