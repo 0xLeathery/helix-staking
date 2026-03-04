@@ -9,9 +9,9 @@ Requirements for milestone v3.0. Each maps to roadmap phases.
 
 ### Communication
 
-- [ ] **COMM-01**: Seed launch page clearly states creator rewards from seed token fund the HLX/SOL liquidity pool
-- [ ] **COMM-02**: Seed launch page explains the seed token's purpose and its relationship to the HELIX protocol
-- [ ] **COMM-03**: Seed launch page explains boost eligibility — hold seed tokens for better APY when staking HLX
+- [x] **COMM-01**: Seed launch page clearly states creator rewards from seed token fund the HLX/SOL liquidity pool
+- [x] **COMM-02**: Seed launch page explains the seed token's purpose and its relationship to the HELIX protocol
+- [x] **COMM-03**: Seed launch page explains boost eligibility — hold seed tokens for better APY when staking HLX
 - [x] **COMM-04**: Pre-staking boost rules displayed prominently before any stake action — snapshot, headroom, permanent revocation explained in plain language
 
 ### On-Chain Boost
@@ -84,9 +84,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| COMM-01 | Phase 23 | Pending |
-| COMM-02 | Phase 23 | Pending |
-| COMM-03 | Phase 23 | Pending |
+| COMM-01 | Phase 23 | Complete |
+| COMM-02 | Phase 23 | Complete |
+| COMM-03 | Phase 23 | Complete |
 | COMM-04 | Phase 23 | Complete |
 | BOOST-01 | Phase 24 | Pending |
 | BOOST-02 | Phase 24 | Pending |

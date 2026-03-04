@@ -39,7 +39,7 @@ Framer Motion with LazyMotion, visual depth overhaul, page transitions, loading/
 
 #### Phase Summary
 
-- [ ] **Phase 23: Communication & Boost Rules** — Seed launch page messaging and plain-language boost rules live before any staking action
+- [x] **Phase 23: Communication & Boost Rules** — Seed launch page messaging and plain-language boost rules live before any staking action (completed 2026-03-04)
 - [ ] **Phase 24: Anchor Program Boost System** — On-chain boost registration, snapshot enforcement, reward multiplier, and proactive crank revocation
 - [ ] **Phase 25: Crank Boost Monitoring** — Automated 6-hour crank job that proactively revokes boosts when seed balance drops below snapshot
 - [ ] **Phase 26: Frontend Boost UI** — Dashboard boost indicator, boosted APY display, wallet registration flow, and revocation push notification
@@ -56,11 +56,11 @@ Framer Motion with LazyMotion, visual depth overhaul, page transitions, loading/
   2. The seed launch page explains what the seed token is and how it relates to HELIX staking — a first-time visitor can answer "why does this token exist?"
   3. The seed launch page explains boost eligibility — a user can read the page and know that holding seed tokens earns a higher APY when staking HLX
   4. Before a user can initiate any stake action, they see a prominent boost rules display covering: snapshot concept, headroom mechanic, permanent revocation on sell, and that buying more seed creates headroom — no stake is submitted without this disclosure
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
-- [ ] 23-01-PLAN.md — Seed launch page (/seed) with 6 content sections, nav and landing page links
-- [ ] 23-02-PLAN.md — Stake wizard boost rules disclosure step with checkbox acknowledgment
+- [x] 23-01-PLAN.md — Seed launch page (/seed) with 6 content sections, nav and landing page links
+- [x] 23-02-PLAN.md — Stake wizard boost rules disclosure step with checkbox acknowledgment
 
 ### Phase 24: Anchor Program Boost System
 **Goal**: The Anchor program enforces boost eligibility, snapshot logic, and reward multiplier entirely on-chain — boost is real (extra tokens minted) and cannot be gamed
@@ -73,7 +73,12 @@ Plans:
   4. `claim_rewards` reads the user's current seed ATA balance at call time and only applies the boost multiplier if current balance >= snapshot — a user who sold their seed tokens receives zero boost on that claim, even if they repurchase before calling claim
   5. The boost multiplier actually mints extra HLX tokens — a LiteSVM test confirms `RewardsClaimed.amount` is strictly higher for a seed holder vs an identical non-seed stake
   6. Revocation is permanent per stake — a stake whose boost was revoked (due to sell) cannot have the boost restored by any on-chain action, even after repurchasing seed
-**Plans**: TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 24-01-PLAN.md — Foundation: state accounts, constants, errors, events, math, admin instructions
+- [ ] 24-02-PLAN.md — Registration: register_seed_boost, update_boost_status, create_stake boost auto-link
+- [ ] 24-03-PLAN.md — Enforcement: claim_rewards boost check, revocation, complete LiteSVM test suite
 
 ### Phase 25: Crank Boost Monitoring
 **Goal**: The crank proactively detects and records on-chain boost revocations every 6 hours so the frontend reflects true boost status without waiting for the user to claim
@@ -123,8 +128,8 @@ Phases execute in numeric order: 23 → 24 → 25 → 26 → 27
 | 20. Automated Crank Service | v2.0 | 3/3 | Complete | 2026-03-03 |
 | 21. Tokenomics Documentation | v2.0 | 3/3 | Complete | 2026-03-03 |
 | 22. Production Runbook | v2.0 | 2/2 | Complete | 2026-03-04 |
-| 23. Communication & Boost Rules | 1/2 | In Progress|  | - |
-| 24. Anchor Program Boost System | v3.0 | 0/TBD | Not started | - |
+| 23. Communication & Boost Rules | v3.0 | 2/2 | Complete | 2026-03-04 |
+| 24. Anchor Program Boost System | v3.0 | 0/3 | Not started | - |
 | 25. Crank Boost Monitoring | v3.0 | 0/TBD | Not started | - |
 | 26. Frontend Boost UI | v3.0 | 0/TBD | Not started | - |
 | 27. LP Stats, Docs & Transparency | v3.0 | 0/TBD | Not started | - |
