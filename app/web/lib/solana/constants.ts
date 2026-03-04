@@ -80,6 +80,12 @@ export const CLAIM_CONFIG_SEED = Buffer.from("claim_config");
 export const CLAIM_STATUS_SEED = Buffer.from("claim_status");
 export const REFERRAL_RECORD_SEED = Buffer.from("referral");
 
+// === Phase 24: Boost System ===
+/** PDA seed for BoostRecord accounts */
+export const BOOST_RECORD_SEED = Buffer.from("boost_record");
+/** Boost multiplier in basis points: 1,000 BPS = 10% */
+export const BOOST_MULTIPLIER_BPS = 1_000;
+
 // ============================================================================
 // Display Labels (user-facing terminology from CONTEXT.md)
 // ============================================================================

@@ -9,6 +9,7 @@ import {
   CLAIM_CONFIG_SEED,
   CLAIM_STATUS_SEED,
   REFERRAL_RECORD_SEED,
+  BOOST_RECORD_SEED,
 } from "./constants";
 
 /**
@@ -87,6 +88,18 @@ export function deriveReferralRecord(
 ): [PublicKey, number] {
   return PublicKey.findProgramAddressSync(
     [REFERRAL_RECORD_SEED, referrer.toBuffer(), referee.toBuffer()],
+    PROGRAM_ID
+  );
+}
+
+/**
+ * Derive the BoostRecord PDA for a wallet.
+ * Seeds: ["boost_record", user_pubkey]
+ * One BoostRecord per wallet — enforced by PDA uniqueness.
+ */
+export function deriveBoostRecord(user: PublicKey): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync(
+    [BOOST_RECORD_SEED, user.toBuffer()],
     PROGRAM_ID
   );
 }

@@ -2407,6 +2407,118 @@ export type HelixStaking = {
         }
       ],
       "args": []
+    },
+    {
+      "name": "adminSetSeedMint",
+      "discriminator": [246, 93, 208, 43, 171, 108, 219, 235],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "globalState",
+          "writable": true,
+          "pda": {
+            "seeds": [{ "kind": "const", "value": [103, 108, 111, 98, 97, 108, 95, 115, 116, 97, 116, 101] }]
+          }
+        }
+      ],
+      "args": [{ "name": "newSeedMint", "type": "pubkey" }]
+    },
+    {
+      "name": "adminToggleBoost",
+      "discriminator": [110, 193, 153, 241, 107, 203, 82, 90],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "globalState",
+          "writable": true,
+          "pda": {
+            "seeds": [{ "kind": "const", "value": [103, 108, 111, 98, 97, 108, 95, 115, 116, 97, 116, 101] }]
+          }
+        }
+      ],
+      "args": [{ "name": "enabled", "type": "bool" }]
+    },
+    {
+      "name": "registerSeedBoost",
+      "discriminator": [113, 1, 155, 139, 85, 11, 115, 37],
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "globalState",
+          "pda": {
+            "seeds": [{ "kind": "const", "value": [103, 108, 111, 98, 97, 108, 95, 115, 116, 97, 116, 101] }]
+          }
+        },
+        {
+          "name": "boostRecord",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              { "kind": "const", "value": [98, 111, 111, 115, 116, 95, 114, 101, 99, 111, 114, 100] },
+              { "kind": "account", "path": "user" }
+            ]
+          }
+        },
+        {
+          "name": "seedTokenAccount"
+        },
+        {
+          "name": "seedMint"
+        },
+        {
+          "name": "seedTokenProgram"
+        },
+        {
+          "name": "associatedTokenProgram",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "updateBoostStatus",
+      "discriminator": [81, 38, 98, 99, 32, 146, 146, 13],
+      "accounts": [
+        {
+          "name": "crank",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "globalState",
+          "pda": {
+            "seeds": [{ "kind": "const", "value": [103, 108, 111, 98, 97, 108, 95, 115, 116, 97, 116, 101] }]
+          }
+        },
+        {
+          "name": "stakeAccount",
+          "writable": true
+        },
+        {
+          "name": "seedTokenAccount"
+        },
+        {
+          "name": "seedMint"
+        },
+        {
+          "name": "seedTokenProgram"
+        }
+      ],
+      "args": []
     }
   ],
   "accounts": [
@@ -2474,6 +2586,10 @@ export type HelixStaking = {
         252,
         185
       ]
+    },
+    {
+      "name": "boostRecord",
+      "discriminator": [35, 20, 234, 24, 56, 202, 3, 116]
     },
     {
       "name": "stakeAccount",
@@ -2710,6 +2826,18 @@ export type HelixStaking = {
         97,
         129
       ]
+    },
+    {
+      "name": "boostRegistered",
+      "discriminator": [234, 92, 26, 82, 182, 195, 28, 185]
+    },
+    {
+      "name": "boostRevoked",
+      "discriminator": [22, 139, 202, 37, 32, 173, 74, 129]
+    },
+    {
+      "name": "boostedRewardsClaimed",
+      "discriminator": [101, 249, 118, 241, 52, 40, 84, 126]
     }
   ],
   "errors": [
@@ -2982,6 +3110,51 @@ export type HelixStaking = {
       "code": 6053,
       "name": "selfReferral",
       "msg": "Cannot refer yourself"
+    },
+    {
+      "code": 6054,
+      "name": "programIdMismatch",
+      "msg": "Program ID mismatch — chain binding violated"
+    },
+    {
+      "code": 6055,
+      "name": "seedTokenAccountNotFound",
+      "msg": "Seed token account not found for user"
+    },
+    {
+      "code": 6056,
+      "name": "seedBalanceBelowMinimum",
+      "msg": "Seed balance below minimum required for boost"
+    },
+    {
+      "code": 6057,
+      "name": "boostNotEnabled",
+      "msg": "Boost system is not enabled"
+    },
+    {
+      "code": 6058,
+      "name": "boostAlreadyRegistered",
+      "msg": "Boost already registered for this wallet"
+    },
+    {
+      "code": 6059,
+      "name": "boostAlreadyLinked",
+      "msg": "Boost already linked to a stake"
+    },
+    {
+      "code": 6060,
+      "name": "seedMintNotConfigured",
+      "msg": "Seed mint not configured in GlobalState"
+    },
+    {
+      "code": 6061,
+      "name": "invalidSeedTokenAccount",
+      "msg": "Invalid seed token account (not canonical ATA)"
+    },
+    {
+      "code": 6062,
+      "name": "boostPermanentlyRevoked",
+      "msg": "Boost has been permanently revoked for this stake"
     }
   ],
   "types": [
@@ -3942,6 +4115,27 @@ export type HelixStaking = {
               "Last claim period where stake was counted in BPD finalize (0 = never)"
             ],
             "type": "u32"
+          },
+          {
+            "name": "seedBalanceAtStake",
+            "docs": [
+              "Seed token balance snapshotted at stake creation (0 = not boosted)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "boostRevoked",
+            "docs": [
+              "True if boost was permanently revoked (repurchasing seed does NOT restore)"
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "boostedStakeId",
+            "docs": [
+              "Mirrors BoostRecord.boosted_stake_id for this stake (u64::MAX = not boosted)"
+            ],
+            "type": "u64"
           }
         ]
       }
@@ -4115,6 +4309,85 @@ export type HelixStaking = {
             "name": "remaining",
             "type": "u64"
           }
+        ]
+      }
+    },
+    {
+      "name": "boostRecord",
+      "docs": [
+        "Per-wallet boost registration record.",
+        "Seeds: [\"boost_record\", user]",
+        "One BoostRecord per wallet — enforced by PDA uniqueness.",
+        "boostedStakeId == u64::MAX means registered but not yet linked to a stake."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "docs": ["Wallet that registered the boost"],
+            "type": "pubkey"
+          },
+          {
+            "name": "seedBalanceSnapshot",
+            "docs": ["Seed balance at registration time"],
+            "type": "u64"
+          },
+          {
+            "name": "registrationSlot",
+            "docs": ["Slot when boost was registered"],
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "docs": ["PDA bump"],
+            "type": "u8"
+          },
+          {
+            "name": "boostedStakeId",
+            "docs": ["Stake ID this boost is linked to (u64::MAX = not yet linked)"],
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "boostRegistered",
+      "docs": ["Emitted when a wallet registers for a seed boost."],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "slot", "type": "u64" },
+          { "name": "user", "type": "pubkey" },
+          { "name": "seedBalance", "type": "u64" }
+        ]
+      }
+    },
+    {
+      "name": "boostRevoked",
+      "docs": ["Emitted when a stake's boost is permanently revoked."],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "slot", "type": "u64" },
+          { "name": "user", "type": "pubkey" },
+          { "name": "stakeId", "type": "u64" },
+          { "name": "currentBalance", "type": "u64" },
+          { "name": "requiredBalance", "type": "u64" }
+        ]
+      }
+    },
+    {
+      "name": "boostedRewardsClaimed",
+      "docs": ["Emitted when rewards are claimed with boost multiplier applied."],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "slot", "type": "u64" },
+          { "name": "user", "type": "pubkey" },
+          { "name": "stakeId", "type": "u64" },
+          { "name": "baseRewards", "type": "u64" },
+          { "name": "boostedRewards", "type": "u64" }
         ]
       }
     }

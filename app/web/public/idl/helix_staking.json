@@ -413,6 +413,60 @@
       ]
     },
     {
+      "name": "admin_set_seed_mint",
+      "discriminator": [
+        246,
+        93,
+        208,
+        43,
+        171,
+        108,
+        219,
+        235
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "global_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "new_seed_mint",
+          "type": "pubkey"
+        },
+        {
+          "name": "min_seed_balance",
+          "type": "u64"
+        }
+      ]
+    },
+    {
       "name": "admin_set_slots_per_day",
       "discriminator": [
         21,
@@ -459,6 +513,56 @@
         {
           "name": "new_slots_per_day",
           "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "admin_toggle_boost",
+      "discriminator": [
+        110,
+        193,
+        153,
+        241,
+        107,
+        203,
+        82,
+        90
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "global_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "enabled",
+          "type": "bool"
         }
       ]
     },
@@ -1758,6 +1862,168 @@
       "args": []
     },
     {
+      "name": "register_seed_boost",
+      "discriminator": [
+        113,
+        1,
+        155,
+        139,
+        85,
+        11,
+        115,
+        37
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "docs": [
+            "User registering for boost; pays for BoostRecord init"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "global_state",
+          "docs": [
+            "GlobalState holds boost config (seed_mint, min_seed_balance, boost_enabled)"
+          ],
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "boost_record",
+          "docs": [
+            "BoostRecord PDA — init means one per wallet (PDA uniqueness enforces this)"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  111,
+                  111,
+                  115,
+                  116,
+                  95,
+                  114,
+                  101,
+                  99,
+                  111,
+                  114,
+                  100
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              }
+            ]
+          }
+        },
+        {
+          "name": "seed_token_account",
+          "docs": [
+            "Canonical ATA for seed token; Anchor validates the ATA derivation automatically"
+          ],
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "user"
+              },
+              {
+                "kind": "account",
+                "path": "seed_token_program"
+              },
+              {
+                "kind": "account",
+                "path": "seed_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "seed_mint",
+          "docs": [
+            "The seed token mint; constrained to match global_state.get_seed_mint()"
+          ]
+        },
+        {
+          "name": "seed_token_program",
+          "docs": [
+            "Seed token program — supports both SPL Token and Token-2022"
+          ]
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "seal_bpd_finalize",
       "discriminator": [
         81,
@@ -2220,6 +2486,169 @@
       "args": []
     },
     {
+      "name": "update_boost_status",
+      "discriminator": [
+        81,
+        38,
+        98,
+        99,
+        32,
+        146,
+        146,
+        13
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "docs": [
+            "Anyone can call this — permissionless (crank or user)"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "global_state",
+          "docs": [
+            "GlobalState for seed_mint config"
+          ],
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "stake_account",
+          "docs": [
+            "The stake account to check; must be owned by stake_owner"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  116,
+                  97,
+                  107,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "stake_owner"
+              },
+              {
+                "kind": "account",
+                "path": "stake_account.stake_id",
+                "account": "StakeAccount"
+              }
+            ]
+          }
+        },
+        {
+          "name": "stake_owner"
+        },
+        {
+          "name": "seed_token_account",
+          "docs": [
+            "Canonical ATA for stake_owner's seed tokens"
+          ],
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "stake_owner"
+              },
+              {
+                "kind": "account",
+                "path": "seed_token_program"
+              },
+              {
+                "kind": "account",
+                "path": "seed_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "seed_mint",
+          "docs": [
+            "The seed token mint; constrained to match global_state.get_seed_mint()"
+          ]
+        },
+        {
+          "name": "seed_token_program",
+          "docs": [
+            "Seed token program — supports both SPL Token and Token-2022"
+          ]
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "withdraw_vested",
       "discriminator": [
         104,
@@ -2405,6 +2834,19 @@
   ],
   "accounts": [
     {
+      "name": "BoostRecord",
+      "discriminator": [
+        35,
+        20,
+        234,
+        24,
+        56,
+        202,
+        3,
+        116
+      ]
+    },
+    {
       "name": "ClaimConfig",
       "discriminator": [
         97,
@@ -2547,6 +2989,45 @@
         154,
         104,
         198
+      ]
+    },
+    {
+      "name": "BoostRegistered",
+      "discriminator": [
+        234,
+        92,
+        26,
+        82,
+        182,
+        195,
+        28,
+        185
+      ]
+    },
+    {
+      "name": "BoostRevoked",
+      "discriminator": [
+        22,
+        139,
+        202,
+        37,
+        32,
+        173,
+        74,
+        129
+      ]
+    },
+    {
+      "name": "BoostedRewardsClaimed",
+      "discriminator": [
+        101,
+        249,
+        118,
+        241,
+        52,
+        40,
+        84,
+        126
       ]
     },
     {
@@ -2976,6 +3457,51 @@
       "code": 6053,
       "name": "SelfReferral",
       "msg": "Cannot refer yourself"
+    },
+    {
+      "code": 6054,
+      "name": "ProgramIdMismatch",
+      "msg": "Program ID mismatch — chain binding violated"
+    },
+    {
+      "code": 6055,
+      "name": "SeedTokenAccountNotFound",
+      "msg": "Seed token account not found for user"
+    },
+    {
+      "code": 6056,
+      "name": "SeedBalanceBelowMinimum",
+      "msg": "Seed balance below minimum required for boost"
+    },
+    {
+      "code": 6057,
+      "name": "BoostNotEnabled",
+      "msg": "Boost system is not enabled"
+    },
+    {
+      "code": 6058,
+      "name": "BoostAlreadyRegistered",
+      "msg": "Boost already registered for this wallet"
+    },
+    {
+      "code": 6059,
+      "name": "BoostAlreadyLinked",
+      "msg": "Boost already linked to a stake"
+    },
+    {
+      "code": 6060,
+      "name": "SeedMintNotConfigured",
+      "msg": "Seed mint not configured in GlobalState"
+    },
+    {
+      "code": 6061,
+      "name": "InvalidSeedTokenAccount",
+      "msg": "Invalid seed token account (not canonical ATA)"
+    },
+    {
+      "code": 6062,
+      "name": "BoostPermanentlyRevoked",
+      "msg": "Boost has been permanently revoked for this stake"
     }
   ],
   "types": [
@@ -3087,6 +3613,130 @@
           {
             "name": "eligible_stakers",
             "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BoostRecord",
+      "docs": [
+        "Per-wallet boost registration record.",
+        "",
+        "Seeds: [\"boost_record\", user]",
+        "",
+        "One BoostRecord per wallet — enforced by PDA uniqueness.",
+        "boosted_stake_id == u64::MAX means registered but not yet linked to a stake."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "docs": [
+              "Wallet that registered the boost"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "slot",
+            "docs": [
+              "Slot when boost was registered"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "PDA bump seed (canonical)"
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "boosted_stake_id",
+            "docs": [
+              "Stake ID this boost is linked to (u64::MAX = not yet linked)"
+            ],
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BoostRegistered",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "slot",
+            "type": "u64"
+          },
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "seed_balance",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BoostRevoked",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "slot",
+            "type": "u64"
+          },
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "stake_id",
+            "type": "u64"
+          },
+          {
+            "name": "current_balance",
+            "type": "u64"
+          },
+          {
+            "name": "required_balance",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BoostedRewardsClaimed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "slot",
+            "type": "u64"
+          },
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "stake_id",
+            "type": "u64"
+          },
+          {
+            "name": "base_amount",
+            "type": "u64"
+          },
+          {
+            "name": "boost_amount",
+            "type": "u64"
+          },
+          {
+            "name": "total_amount",
+            "type": "u64"
           }
         ]
       }
@@ -3610,7 +4260,7 @@
             "type": {
               "array": [
                 "u64",
-                6
+                10
               ]
             }
           }
@@ -3936,6 +4586,27 @@
               "Last claim period where stake was counted in BPD finalize (0 = never)"
             ],
             "type": "u32"
+          },
+          {
+            "name": "seed_balance_at_stake",
+            "docs": [
+              "Seed token balance snapshotted at stake creation (0 = not boosted)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "boost_revoked",
+            "docs": [
+              "True if boost was permanently revoked (repurchasing seed does NOT restore)"
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "boosted_stake_id",
+            "docs": [
+              "Mirrors BoostRecord.boosted_stake_id for this stake (u64::MAX = not boosted)"
+            ],
+            "type": "u64"
           }
         ]
       }

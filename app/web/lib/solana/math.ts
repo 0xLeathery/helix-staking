@@ -276,3 +276,21 @@ export function applyLoyaltyMultiplier(pendingRewards: BN, loyaltyBonus: BN): BN
   const totalMultiplier = PRECISION.add(loyaltyBonus);
   return mulDiv(pendingRewards, totalMultiplier, PRECISION);
 }
+
+// Phase 24: Boost multiplier constants (mirrors math.rs apply_boost_multiplier)
+const BOOST_MULTIPLIER_BPS_BN = new BN(1_000);
+const BPS_SCALER_BN = new BN(10_000);
+
+/**
+ * Apply the 10% boost multiplier to an amount.
+ * Formula: amount + floor(amount * 1_000 / 10_000)
+ *
+ * Mirrors `apply_boost_multiplier()` in programs/helix-staking/src/instructions/math.rs.
+ * BPD bonus is NOT amplified — it is additive after boost per locked decision:
+ *   boostedTotal = applyBoostMultiplier(loyaltyAdjusted) + bpdBonus
+ */
+export function applyBoostMultiplier(amount: BN): BN {
+  if (amount.isZero()) return ZERO;
+  const bonus = amount.mul(BOOST_MULTIPLIER_BPS_BN).div(BPS_SCALER_BN);
+  return amount.add(bonus);
+}

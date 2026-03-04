@@ -9,6 +9,7 @@ import {
   calculatePendingRewards,
   calculateLoyaltyBonus,
   applyLoyaltyMultiplier,
+  applyBoostMultiplier,
 } from '@/lib/solana/math';
 import {
   PRECISION,
@@ -372,5 +373,39 @@ describe('applyLoyaltyMultiplier', () => {
     // result = rewards * (PRECISION + 0.25*PRECISION) / PRECISION = 1.25x
     const expected = rewards.mul(new BN(5)).div(new BN(4)); // 1.25x
     expect(result.toString()).toBe(expected.toString());
+  });
+});
+
+describe('applyBoostMultiplier', () => {
+  it('returns 1100 for input 1000 (10% increase)', () => {
+    const result = applyBoostMultiplier(new BN(1000));
+    expect(result.toString()).toBe('1100');
+  });
+
+  it('returns 0 for input 0 (zero stays zero)', () => {
+    const result = applyBoostMultiplier(new BN(0));
+    expect(result.isZero()).toBe(true);
+  });
+
+  it('returns 1098 for input 999 (floor division: 999*1000/10000 = 99)', () => {
+    // bonus = floor(999 * 1000 / 10000) = floor(99.9) = 99
+    // result = 999 + 99 = 1098
+    const result = applyBoostMultiplier(new BN(999));
+    expect(result.toString()).toBe('1098');
+  });
+
+  it('handles large BN values correctly', () => {
+    // 1_000_000_000 (1B) * 1.10 = 1_100_000_000
+    const large = new BN('1000000000');
+    const result = applyBoostMultiplier(large);
+    expect(result.toString()).toBe('1100000000');
+  });
+
+  it('returns amount plus exactly 10% bonus', () => {
+    const amount = new BN(10000);
+    const result = applyBoostMultiplier(amount);
+    // bonus = 10000 * 1000 / 10000 = 1000
+    // result = 10000 + 1000 = 11000
+    expect(result.toString()).toBe('11000');
   });
 });
