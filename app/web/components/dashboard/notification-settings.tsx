@@ -13,6 +13,7 @@ const DEFAULT_PREFERENCES: PushPreferences = {
   notifyLatePenalty: true,
   notifyRewards: true,
   notifyBpd: true,
+  notifyBoostRevoked: true,
 };
 
 interface ToggleRowProps {
@@ -219,6 +220,13 @@ export function NotificationSettings() {
             checked={preferences.notifyBpd}
             disabled={prefsLoading}
             onChange={(v) => handleToggle('notifyBpd', v)}
+          />
+          <ToggleRow
+            label="Boost Revoked"
+            description="Get notified if your seed boost is revoked for any stake"
+            checked={preferences.notifyBoostRevoked}
+            disabled={prefsLoading}
+            onChange={(v) => handleToggle('notifyBoostRevoked', v)}
           />
         </div>
       )}

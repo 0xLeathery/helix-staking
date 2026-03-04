@@ -32,6 +32,7 @@ vi.mock('@/lib/api', () => ({
       notifyLatePenalty: false,
       notifyRewards: true,
       notifyBpd: true,
+      notifyBoostRevoked: true,
     }),
     setPushPreferences: vi.fn().mockResolvedValue({}),
   },
@@ -65,7 +66,7 @@ describe('NotificationSettings - subscribed state', () => {
     expect(screen.getByRole('heading', { name: /Push Notifications/i })).toBeInTheDocument();
   });
 
-  it('renders all 4 notification toggle rows', async () => {
+  it('renders all 5 notification toggle rows', async () => {
     await act(async () => {
       render(<NotificationSettings />);
     });
@@ -73,6 +74,7 @@ describe('NotificationSettings - subscribed state', () => {
     expect(screen.getByText(/Late Penalty Warning/i)).toBeInTheDocument();
     expect(screen.getByText(/Rewards Available/i)).toBeInTheDocument();
     expect(screen.getByText(/Big Pay Day/i)).toBeInTheDocument();
+    expect(screen.getByText(/Boost Revoked/i)).toBeInTheDocument();
   });
 
   it('renders toggle switches (role=switch)', async () => {
@@ -80,7 +82,7 @@ describe('NotificationSettings - subscribed state', () => {
       render(<NotificationSettings />);
     });
     const switches = screen.getAllByRole('switch');
-    expect(switches.length).toBe(4);
+    expect(switches.length).toBe(5);
   });
 
   it('renders Disable Notifications button when subscribed', async () => {

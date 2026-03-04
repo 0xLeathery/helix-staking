@@ -72,6 +72,7 @@ export interface PushPreferences {
   notifyLatePenalty: boolean;
   notifyRewards: boolean;
   notifyBpd: boolean;
+  notifyBoostRevoked: boolean;
 }
 
 export interface BadgeEligibility {
