@@ -10,6 +10,8 @@ const envSchema = z.object({
   SOL_BALANCE_THRESHOLD_SOL: z.coerce.number().positive().default(0.1),
   HEARTBEAT_URL: z.string().url().optional().describe('BetterStack heartbeat URL — optional, warning if absent'),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
+  SEED_TOKEN_PROGRAM_ID: z.string().default('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA')
+    .describe('Token program for seed mint — SPL Token (pump.fun) by default, set to TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb for Token-2022'),
 });
 
 export type Env = z.infer<typeof envSchema>;
