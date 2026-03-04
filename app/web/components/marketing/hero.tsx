@@ -57,7 +57,7 @@ export function Hero({ totalStakes, currentDay, totalShares }: HeroProps) {
         </p>
 
         {/* CTA Buttons */}
-        <div className="flex gap-4 justify-center mt-10">
+        <div className="flex flex-wrap gap-4 justify-center mt-10">
           <Link
             href="/dashboard"
             className="bg-helix-600 hover:bg-helix-500 text-white px-8 py-3 rounded-lg font-medium text-lg transition-colors"
@@ -69,6 +69,12 @@ export function Hero({ totalStakes, currentDay, totalShares }: HeroProps) {
             className="border border-zinc-700 hover:border-zinc-500 text-zinc-300 px-8 py-3 rounded-lg font-medium text-lg transition-colors"
           >
             Learn How
+          </Link>
+          <Link
+            href="/seed"
+            className="border border-zinc-700 hover:border-zinc-500 text-zinc-300 px-8 py-3 rounded-lg font-medium text-lg transition-colors"
+          >
+            Learn about Seed Launch
           </Link>
         </div>
 

@@ -33,6 +33,12 @@ export function MarketingNav() {
               Tokenomics
             </Link>
             <Link
+              href="/seed"
+              className="text-sm text-zinc-400 hover:text-zinc-100 transition-colors"
+            >
+              Seed Launch
+            </Link>
+            <Link
               href="/dashboard"
               className="bg-helix-600 hover:bg-helix-500 text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors"
             >
