@@ -9,8 +9,10 @@ import {
   mintTokensToUser,
   getTokenBalance,
   findStakePDA,
+  advanceClock,
   TOKEN_2022_PROGRAM_ID,
   DEFAULT_MIN_STAKE_AMOUNT,
+  DEFAULT_SLOTS_PER_DAY,
   findBoostRecordPDA,
   createSeedMintAndFund,
   getSeedTokenBalance,
@@ -1036,6 +1038,603 @@ describe("Boost System", () => {
         .signers([payer])
         .rpc();
 
+      const stakeAccount = await program.account.stakeAccount.fetch(stakePDA);
+      expect(stakeAccount.boostRevoked).toBe(false);
+      expect(stakeAccount.seedBalanceAtStake.toString()).toBe("0");
+    });
+  });
+
+  // ===== Helper: Setup a full staking scenario with boost enabled =====
+  // Returns everything needed to call claimRewards
+  async function setupBoostedStake(
+    program: any,
+    payer: any,
+    client: any,
+    stakeAmount: BN,
+    stakeDays: number,
+    seedFundAmount: bigint
+  ) {
+    const web3 = require("@solana/web3.js");
+    const splToken = require("@solana/spl-token");
+    const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
+
+    // Create user HLX ATA and fund it
+    const userATA = getAssociatedTokenAddressSync(mint, payer.publicKey, false, TOKEN_2022_PROGRAM_ID);
+    await program.provider.sendAndConfirm(
+      new web3.Transaction().add(
+        splToken.createAssociatedTokenAccountInstruction(
+          payer.publicKey, userATA, payer.publicKey, mint, TOKEN_2022_PROGRAM_ID
+        )
+      ),
+      [payer]
+    );
+    await mintTokensToUser(program, payer, globalState, mint, mintAuthority, userATA, stakeAmount);
+
+    // Create seed mint and fund user
+    const { seedMint, seedAta } = await createSeedMintAndFund(
+      program, payer, payer.publicKey, seedFundAmount
+    );
+
+    // Configure and enable boost
+    await program.methods
+      .adminSetSeedMint(seedMint, MIN_SEED_BALANCE)
+      .accounts({ authority: payer.publicKey, globalState })
+      .signers([payer])
+      .rpc();
+    await program.methods
+      .adminToggleBoost(true)
+      .accounts({ authority: payer.publicKey, globalState })
+      .signers([payer])
+      .rpc();
+
+    // Register boost
+    const [boostRecordPDA] = findBoostRecordPDA(program.programId, payer.publicKey);
+    await program.methods
+      .registerSeedBoost()
+      .accounts({
+        user: payer.publicKey,
+        globalState,
+        boostRecord: boostRecordPDA,
+        seedTokenAccount: seedAta,
+        seedMint,
+        seedTokenProgram: TOKEN_2022_PROGRAM_ID,
+      })
+      .signers([payer])
+      .rpc();
+
+    // Create boosted stake
+    const [stakePDA] = findStakePDA(program.programId, payer.publicKey, 0);
+    await program.methods
+      .createStake(stakeAmount, stakeDays)
+      .accounts({
+        user: payer.publicKey,
+        globalState,
+        stakeAccount: stakePDA,
+        userTokenAccount: userATA,
+        mint,
+        tokenProgram: TOKEN_2022_PROGRAM_ID,
+      })
+      .remainingAccounts([
+        { pubkey: boostRecordPDA, isWritable: true, isSigner: false },
+        { pubkey: seedAta, isWritable: false, isSigner: false },
+      ])
+      .signers([payer])
+      .rpc();
+
+    return { globalState, mint, mintAuthority, userATA, seedMint, seedAta, stakePDA, boostRecordPDA };
+  }
+
+  describe("claim_rewards boost", () => {
+    it("claim_rewards boost active - mints extra tokens (BOOST-06)", async () => {
+      const web3 = require("@solana/web3.js");
+      const splToken = require("@solana/spl-token");
+
+      // User A: boosted staker
+      const { client: clientA, program: programA, payer: payerA } = setupTest();
+      const { globalState: gsA, mint: mintA, mintAuthority: mintAuthA, userATA: userATA_A, seedMint: seedMintA, seedAta: seedAtaA, stakePDA: stakePDA_A } =
+        await setupBoostedStake(programA, payerA, clientA, DEFAULT_MIN_STAKE_AMOUNT, 1, USER_SEED_BALANCE);
+
+      // User B: non-boosted staker (same amount, same duration, same time)
+      // Use a fresh env so globalState/slot/rate is identical
+      const { client: clientB, program: programB, payer: payerB } = setupTest();
+      const { globalState: gsB, mint: mintB, mintAuthority: mintAuthB } = await initializeProtocol(programB, payerB);
+      const userATA_B = getAssociatedTokenAddressSync(mintB, payerB.publicKey, false, TOKEN_2022_PROGRAM_ID);
+      await programB.provider.sendAndConfirm(
+        new web3.Transaction().add(
+          splToken.createAssociatedTokenAccountInstruction(
+            payerB.publicKey, userATA_B, payerB.publicKey, mintB, TOKEN_2022_PROGRAM_ID
+          )
+        ),
+        [payerB]
+      );
+      await mintTokensToUser(programB, payerB, gsB, mintB, mintAuthB, userATA_B, DEFAULT_MIN_STAKE_AMOUNT);
+      const [stakePDA_B] = findStakePDA(programB.programId, payerB.publicKey, 0);
+      await programB.methods
+        .createStake(DEFAULT_MIN_STAKE_AMOUNT, 1)
+        .accounts({
+          user: payerB.publicKey,
+          globalState: gsB,
+          stakeAccount: stakePDA_B,
+          userTokenAccount: userATA_B,
+          mint: mintB,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .signers([payerB])
+        .rpc();
+
+      // Advance 1 day and crank on both
+      const slotsPerDay = BigInt(DEFAULT_SLOTS_PER_DAY.toString());
+      await advanceClock(clientA, slotsPerDay);
+      await programA.methods.crankDistribution()
+        .accounts({ cranker: payerA.publicKey, globalState: gsA, mint: mintA, mintAuthority: mintAuthA, tokenProgram: TOKEN_2022_PROGRAM_ID })
+        .signers([payerA]).rpc();
+
+      await advanceClock(clientB, slotsPerDay);
+      await programB.methods.crankDistribution()
+        .accounts({ cranker: payerB.publicKey, globalState: gsB, mint: mintB, mintAuthority: mintAuthB, tokenProgram: TOKEN_2022_PROGRAM_ID })
+        .signers([payerB]).rpc();
+
+      // User A claims WITH seed ATA (boosted)
+      const balanceBeforeA = await getTokenBalance(clientA, userATA_A);
+      await programA.methods.claimRewards()
+        .accounts({
+          user: payerA.publicKey,
+          globalState: gsA,
+          stakeAccount: stakePDA_A,
+          userTokenAccount: userATA_A,
+          mint: mintA,
+          mintAuthority: mintAuthA,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .remainingAccounts([{ pubkey: seedAtaA, isSigner: false, isWritable: false }])
+        .signers([payerA]).rpc();
+      const balanceAfterA = await getTokenBalance(clientA, userATA_A);
+      const rewardsA = new BN(balanceAfterA.toString()).sub(new BN(balanceBeforeA.toString()));
+
+      // User B claims WITHOUT boost
+      const balanceBeforeB = await getTokenBalance(clientB, userATA_B);
+      await programB.methods.claimRewards()
+        .accounts({
+          user: payerB.publicKey,
+          globalState: gsB,
+          stakeAccount: stakePDA_B,
+          userTokenAccount: userATA_B,
+          mint: mintB,
+          mintAuthority: mintAuthB,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .signers([payerB]).rpc();
+      const balanceAfterB = await getTokenBalance(clientB, userATA_B);
+      const rewardsB = new BN(balanceAfterB.toString()).sub(new BN(balanceBeforeB.toString()));
+
+      // Boosted staker receives strictly more tokens (BOOST-06)
+      expect(rewardsA.gt(rewardsB)).toBe(true);
+
+      // Boosted amount should be ~10% more: rewardsA ~= rewardsB * 1.10
+      // Allow small rounding: check rewardsA >= rewardsB * 1.09
+      const rewardsBTimes110 = rewardsB.muln(11).divn(10);
+      expect(rewardsA.gte(rewardsBTimes110)).toBe(true);
+    });
+
+    it("boost applies after loyalty, before BPD (formula: loyalty_adjusted * 1.10 + bpd)", async () => {
+      const web3 = require("@solana/web3.js");
+      const splToken = require("@solana/spl-token");
+
+      // Setup boosted stake
+      const { client, program, payer } = setupTest();
+      const { globalState, mint, mintAuthority, userATA, seedAta, stakePDA } =
+        await setupBoostedStake(program, payer, client, DEFAULT_MIN_STAKE_AMOUNT, 1, USER_SEED_BALANCE);
+
+      // Advance 1 day and crank
+      const slotsPerDay = BigInt(DEFAULT_SLOTS_PER_DAY.toString());
+      await advanceClock(client, slotsPerDay);
+      await program.methods.crankDistribution()
+        .accounts({ cranker: payer.publicKey, globalState, mint, mintAuthority, tokenProgram: TOKEN_2022_PROGRAM_ID })
+        .signers([payer]).rpc();
+
+      // Non-boosted reference: same setup but no remaining_accounts
+      const { client: clientRef, program: programRef, payer: payerRef } = setupTest();
+      const { globalState: gsRef, mint: mintRef, mintAuthority: mintAuthRef } = await initializeProtocol(programRef, payerRef);
+      const userATA_Ref = getAssociatedTokenAddressSync(mintRef, payerRef.publicKey, false, TOKEN_2022_PROGRAM_ID);
+      await programRef.provider.sendAndConfirm(
+        new web3.Transaction().add(
+          splToken.createAssociatedTokenAccountInstruction(
+            payerRef.publicKey, userATA_Ref, payerRef.publicKey, mintRef, TOKEN_2022_PROGRAM_ID
+          )
+        ),
+        [payerRef]
+      );
+      await mintTokensToUser(programRef, payerRef, gsRef, mintRef, mintAuthRef, userATA_Ref, DEFAULT_MIN_STAKE_AMOUNT);
+      const [stakePDARef] = findStakePDA(programRef.programId, payerRef.publicKey, 0);
+      await programRef.methods.createStake(DEFAULT_MIN_STAKE_AMOUNT, 1)
+        .accounts({ user: payerRef.publicKey, globalState: gsRef, stakeAccount: stakePDARef, userTokenAccount: userATA_Ref, mint: mintRef, tokenProgram: TOKEN_2022_PROGRAM_ID })
+        .signers([payerRef]).rpc();
+      await advanceClock(clientRef, slotsPerDay);
+      await programRef.methods.crankDistribution()
+        .accounts({ cranker: payerRef.publicKey, globalState: gsRef, mint: mintRef, mintAuthority: mintAuthRef, tokenProgram: TOKEN_2022_PROGRAM_ID })
+        .signers([payerRef]).rpc();
+      const balanceBeforeRef = await getTokenBalance(clientRef, userATA_Ref);
+      await programRef.methods.claimRewards()
+        .accounts({ user: payerRef.publicKey, globalState: gsRef, stakeAccount: stakePDARef, userTokenAccount: userATA_Ref, mint: mintRef, mintAuthority: mintAuthRef, tokenProgram: TOKEN_2022_PROGRAM_ID })
+        .signers([payerRef]).rpc();
+      const balanceAfterRef = await getTokenBalance(clientRef, userATA_Ref);
+      const baseRewards = new BN(balanceAfterRef.toString()).sub(new BN(balanceBeforeRef.toString()));
+
+      // Claim boosted
+      const balanceBefore = await getTokenBalance(client, userATA);
+      await program.methods.claimRewards()
+        .accounts({ user: payer.publicKey, globalState, stakeAccount: stakePDA, userTokenAccount: userATA, mint, mintAuthority, tokenProgram: TOKEN_2022_PROGRAM_ID })
+        .remainingAccounts([{ pubkey: seedAta, isSigner: false, isWritable: false }])
+        .signers([payer]).rpc();
+      const balanceAfter = await getTokenBalance(client, userATA);
+      const boostedRewards = new BN(balanceAfter.toString()).sub(new BN(balanceBefore.toString()));
+
+      // boostedRewards should be baseRewards * 1.10 (no BPD in this scenario)
+      const expectedBoosted = baseRewards.muln(11).divn(10);
+      // Allow 1-token rounding tolerance
+      const diff = boostedRewards.sub(expectedBoosted).abs();
+      expect(diff.lten(1)).toBe(true);
+    });
+
+    it("claim without seed ATA in remaining_accounts returns base rewards only", async () => {
+      const { client, program, payer } = setupTest();
+      const { globalState, mint, mintAuthority, userATA, stakePDA } =
+        await setupBoostedStake(program, payer, client, DEFAULT_MIN_STAKE_AMOUNT, 1, USER_SEED_BALANCE);
+
+      // Advance 1 day and crank
+      const slotsPerDay = BigInt(DEFAULT_SLOTS_PER_DAY.toString());
+      await advanceClock(client, slotsPerDay);
+      await program.methods.crankDistribution()
+        .accounts({ cranker: payer.publicKey, globalState, mint, mintAuthority, tokenProgram: TOKEN_2022_PROGRAM_ID })
+        .signers([payer]).rpc();
+
+      // Claim WITHOUT seed ATA in remaining_accounts
+      const balanceBefore = await getTokenBalance(client, userATA);
+      await program.methods.claimRewards()
+        .accounts({ user: payer.publicKey, globalState, stakeAccount: stakePDA, userTokenAccount: userATA, mint, mintAuthority, tokenProgram: TOKEN_2022_PROGRAM_ID })
+        .signers([payer]).rpc();
+      const balanceAfter = await getTokenBalance(client, userATA);
+      const rewards = new BN(balanceAfter.toString()).sub(new BN(balanceBefore.toString()));
+
+      // Should receive rewards (not zero)
+      expect(rewards.gt(new BN(0))).toBe(true);
+
+      // boost_revoked should still be false (no revocation happened)
+      const stakeAccount = await program.account.stakeAccount.fetch(stakePDA);
+      expect(stakeAccount.boostRevoked).toBe(false);
+    });
+  });
+
+  describe("claim_rewards boost revocation", () => {
+    it("revokes when balance < snapshot at claim time (BOOST-04)", async () => {
+      const web3 = require("@solana/web3.js");
+      const splToken = require("@solana/spl-token");
+      const { client, program, payer } = setupTest();
+      const { globalState, mint, mintAuthority, userATA, seedMint, seedAta, stakePDA } =
+        await setupBoostedStake(program, payer, client, DEFAULT_MIN_STAKE_AMOUNT, 1, USER_SEED_BALANCE);
+
+      // Advance 1 day and crank to accumulate rewards
+      const slotsPerDay = BigInt(DEFAULT_SLOTS_PER_DAY.toString());
+      await advanceClock(client, slotsPerDay);
+      await program.methods.crankDistribution()
+        .accounts({ cranker: payer.publicKey, globalState, mint, mintAuthority, tokenProgram: TOKEN_2022_PROGRAM_ID })
+        .signers([payer]).rpc();
+
+      // Transfer ALL seed tokens away so balance < snapshot
+      const tempUser = require("@solana/web3.js").Keypair.generate();
+      client.airdrop(tempUser.publicKey, BigInt(10_000_000_000));
+      const tempAta = splToken.getAssociatedTokenAddressSync(
+        seedMint, tempUser.publicKey, false,
+        new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb")
+      );
+      await program.provider.sendAndConfirm(
+        new web3.Transaction().add(
+          splToken.createAssociatedTokenAccountInstruction(
+            payer.publicKey, tempAta, tempUser.publicKey, seedMint,
+            new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb")
+          )
+        ),
+        [payer]
+      );
+      await program.provider.sendAndConfirm(
+        new web3.Transaction().add(
+          splToken.createTransferInstruction(
+            seedAta, tempAta, payer.publicKey, USER_SEED_BALANCE, [],
+            new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb")
+          )
+        ),
+        [payer]
+      );
+
+      // Verify seed balance is now 0 (< snapshot = USER_SEED_BALANCE)
+      const seedBalance = await getSeedTokenBalance(client, seedAta);
+      expect(seedBalance).toBe(0n);
+
+      // Claim with seed ATA in remaining_accounts — should revoke and return base rewards
+      const balanceBefore = await getTokenBalance(client, userATA);
+      await program.methods.claimRewards()
+        .accounts({ user: payer.publicKey, globalState, stakeAccount: stakePDA, userTokenAccount: userATA, mint, mintAuthority, tokenProgram: TOKEN_2022_PROGRAM_ID })
+        .remainingAccounts([{ pubkey: seedAta, isSigner: false, isWritable: false }])
+        .signers([payer]).rpc();
+      const balanceAfter = await getTokenBalance(client, userATA);
+      const rewards = new BN(balanceAfter.toString()).sub(new BN(balanceBefore.toString()));
+
+      // Should receive base rewards (not zero, but not boosted)
+      expect(rewards.gt(new BN(0))).toBe(true);
+
+      // boost_revoked must be true
+      const stakeAccount = await program.account.stakeAccount.fetch(stakePDA);
+      expect(stakeAccount.boostRevoked).toBe(true);
+    });
+
+    it("transaction succeeds on revocation (mints base rewards)", async () => {
+      const web3 = require("@solana/web3.js");
+      const splToken = require("@solana/spl-token");
+      const { client, program, payer } = setupTest();
+      const { globalState, mint, mintAuthority, userATA, seedMint, seedAta, stakePDA } =
+        await setupBoostedStake(program, payer, client, DEFAULT_MIN_STAKE_AMOUNT, 1, USER_SEED_BALANCE);
+
+      // Advance and crank
+      const slotsPerDay = BigInt(DEFAULT_SLOTS_PER_DAY.toString());
+      await advanceClock(client, slotsPerDay);
+      await program.methods.crankDistribution()
+        .accounts({ cranker: payer.publicKey, globalState, mint, mintAuthority, tokenProgram: TOKEN_2022_PROGRAM_ID })
+        .signers([payer]).rpc();
+
+      // Transfer ALL seed tokens away
+      const tempUser = require("@solana/web3.js").Keypair.generate();
+      client.airdrop(tempUser.publicKey, BigInt(10_000_000_000));
+      const tempAta = splToken.getAssociatedTokenAddressSync(
+        seedMint, tempUser.publicKey, false,
+        new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb")
+      );
+      await program.provider.sendAndConfirm(
+        new web3.Transaction().add(
+          splToken.createAssociatedTokenAccountInstruction(
+            payer.publicKey, tempAta, tempUser.publicKey, seedMint,
+            new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb")
+          )
+        ),
+        [payer]
+      );
+      await program.provider.sendAndConfirm(
+        new web3.Transaction().add(
+          splToken.createTransferInstruction(
+            seedAta, tempAta, payer.publicKey, USER_SEED_BALANCE, [],
+            new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb")
+          )
+        ),
+        [payer]
+      );
+
+      // Claim should succeed (not throw) and return base rewards
+      let didSucceed = false;
+      try {
+        await program.methods.claimRewards()
+          .accounts({ user: payer.publicKey, globalState, stakeAccount: stakePDA, userTokenAccount: userATA, mint, mintAuthority, tokenProgram: TOKEN_2022_PROGRAM_ID })
+          .remainingAccounts([{ pubkey: seedAta, isSigner: false, isWritable: false }])
+          .signers([payer]).rpc();
+        didSucceed = true;
+      } catch (e) {
+        // Should not throw
+      }
+      expect(didSucceed).toBe(true);
+    });
+  });
+
+  describe("revocation permanent (BOOST-05)", () => {
+    it("boost_revoked stays true after seed repurchase and reclaim", async () => {
+      const web3 = require("@solana/web3.js");
+      const splToken = require("@solana/spl-token");
+      const { client, program, payer } = setupTest();
+      const { globalState, mint, mintAuthority, userATA, seedMint, seedAta, stakePDA } =
+        await setupBoostedStake(program, payer, client, DEFAULT_MIN_STAKE_AMOUNT, 1, USER_SEED_BALANCE);
+
+      const slotsPerDay = BigInt(DEFAULT_SLOTS_PER_DAY.toString());
+      await advanceClock(client, slotsPerDay);
+      await program.methods.crankDistribution()
+        .accounts({ cranker: payer.publicKey, globalState, mint, mintAuthority, tokenProgram: TOKEN_2022_PROGRAM_ID })
+        .signers([payer]).rpc();
+
+      // Transfer ALL seed tokens away
+      const tempUser = require("@solana/web3.js").Keypair.generate();
+      client.airdrop(tempUser.publicKey, BigInt(10_000_000_000));
+      const tempAta = splToken.getAssociatedTokenAddressSync(
+        seedMint, tempUser.publicKey, false,
+        new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb")
+      );
+      await program.provider.sendAndConfirm(
+        new web3.Transaction().add(
+          splToken.createAssociatedTokenAccountInstruction(
+            payer.publicKey, tempAta, tempUser.publicKey, seedMint,
+            new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb")
+          )
+        ),
+        [payer]
+      );
+      await program.provider.sendAndConfirm(
+        new web3.Transaction().add(
+          splToken.createTransferInstruction(
+            seedAta, tempAta, payer.publicKey, USER_SEED_BALANCE, [],
+            new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb")
+          )
+        ),
+        [payer]
+      );
+
+      // First claim: revokes boost
+      await program.methods.claimRewards()
+        .accounts({ user: payer.publicKey, globalState, stakeAccount: stakePDA, userTokenAccount: userATA, mint, mintAuthority, tokenProgram: TOKEN_2022_PROGRAM_ID })
+        .remainingAccounts([{ pubkey: seedAta, isSigner: false, isWritable: false }])
+        .signers([payer]).rpc();
+
+      const afterRevoke = await program.account.stakeAccount.fetch(stakePDA);
+      expect(afterRevoke.boostRevoked).toBe(true);
+
+      // "Repurchase" seed tokens: mint them back to user's seed ATA
+      await program.provider.sendAndConfirm(
+        new web3.Transaction().add(
+          splToken.createMintToInstruction(
+            seedMint, seedAta, payer.publicKey, USER_SEED_BALANCE, [],
+            new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb")
+          )
+        ),
+        [payer]
+      );
+
+      // Verify seed balance is restored
+      const seedBalanceAfter = await getSeedTokenBalance(client, seedAta);
+      expect(seedBalanceAfter).toBe(USER_SEED_BALANCE);
+
+      // Advance clock and crank for second claim
+      await advanceClock(client, slotsPerDay);
+      await program.methods.crankDistribution()
+        .accounts({ cranker: payer.publicKey, globalState, mint, mintAuthority, tokenProgram: TOKEN_2022_PROGRAM_ID })
+        .signers([payer]).rpc();
+
+      // Second claim with seed ATA: boost_revoked should remain true, base rewards only
+      const balanceBefore = await getTokenBalance(client, userATA);
+      await program.methods.claimRewards()
+        .accounts({ user: payer.publicKey, globalState, stakeAccount: stakePDA, userTokenAccount: userATA, mint, mintAuthority, tokenProgram: TOKEN_2022_PROGRAM_ID })
+        .remainingAccounts([{ pubkey: seedAta, isSigner: false, isWritable: false }])
+        .signers([payer]).rpc();
+      const balanceAfter = await getTokenBalance(client, userATA);
+      const secondRewards = new BN(balanceAfter.toString()).sub(new BN(balanceBefore.toString()));
+
+      // boost_revoked must still be true even after repurchase
+      const finalStake = await program.account.stakeAccount.fetch(stakePDA);
+      expect(finalStake.boostRevoked).toBe(true);
+
+      // Rewards should be > 0 (base rewards still paid out)
+      expect(secondRewards.gt(new BN(0))).toBe(true);
+    });
+  });
+
+  describe("headroom at claim time (BOOST-07)", () => {
+    it("selling surplus above snapshot does not revoke at claim time", async () => {
+      const web3 = require("@solana/web3.js");
+      const splToken = require("@solana/spl-token");
+      const { client, program, payer } = setupTest();
+
+      // Setup with exactly USER_SEED_BALANCE (snapshot = USER_SEED_BALANCE)
+      const { globalState, mint, mintAuthority, userATA, seedMint, seedAta, stakePDA } =
+        await setupBoostedStake(program, payer, client, DEFAULT_MIN_STAKE_AMOUNT, 1, USER_SEED_BALANCE);
+
+      // Verify snapshot = USER_SEED_BALANCE
+      const stakeAfterCreate = await program.account.stakeAccount.fetch(stakePDA);
+      expect(stakeAfterCreate.seedBalanceAtStake.toString()).toBe(USER_SEED_BALANCE_BN.toString());
+
+      // Mint 5,000,000 more seed tokens (surplus above snapshot)
+      const surplus = BigInt(5_000_000);
+      await program.provider.sendAndConfirm(
+        new web3.Transaction().add(
+          splToken.createMintToInstruction(
+            seedMint, seedAta, payer.publicKey, surplus, [],
+            new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb")
+          )
+        ),
+        [payer]
+      );
+
+      // Now balance = USER_SEED_BALANCE + surplus
+      // Transfer surplus away — balance returns to exactly snapshot
+      const tempUser = require("@solana/web3.js").Keypair.generate();
+      client.airdrop(tempUser.publicKey, BigInt(10_000_000_000));
+      const tempAta = splToken.getAssociatedTokenAddressSync(
+        seedMint, tempUser.publicKey, false,
+        new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb")
+      );
+      await program.provider.sendAndConfirm(
+        new web3.Transaction().add(
+          splToken.createAssociatedTokenAccountInstruction(
+            payer.publicKey, tempAta, tempUser.publicKey, seedMint,
+            new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb")
+          )
+        ),
+        [payer]
+      );
+      await program.provider.sendAndConfirm(
+        new web3.Transaction().add(
+          splToken.createTransferInstruction(
+            seedAta, tempAta, payer.publicKey, surplus, [],
+            new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb")
+          )
+        ),
+        [payer]
+      );
+
+      // Verify balance == snapshot
+      const seedBalance = await getSeedTokenBalance(client, seedAta);
+      expect(seedBalance).toBe(USER_SEED_BALANCE);
+
+      // Advance 1 day and crank
+      const slotsPerDay = BigInt(DEFAULT_SLOTS_PER_DAY.toString());
+      await advanceClock(client, slotsPerDay);
+      await program.methods.crankDistribution()
+        .accounts({ cranker: payer.publicKey, globalState, mint, mintAuthority, tokenProgram: TOKEN_2022_PROGRAM_ID })
+        .signers([payer]).rpc();
+
+      // Claim with seed ATA — boost should still be active
+      const balanceBefore = await getTokenBalance(client, userATA);
+      await program.methods.claimRewards()
+        .accounts({ user: payer.publicKey, globalState, stakeAccount: stakePDA, userTokenAccount: userATA, mint, mintAuthority, tokenProgram: TOKEN_2022_PROGRAM_ID })
+        .remainingAccounts([{ pubkey: seedAta, isSigner: false, isWritable: false }])
+        .signers([payer]).rpc();
+      const balanceAfter = await getTokenBalance(client, userATA);
+      const rewards = new BN(balanceAfter.toString()).sub(new BN(balanceBefore.toString()));
+
+      // Boost NOT revoked — headroom works at claim time
+      const finalStake = await program.account.stakeAccount.fetch(stakePDA);
+      expect(finalStake.boostRevoked).toBe(false);
+      // Rewards should be > 0
+      expect(rewards.gt(new BN(0))).toBe(true);
+    });
+  });
+
+  describe("non-boosted stake claim (regression)", () => {
+    it("claim_rewards works exactly as before for non-boosted stakers", async () => {
+      const web3 = require("@solana/web3.js");
+      const splToken = require("@solana/spl-token");
+      const { client, program, payer } = setupTest();
+      const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
+
+      // Create HLX ATA and fund
+      const userATA = getAssociatedTokenAddressSync(mint, payer.publicKey, false, TOKEN_2022_PROGRAM_ID);
+      await program.provider.sendAndConfirm(
+        new web3.Transaction().add(
+          splToken.createAssociatedTokenAccountInstruction(
+            payer.publicKey, userATA, payer.publicKey, mint, TOKEN_2022_PROGRAM_ID
+          )
+        ),
+        [payer]
+      );
+      const stakeAmount = new BN("10000000000"); // 100 tokens
+      await mintTokensToUser(program, payer, globalState, mint, mintAuthority, userATA, stakeAmount);
+
+      // Create non-boosted stake
+      const [stakePDA] = findStakePDA(program.programId, payer.publicKey, 0);
+      await program.methods.createStake(stakeAmount, 1)
+        .accounts({ user: payer.publicKey, globalState, stakeAccount: stakePDA, userTokenAccount: userATA, mint, tokenProgram: TOKEN_2022_PROGRAM_ID })
+        .signers([payer]).rpc();
+
+      // Advance 1 day and crank
+      const slotsPerDay = BigInt(DEFAULT_SLOTS_PER_DAY.toString());
+      await advanceClock(client, slotsPerDay);
+      await program.methods.crankDistribution()
+        .accounts({ cranker: payer.publicKey, globalState, mint, mintAuthority, tokenProgram: TOKEN_2022_PROGRAM_ID })
+        .signers([payer]).rpc();
+
+      // Claim without any remaining_accounts
+      const balanceBefore = await getTokenBalance(client, userATA);
+      await program.methods.claimRewards()
+        .accounts({ user: payer.publicKey, globalState, stakeAccount: stakePDA, userTokenAccount: userATA, mint, mintAuthority, tokenProgram: TOKEN_2022_PROGRAM_ID })
+        .signers([payer]).rpc();
+      const balanceAfter = await getTokenBalance(client, userATA);
+      const rewards = new BN(balanceAfter.toString()).sub(new BN(balanceBefore.toString()));
+
+      expect(rewards.gt(new BN(0))).toBe(true);
+
+      // Verify fields
       const stakeAccount = await program.account.stakeAccount.fetch(stakePDA);
       expect(stakeAccount.boostRevoked).toBe(false);
       expect(stakeAccount.seedBalanceAtStake.toString()).toBe("0");
