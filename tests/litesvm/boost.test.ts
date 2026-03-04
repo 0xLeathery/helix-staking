@@ -1042,6 +1042,141 @@ describe("Boost System", () => {
       expect(stakeAccount.boostRevoked).toBe(false);
       expect(stakeAccount.seedBalanceAtStake.toString()).toBe("0");
     });
+
+    it("is no-op when already revoked", async () => {
+      const { client, provider, program, payer } = setupTest();
+      const { globalState, mint, mintAuthority } = await initializeProtocol(program, payer);
+
+      const userATA = getAssociatedTokenAddressSync(
+        mint, payer.publicKey, false, TOKEN_2022_PROGRAM_ID
+      );
+      const web3 = require("@solana/web3.js");
+      const splToken = require("@solana/spl-token");
+      await program.provider.sendAndConfirm(
+        new web3.Transaction().add(
+          splToken.createAssociatedTokenAccountInstruction(
+            payer.publicKey, userATA, payer.publicKey, mint, TOKEN_2022_PROGRAM_ID
+          )
+        ),
+        [payer]
+      );
+      await mintTokensToUser(
+        program, payer, globalState, mint, mintAuthority, userATA, DEFAULT_MIN_STAKE_AMOUNT
+      );
+
+      const snapshotBalance = BigInt(5_000_000);
+      const { seedMint, seedAta } = await createSeedMintAndFund(
+        program, payer, payer.publicKey, snapshotBalance
+      );
+
+      await program.methods
+        .adminSetSeedMint(seedMint, new BN(snapshotBalance.toString()))
+        .accounts({ authority: payer.publicKey, globalState })
+        .signers([payer])
+        .rpc();
+      await program.methods
+        .adminToggleBoost(true)
+        .accounts({ authority: payer.publicKey, globalState })
+        .signers([payer])
+        .rpc();
+
+      const [boostRecordPDA] = findBoostRecordPDA(program.programId, payer.publicKey);
+      await program.methods
+        .registerSeedBoost()
+        .accounts({
+          user: payer.publicKey,
+          globalState,
+          boostRecord: boostRecordPDA,
+          seedTokenAccount: seedAta,
+          seedMint,
+          seedTokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .signers([payer])
+        .rpc();
+
+      const [stakePDA] = findStakePDA(program.programId, payer.publicKey, 0);
+      await program.methods
+        .createStake(DEFAULT_MIN_STAKE_AMOUNT, 1)
+        .accounts({
+          user: payer.publicKey,
+          globalState,
+          stakeAccount: stakePDA,
+          userTokenAccount: userATA,
+          mint,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .remainingAccounts([
+          { pubkey: boostRecordPDA, isWritable: true, isSigner: false },
+          { pubkey: seedAta, isWritable: false, isSigner: false },
+        ])
+        .signers([payer])
+        .rpc();
+
+      // Create temp ATA to receive seed tokens, then transfer away seeds
+      const tempUser = Keypair.generate();
+      client.airdrop(tempUser.publicKey, BigInt(10_000_000_000));
+      const tempAta = splToken.getAssociatedTokenAddressSync(
+        seedMint, tempUser.publicKey, false,
+        new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb")
+      );
+      await program.provider.sendAndConfirm(
+        new web3.Transaction().add(
+          splToken.createAssociatedTokenAccountInstruction(
+            payer.publicKey, tempAta, tempUser.publicKey, seedMint,
+            new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb")
+          )
+        ),
+        [payer]
+      );
+
+      // Transfer all seeds away (balance drops to 0 — below snapshot)
+      const transferTx = new web3.Transaction().add(
+        splToken.createTransferInstruction(
+          seedAta, tempAta, payer.publicKey, snapshotBalance, [],
+          new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb")
+        )
+      );
+      await program.provider.sendAndConfirm(transferTx, [payer]);
+
+      // First call — should revoke (balance < snapshot)
+      await program.methods
+        .updateBoostStatus()
+        .accounts({
+          payer: payer.publicKey,
+          globalState,
+          stakeAccount: stakePDA,
+          stakeOwner: payer.publicKey,
+          seedTokenAccount: seedAta,
+          seedMint,
+          seedTokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .signers([payer])
+        .rpc();
+
+      const stakeAccountAfterFirst = await program.account.stakeAccount.fetch(stakePDA);
+      expect(stakeAccountAfterFirst.boostRevoked).toBe(true);
+
+      // Expire blockhash to prevent AlreadyProcessed rejection on the second identical call
+      client.expireBlockhash();
+
+      // Second call — should be a no-op (already revoked — idempotent)
+      await program.methods
+        .updateBoostStatus()
+        .accounts({
+          payer: payer.publicKey,
+          globalState,
+          stakeAccount: stakePDA,
+          stakeOwner: payer.publicKey,
+          seedTokenAccount: seedAta,
+          seedMint,
+          seedTokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .signers([payer])
+        .rpc();
+
+      const stakeAccountAfterSecond = await program.account.stakeAccount.fetch(stakePDA);
+      expect(stakeAccountAfterSecond.boostRevoked).toBe(true);
+    });
   });
 
   // ===== Helper: Setup a full staking scenario with boost enabled =====
