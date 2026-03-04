@@ -4,9 +4,9 @@ use anchor_spl::token_2022::{self, MintTo, Token2022};
 use anchor_spl::token_interface::{Mint, TokenAccount};
 use crate::constants::*;
 use crate::error::HelixError;
-use crate::events::RewardsClaimed;
+use crate::events::{RewardsClaimed, BoostRevoked, BoostedRewardsClaimed};
 use crate::state::{GlobalState, StakeAccount};
-use crate::instructions::math::{calculate_pending_rewards, calculate_reward_debt, calculate_loyalty_bonus, mul_div};
+use crate::instructions::math::{calculate_pending_rewards, calculate_reward_debt, calculate_loyalty_bonus, mul_div, apply_boost_multiplier};
 use crate::instructions::crank_distribution::distribute_pending_inflation;
 
 /// Apply loyalty multiplier to a reward amount.
@@ -111,9 +111,62 @@ pub fn claim_rewards(ctx: Context<ClaimRewards>) -> Result<()> {
     // Apply loyalty multiplier: reward × (1 + loyalty_bonus / PRECISION)
     let loyalty_adjusted_rewards = apply_loyalty_multiplier(pending_rewards, loyalty_bonus)?;
 
-    // Include BPD bonus if pending (loyalty does NOT apply to BPD bonus)
+    // === Phase 24: Boost check ===
+    // Copy fields to locals before mutable borrow to satisfy borrow checker
+    let seed_balance_at_stake = stake.seed_balance_at_stake;
+    let boost_revoked = stake.boost_revoked;
+    // Also copy bpd_bonus_pending now to avoid borrow-after-mutable-borrow issues below
     let bpd_bonus = stake.bpd_bonus_pending;
-    let total_rewards = loyalty_adjusted_rewards
+    // End the immutable borrow of stake_account so we can take mutable borrows in the boost block
+    let _ = stake;
+
+    // Check if this is a boosted stake and apply multiplier or revoke
+    let (boost_adjusted_rewards, boost_applied) = if seed_balance_at_stake > 0 && !boost_revoked {
+        // Boosted stake: need seed ATA in remaining_accounts[0] to check current balance
+        if ctx.remaining_accounts.is_empty() {
+            // No seed ATA passed -- treat as non-boosted for this claim
+            // (Client must pass seed ATA to get boost; omission means base rewards only)
+            (loyalty_adjusted_rewards, false)
+        } else {
+            let seed_ata_info = &ctx.remaining_accounts[0];
+            // Read current seed balance from token account (amount at offset 64, 8 bytes LE)
+            let data = seed_ata_info.try_borrow_data()?;
+            let current_seed_balance = if data.len() >= 72 {
+                u64::from_le_bytes(data[64..72].try_into().unwrap())
+            } else {
+                0u64
+            };
+            drop(data);
+
+            if current_seed_balance >= seed_balance_at_stake {
+                // Boost active: apply 10% multiplier
+                let boosted = apply_boost_multiplier(loyalty_adjusted_rewards)?;
+                (boosted, true)
+            } else {
+                // Balance dropped below snapshot: REVOKE permanently
+                // Per BOOST-05: revocation is permanent per stake
+                // NOTE: Set the flag BEFORE the CPI mint (Check-Effects-Interactions)
+                let stake_mut_for_revoke = &mut ctx.accounts.stake_account;
+                stake_mut_for_revoke.boost_revoked = true;
+
+                emit!(BoostRevoked {
+                    slot: clock.slot,
+                    user,
+                    stake_id,
+                    current_balance: current_seed_balance,
+                    required_balance: seed_balance_at_stake,
+                });
+
+                (loyalty_adjusted_rewards, false)
+            }
+        }
+    } else {
+        // Not a boosted stake, or already revoked
+        (loyalty_adjusted_rewards, false)
+    };
+
+    // Include BPD bonus if pending (loyalty and boost do NOT apply to BPD bonus)
+    let total_rewards = boost_adjusted_rewards
         .checked_add(bpd_bonus)
         .ok_or(HelixError::Overflow)?;
 
@@ -160,6 +213,21 @@ pub fn claim_rewards(ctx: Context<ClaimRewards>) -> Result<()> {
         stake_id,
         amount: total_rewards,  // Includes BPD bonus
     });
+
+    // Emit boost event if boost was applied
+    if boost_applied {
+        let boost_amount = boost_adjusted_rewards
+            .checked_sub(loyalty_adjusted_rewards)
+            .unwrap_or(0);
+        emit!(BoostedRewardsClaimed {
+            slot: clock.slot,
+            user,
+            stake_id,
+            base_amount: loyalty_adjusted_rewards,
+            boost_amount,
+            total_amount: total_rewards,
+        });
+    }
 
     Ok(())
 }
