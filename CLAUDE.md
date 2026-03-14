@@ -61,6 +61,11 @@ Three components: **Program** (Anchor/Rust) → **Indexer** (TypeScript/Fastify)
 - Skip `slot: u64` in new events
 - Use `@solana/web3.js` v2 — project is on v1 (1.95.x)
 - Use Next.js 15 APIs — project is on 14
+- Change `calculatePendingRewards` without verifying PRECISION division matches between Rust and TS
+- Add a new instruction without emitting an event with `slot: u64`
+- Use raw `connection.simulateTransaction()` — use `simulateTransactionOrThrow` from `useTransactionSimulation.ts`
+- Use native `BigInt` for on-chain amounts — use BN.js
+- Hardcode `new BN(10).pow(new BN(TOKEN_DECIMALS))` — use `DECIMALS_FACTOR` from `constants.ts`
 
 ## Self-Improvement
 
