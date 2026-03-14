@@ -9,7 +9,6 @@ import { deriveGlobalState, deriveMint, deriveMintAuthority } from "@/lib/solana
 import { simulateTransactionOrThrow, SimulationError, getSimulationErrorMessage } from "./useTransactionSimulation";
 import { getComputeBudgetInstructions, CU_LIMITS } from "@/lib/solana/compute-budget";
 import { toast } from "sonner";
-import { SystemProgram } from "@solana/web3.js";
 
 interface ClaimRewardsParams {
   stakePublicKey: PublicKey;

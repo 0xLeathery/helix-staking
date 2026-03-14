@@ -59,8 +59,8 @@ export function usePushNotifications(wallet: string | null): UsePushNotification
             setIsSubscribed(true);
           }
         })
-        .catch(() => {
-          // Service worker registration failed — not subscribed
+        .catch((err) => {
+          console.warn('Service worker registration failed:', err);
         });
 
       setPermission(Notification.permission);

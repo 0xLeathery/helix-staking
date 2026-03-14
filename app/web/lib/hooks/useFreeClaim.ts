@@ -40,8 +40,8 @@ export function useFreeClaim() {
 
   return useMutation({
     mutationFn: async ({ snapshotWallet, amount, proof, merkleRoot }: FreeClaimParams) => {
-      if (!wallet.publicKey || !wallet.signMessage) {
-        throw new Error("Wallet not connected");
+      if (!wallet.publicKey || !wallet.signMessage || !wallet.signTransaction) {
+        throw new Error("Wallet not connected or does not support required operations");
       }
 
       // Derive accounts
@@ -105,7 +105,7 @@ export function useFreeClaim() {
       await simulateTransactionOrThrow(connection, tx);
 
       // Sign and send transaction
-      const signed = await wallet.signTransaction!(tx);
+      const signed = await wallet.signTransaction(tx);
       const signature_tx = await connection.sendRawTransaction(signed.serialize());
 
       // Confirm transaction

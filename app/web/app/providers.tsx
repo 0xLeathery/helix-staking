@@ -57,8 +57,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
           });
         }
       })
-      .catch(() => {
-        // Not in test mode or adapter unavailable — ignore silently.
+      .catch((err) => {
+        console.warn('Test wallet adapter unavailable:', err);
       });
   }, []);
 
