@@ -66,6 +66,11 @@ Three components: **Program** (Anchor/Rust) → **Indexer** (TypeScript/Fastify)
 - Use raw `connection.simulateTransaction()` — use `simulateTransactionOrThrow` from `useTransactionSimulation.ts`
 - Use native `BigInt` for on-chain amounts — use BN.js
 - Hardcode `new BN(10).pow(new BN(TOKEN_DECIMALS))` — use `DECIMALS_FACTOR` from `constants.ts`
+- Use `sql.raw()` in indexer queries — use whitelist maps for dynamic column names
+- Accept Solana addresses without base58 validation — use `solanaAddress()` from `lib/validation.ts`
+- Omit volume mounts for stateful Docker containers (Postgres, etc.)
+- Close `StakeAccount` on unstake — BPD lifecycle iterates inactive accounts
+- Remove error variants from `HelixError` — shifts numeric codes, breaks deployed clients
 
 ## Self-Improvement
 
