@@ -288,9 +288,9 @@ pub fn calculate_late_penalty(
 }
 
 /// Calculate pending rewards for a stake.
-/// Formula: pending = (t_shares * current_share_rate) - reward_debt
-/// No PRECISION division needed - reward_debt is stored at the same scale.
-/// Frontend TypeScript: BigInt(tShares) * BigInt(currentShareRate) - BigInt(rewardDebt)
+/// Formula: pending = ((t_shares * current_share_rate) - reward_debt) / PRECISION
+/// Divide by PRECISION to get unscaled token amount.
+/// Frontend TypeScript: (BigInt(tShares) * BigInt(currentShareRate) - BigInt(rewardDebt)) / BigInt(PRECISION)
 pub fn calculate_pending_rewards(
     t_shares: u64,
     current_share_rate: u64,

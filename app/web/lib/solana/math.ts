@@ -226,9 +226,9 @@ export function calculateLatePenalty(
 
 /**
  * Calculate pending rewards for a stake.
- * Formula: (t_shares * current_share_rate) - reward_debt
+ * Formula: ((t_shares * current_share_rate) - reward_debt) / PRECISION
  *
- * No PRECISION division needed - reward_debt is stored at the same scale.
+ * Divide by PRECISION to get unscaled token amount.
  * Uses saturating subtraction (returns 0 if debt > current value).
  */
 export function calculatePendingRewards(
@@ -243,7 +243,7 @@ export function calculatePendingRewards(
     return ZERO;
   }
 
-  return currentValue.sub(rewardDebt);
+  return currentValue.sub(rewardDebt).div(PRECISION);
 }
 
 /**
