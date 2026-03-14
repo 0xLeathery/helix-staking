@@ -1,9 +1,10 @@
 import type { FastifyInstance, FastifyPluginCallback } from 'fastify';
 import { z } from 'zod';
 import { computeBadgeEligibility } from '../../lib/badge-eligibility.js';
+import { solanaAddress } from '../../lib/validation.js';
 
 const walletSchema = z.object({
-  wallet: z.string().min(32).max(50),
+  wallet: solanaAddress(),
 });
 
 export const badgeRoutes: FastifyPluginCallback = (

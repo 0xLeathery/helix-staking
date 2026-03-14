@@ -3,13 +3,14 @@ import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../../db/client.js';
 import { pushSubscriptions } from '../../db/schema.js';
+import { solanaAddress } from '../../lib/validation.js';
 
 // ---------------------------------------------------------------------------
 // Zod schemas
 // ---------------------------------------------------------------------------
 
 const subscribeBodySchema = z.object({
-  wallet: z.string().min(32).max(50),
+  wallet: solanaAddress(),
   subscription: z.object({
     endpoint: z.string().url(),
     keys: z.object({

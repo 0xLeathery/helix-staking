@@ -3,9 +3,10 @@ import { count, sum, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../../db/client.js';
 import { referralStakedEvents } from '../../db/schema.js';
+import { solanaAddress } from '../../lib/validation.js';
 
 const referrerSchema = z.object({
-  referrer: z.string().min(32).max(50),
+  referrer: solanaAddress(),
 });
 
 export const referralRoutes: FastifyPluginCallback = (
