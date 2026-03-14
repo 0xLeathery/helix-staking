@@ -18,8 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # ── Solana CLI v1.18.26 (original version for reproducible builds) ─────
-# Note: This version ships with rustc 1.79.0-dev which has dependency issues
-# For now, we use the original version but clear problematic crates
+# Note: This version ships with rustc 1.79.0-dev
 RUN curl -fsSL https://github.com/solana-labs/solana/releases/download/v1.18.26/solana-release-x86_64-unknown-linux-gnu.tar.bz2 \
     | tar -xjC /opt \
     && ln -s /opt/solana-release/bin/* /usr/local/bin/
