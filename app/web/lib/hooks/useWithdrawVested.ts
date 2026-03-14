@@ -7,6 +7,7 @@ import { getAssociatedTokenAddressSync, TOKEN_2022_PROGRAM_ID } from "@solana/sp
 import { useProgram } from "./useProgram";
 import { deriveClaimConfig, deriveGlobalState, deriveMint, deriveMintAuthority } from "@/lib/solana/pdas";
 import { useToast } from "@/hooks/use-toast";
+import { simulateTransactionOrThrow } from "./useTransactionSimulation";
 
 interface WithdrawVestedParams {
   claimStatusPublicKey: PublicKey;
@@ -67,10 +68,7 @@ export function useWithdrawVested() {
       tx.feePayer = wallet.publicKey;
 
       // Simulate before sending
-      const simulation = await connection.simulateTransaction(tx);
-      if (simulation.value.err) {
-        throw new Error(`Simulation failed: ${JSON.stringify(simulation.value.err)}`);
-      }
+      await simulateTransactionOrThrow(connection, tx);
 
       // Sign and send transaction
       const signed = await wallet.signTransaction(tx);

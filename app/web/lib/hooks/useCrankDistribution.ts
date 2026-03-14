@@ -8,6 +8,7 @@ import { TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 import { useProgram } from "./useProgram";
 import { deriveGlobalState, deriveMint, deriveMintAuthority } from "@/lib/solana/pdas";
 import { useToast } from "@/hooks/use-toast";
+import { simulateTransactionOrThrow } from "./useTransactionSimulation";
 
 /**
  * Mutation hook for crank_distribution transaction.
@@ -52,10 +53,7 @@ export function useCrankDistribution() {
       tx.feePayer = wallet.publicKey;
 
       // Simulate before sending
-      const simulation = await connection.simulateTransaction(tx);
-      if (simulation.value.err) {
-        throw new Error(`Simulation failed: ${JSON.stringify(simulation.value.err)}`);
-      }
+      await simulateTransactionOrThrow(connection, tx);
 
       // Sign and send transaction
       const signed = await wallet.signTransaction(tx);

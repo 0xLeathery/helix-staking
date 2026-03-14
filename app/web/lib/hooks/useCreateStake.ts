@@ -8,6 +8,7 @@ import BN from "bn.js";
 import { useProgram } from "./useProgram";
 import { deriveGlobalState, deriveMint, deriveMintAuthority, deriveStakeAccount } from "@/lib/solana/pdas";
 import { getComputeBudgetInstructions, CU_LIMITS } from "@/lib/solana/compute-budget";
+import { simulateTransactionOrThrow } from "./useTransactionSimulation";
 
 // Token-2022 program ID
 const TOKEN_2022_PROGRAM_ID = new PublicKey(
@@ -98,12 +99,7 @@ export function useCreateStake() {
           tx.feePayer = publicKey;
 
           // SIMULATE transaction before sending (security requirement)
-          const simulation = await connection.simulateTransaction(tx);
-          if (simulation.value.err) {
-            throw new Error(
-              `Transaction simulation failed: ${JSON.stringify(simulation.value.err)}`
-            );
-          }
+          await simulateTransactionOrThrow(connection, tx);
 
           // Send transaction
           const signature = await sendTransaction(tx, connection);
