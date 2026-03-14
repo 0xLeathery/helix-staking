@@ -89,7 +89,7 @@ jobs:
         run: cargo build --package helix-staking
 
       - name: Run Tests
-        run: npx vitest run tests/bankrun --exclude="tests/bankrun/tests"
+        run: npx vitest run tests/bankrun
 
       - name: Tests Success
         if: success()
