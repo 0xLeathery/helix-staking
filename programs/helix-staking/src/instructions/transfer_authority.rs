@@ -30,6 +30,12 @@ pub struct TransferAuthority<'info> {
 }
 
 pub fn transfer_authority(ctx: Context<TransferAuthority>, new_authority: Pubkey) -> Result<()> {
+    // Prevent no-op self-transfer
+    require!(
+        new_authority != ctx.accounts.authority.key(),
+        HelixError::InvalidParameter
+    );
+
     let pending = &mut ctx.accounts.pending_authority;
 
     // Detect overwrite of existing pending transfer
