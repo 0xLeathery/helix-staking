@@ -11,7 +11,7 @@ pub enum HelixError {
     #[msg("Invalid parameter value")]
     InvalidParameter,
     #[msg("Account already initialized")]
-    AlreadyInitialized,
+    AlreadyInitialized, // Note: unused — Anchor's `init` constraint handles this. Kept for error code stability.
     #[msg("Stake amount below minimum")]
     StakeBelowMinimum,
     #[msg("Claim period has not ended")]
@@ -21,7 +21,7 @@ pub enum HelixError {
     #[msg("Invalid Merkle proof")]
     InvalidMerkleProof,
     #[msg("Tokens already claimed")]
-    AlreadyClaimed,
+    AlreadyClaimed, // Note: unused — Anchor's `init` on ClaimStatus PDA prevents double claims. Kept for error code stability.
     #[msg("Failed to calculate mint account space")]
     InvalidMintSpace,
     #[msg("Invalid stake duration (must be 1-5555 days)")]
