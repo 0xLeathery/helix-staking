@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 
 use crate::constants::*;
 use crate::error::HelixError;
+use crate::events::BpdFinalizationSealed;
 use crate::state::{ClaimConfig, GlobalState};
 
 #[derive(Accounts)]
@@ -29,7 +30,10 @@ pub struct SealBpdFinalize<'info> {
     pub claim_config: Account<'info, ClaimConfig>,
 }
 
-pub fn seal_bpd_finalize(ctx: Context<SealBpdFinalize>, expected_finalized_count: u32) -> Result<()> {
+pub fn seal_bpd_finalize(
+    ctx: Context<SealBpdFinalize>,
+    expected_finalized_count: u32,
+) -> Result<()> {
     let clock = Clock::get()?;
     let claim_config = &mut ctx.accounts.claim_config;
 
@@ -51,9 +55,11 @@ pub fn seal_bpd_finalize(ctx: Context<SealBpdFinalize>, expected_finalized_count
         HelixError::BpdFinalizationIncomplete
     );
     require!(
-        clock.unix_timestamp >= claim_config.bpd_finalize_start_timestamp
-            .checked_add(BPD_SEAL_DELAY_SECONDS)
-            .ok_or(error!(HelixError::Overflow))?,
+        clock.unix_timestamp
+            >= claim_config
+                .bpd_finalize_start_timestamp
+                .checked_add(BPD_SEAL_DELAY_SECONDS)
+                .ok_or(error!(HelixError::Overflow))?,
         HelixError::BpdSealTooEarly
     );
 
@@ -69,6 +75,14 @@ pub fn seal_bpd_finalize(ctx: Context<SealBpdFinalize>, expected_finalized_count
     if claim_config.bpd_total_share_days == 0 {
         claim_config.bpd_helix_per_share_day = 0;
         claim_config.bpd_calculation_complete = true;
+
+        emit!(BpdFinalizationSealed {
+            slot: clock.slot,
+            claim_period_id: claim_config.claim_period_id,
+            total_share_days: 0,
+            helix_per_share_day: 0,
+        });
+
         return Ok(());
     }
 
@@ -86,6 +100,13 @@ pub fn seal_bpd_finalize(ctx: Context<SealBpdFinalize>, expected_finalized_count
 
     // Phase 8.1: Store original unclaimed for consistent whale cap in trigger_big_pay_day
     claim_config.bpd_original_unclaimed = unclaimed_amount;
+
+    emit!(BpdFinalizationSealed {
+        slot: clock.slot,
+        claim_period_id: claim_config.claim_period_id,
+        total_share_days: claim_config.bpd_total_share_days,
+        helix_per_share_day,
+    });
 
     Ok(())
 }
@@ -148,8 +169,10 @@ mod tests {
         let share_days = 1_000u128;
         let rate = PRECISION as u128; // 1 helix per share-day before PRECISION scaling
         let bonus_u128 = share_days
-            .checked_mul(rate).unwrap()
-            .checked_div(PRECISION as u128).unwrap();
+            .checked_mul(rate)
+            .unwrap()
+            .checked_div(PRECISION as u128)
+            .unwrap();
         let bonus = u64::try_from(bonus_u128).unwrap();
         assert_eq!(bonus, 1_000); // 1000 share-days * 1 token = 1000 tokens
     }

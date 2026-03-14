@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 
 use crate::constants::*;
 use crate::error::HelixError;
+use crate::events::AdminClaimEndSlotUpdated;
 use crate::state::{ClaimConfig, GlobalState};
 
 /// Admin-only instruction to override the claim period end_slot.
@@ -39,7 +40,8 @@ pub fn admin_set_claim_end_slot(
 
     // A-3 FIX: Allow both increases and bounded decreases.
     // Floor: cannot set below current_slot + 1 day (prevents locking out active claimers)
-    let min_end_slot = clock.slot
+    let min_end_slot = clock
+        .slot
         .checked_add(global_state.slots_per_day)
         .ok_or(HelixError::Overflow)?;
     require!(
@@ -47,6 +49,14 @@ pub fn admin_set_claim_end_slot(
         HelixError::AdminBoundsExceeded
     );
 
+    let old_value = claim_config.end_slot;
     claim_config.end_slot = new_end_slot;
+
+    emit!(AdminClaimEndSlotUpdated {
+        slot: clock.slot,
+        old_value,
+        new_value: new_end_slot,
+    });
+
     Ok(())
 }

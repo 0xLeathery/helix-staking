@@ -35,6 +35,7 @@ pub fn transfer_authority(ctx: Context<TransferAuthority>, new_authority: Pubkey
     // Detect overwrite of existing pending transfer
     if pending.new_authority != Pubkey::default() && pending.new_authority != new_authority {
         emit!(AuthorityTransferCancelled {
+            slot: Clock::get()?.slot,
             authority: ctx.accounts.authority.key(),
             cancelled_new_authority: pending.new_authority,
         });
@@ -44,6 +45,7 @@ pub fn transfer_authority(ctx: Context<TransferAuthority>, new_authority: Pubkey
     pending.bump = ctx.bumps.pending_authority;
 
     emit!(AuthorityTransferInitiated {
+        slot: Clock::get()?.slot,
         old_authority: ctx.accounts.authority.key(),
         new_authority,
     });

@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 
 use crate::constants::*;
 use crate::error::HelixError;
+use crate::events::StakeMigrated;
 use crate::state::StakeAccount;
 
 #[derive(Accounts)]
@@ -38,5 +39,12 @@ pub fn migrate_stake(ctx: Context<MigrateStake>) -> Result<()> {
         ctx.accounts.stake_account.to_account_info().data_len() < StakeAccount::LEN,
         HelixError::AlreadyMigrated
     );
+
+    emit!(StakeMigrated {
+        slot: Clock::get()?.slot,
+        user: ctx.accounts.stake_account.user,
+        stake_id: ctx.accounts.stake_account.stake_id,
+    });
+
     Ok(())
 }

@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 
 use crate::constants::*;
 use crate::error::HelixError;
+use crate::events::AdminBpdFinalizeTimestampUpdated;
 use crate::state::{ClaimConfig, GlobalState};
 
 /// Admin-only instruction to override bpd_finalize_start_timestamp.
@@ -37,5 +38,11 @@ pub fn admin_set_bpd_finalize_timestamp(
     new_timestamp: i64,
 ) -> Result<()> {
     ctx.accounts.claim_config.bpd_finalize_start_timestamp = new_timestamp;
+
+    emit!(AdminBpdFinalizeTimestampUpdated {
+        slot: Clock::get()?.slot,
+        new_timestamp,
+    });
+
     Ok(())
 }

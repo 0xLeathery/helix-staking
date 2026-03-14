@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 
 #[event]
 pub struct ProtocolInitialized {
-    pub slot: u64,                    // REQUIRED: reorg correlation (indexer-expert)
+    pub slot: u64, // REQUIRED: reorg correlation (indexer-expert)
     pub global_state: Pubkey,
     pub mint: Pubkey,
     pub mint_authority: Pubkey,
@@ -48,7 +48,7 @@ pub struct RewardsClaimed {
 pub struct InflationDistributed {
     pub slot: u64,
     pub day: u64,
-    pub days_elapsed: u64,  // Number of days covered in this distribution
+    pub days_elapsed: u64, // Number of days covered in this distribution
     pub amount: u64,
     pub new_share_rate: u64,
     pub total_shares: u64,
@@ -60,7 +60,7 @@ pub struct InflationDistributed {
 pub struct AdminMinted {
     pub slot: u64,
     pub authority: Pubkey,
-    pub recipient: Pubkey,  // Token account address
+    pub recipient: Pubkey, // Token account address
     pub amount: u64,
 }
 
@@ -84,11 +84,11 @@ pub struct TokensClaimed {
     pub claim_period_id: u32,
     pub snapshot_balance: u64,
     pub base_amount: u64,
-    pub bonus_bps: u16,           // 2000 = +20%, 1000 = +10%, 0 = base
+    pub bonus_bps: u16, // 2000 = +20%, 1000 = +10%, 0 = base
     pub days_elapsed: u16,
-    pub total_amount: u64,        // base + bonus
-    pub immediate_amount: u64,    // 10% available now
-    pub vesting_amount: u64,      // 90% vesting
+    pub total_amount: u64,     // base + bonus
+    pub immediate_amount: u64, // 10% available now
+    pub vesting_amount: u64,   // 90% vesting
     pub vesting_end_slot: u64,
 }
 
@@ -126,6 +126,7 @@ pub struct BigPayDayDistributed {
 
 #[event]
 pub struct BpdAborted {
+    pub slot: u64,
     pub claim_period_id: u32,
     pub stakes_finalized: u32,
     pub stakes_distributed: u32,
@@ -143,20 +144,70 @@ pub struct BpdBatchFinalized {
 
 #[event]
 pub struct AuthorityTransferInitiated {
+    pub slot: u64,
     pub old_authority: Pubkey,
     pub new_authority: Pubkey,
 }
 
 #[event]
 pub struct AuthorityTransferCancelled {
+    pub slot: u64,
     pub authority: Pubkey,
     pub cancelled_new_authority: Pubkey,
 }
 
 #[event]
 pub struct AuthorityTransferCompleted {
+    pub slot: u64,
     pub old_authority: Pubkey,
     pub new_authority: Pubkey,
+}
+
+#[event]
+pub struct ProtocolPaused {
+    pub slot: u64,
+    pub authority: Pubkey,
+}
+
+#[event]
+pub struct ProtocolUnpaused {
+    pub slot: u64,
+    pub authority: Pubkey,
+}
+
+#[event]
+pub struct AdminSlotsPerDayUpdated {
+    pub slot: u64,
+    pub old_value: u64,
+    pub new_value: u64,
+}
+
+#[event]
+pub struct AdminClaimEndSlotUpdated {
+    pub slot: u64,
+    pub old_value: u64,
+    pub new_value: u64,
+}
+
+#[event]
+pub struct AdminBpdFinalizeTimestampUpdated {
+    pub slot: u64,
+    pub new_timestamp: i64,
+}
+
+#[event]
+pub struct StakeMigrated {
+    pub slot: u64,
+    pub user: Pubkey,
+    pub stake_id: u64,
+}
+
+#[event]
+pub struct BpdFinalizationSealed {
+    pub slot: u64,
+    pub claim_period_id: u32,
+    pub total_share_days: u128,
+    pub helix_per_share_day: u128,
 }
 
 #[event]

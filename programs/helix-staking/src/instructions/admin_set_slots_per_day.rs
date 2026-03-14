@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 
 use crate::constants::*;
 use crate::error::HelixError;
+use crate::events::AdminSlotsPerDayUpdated;
 use crate::state::GlobalState;
 
 /// Admin-only instruction to override slots_per_day.
@@ -40,7 +41,15 @@ pub fn admin_set_slots_per_day(
         HelixError::AdminBoundsExceeded
     );
 
+    let old_value = ctx.accounts.global_state.slots_per_day;
     ctx.accounts.global_state.slots_per_day = new_slots_per_day;
+
+    emit!(AdminSlotsPerDayUpdated {
+        slot: Clock::get()?.slot,
+        old_value,
+        new_value: new_slots_per_day,
+    });
+
     Ok(())
 }
 

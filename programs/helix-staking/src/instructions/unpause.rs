@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 
 use crate::constants::GLOBAL_STATE_SEED;
 use crate::error::HelixError;
+use crate::events::ProtocolUnpaused;
 use crate::state::GlobalState;
 
 #[derive(Accounts)]
@@ -19,19 +20,32 @@ pub struct Unpause<'info> {
 
 pub fn unpause(ctx: Context<Unpause>) -> Result<()> {
     ctx.accounts.global_state.set_paused(false);
-    msg!("Program unpaused by authority");
+
+    emit!(ProtocolUnpaused {
+        slot: Clock::get()?.slot,
+        authority: ctx.accounts.authority.key(),
+    });
+
     Ok(())
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::instructions::crank_distribution::make_test_global_state;
     use crate::constants::*;
+    use crate::instructions::crank_distribution::make_test_global_state;
 
     #[test]
     fn test_unpause_clears_paused_flag() {
         let spd = DEFAULT_SLOTS_PER_DAY;
-        let mut gs = make_test_global_state(0, spd, 0, 0, 0, DEFAULT_STARTING_SHARE_RATE, DEFAULT_ANNUAL_INFLATION_BP);
+        let mut gs = make_test_global_state(
+            0,
+            spd,
+            0,
+            0,
+            0,
+            DEFAULT_STARTING_SHARE_RATE,
+            DEFAULT_ANNUAL_INFLATION_BP,
+        );
         gs.set_paused(true);
         assert!(gs.is_paused(), "Is paused before unpause");
         gs.set_paused(false);

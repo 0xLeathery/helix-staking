@@ -66,12 +66,13 @@ pub fn abort_bpd(ctx: Context<AbortBpd>) -> Result<()> {
     claim_config.bpd_stakes_distributed = 0;
     claim_config.bpd_remaining_unclaimed = 0;
     claim_config.bpd_finalize_start_timestamp = 0; // Phase 8.1
-    claim_config.bpd_original_unclaimed = 0;       // Phase 8.1
+    claim_config.bpd_original_unclaimed = 0; // Phase 8.1
 
     // Clear BPD window flag (uses same method as MED-1 zero-amount finalize path)
     global_state.set_bpd_window_active(false);
 
     emit!(BpdAborted {
+        slot: Clock::get()?.slot,
         claim_period_id: claim_config.claim_period_id,
         stakes_finalized,
         stakes_distributed,
@@ -82,14 +83,22 @@ pub fn abort_bpd(ctx: Context<AbortBpd>) -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use crate::instructions::crank_distribution::make_test_global_state;
     use crate::constants::*;
+    use crate::instructions::crank_distribution::make_test_global_state;
 
     #[test]
     fn test_abort_bpd_window_not_active_is_noop() {
         // When BPD window is not active, abort is a no-op
         let spd = DEFAULT_SLOTS_PER_DAY;
-        let gs = make_test_global_state(0, spd, 0, 0, 0, DEFAULT_STARTING_SHARE_RATE, DEFAULT_ANNUAL_INFLATION_BP);
+        let gs = make_test_global_state(
+            0,
+            spd,
+            0,
+            0,
+            0,
+            DEFAULT_STARTING_SHARE_RATE,
+            DEFAULT_ANNUAL_INFLATION_BP,
+        );
         assert!(!gs.is_bpd_window_active(), "Initially not active");
         // Logic: if !is_bpd_window_active() → return Ok(()) immediately
     }
@@ -98,7 +107,15 @@ mod tests {
     fn test_abort_bpd_clears_window() {
         // After BPD window is set active, abort should clear it
         let spd = DEFAULT_SLOTS_PER_DAY;
-        let mut gs = make_test_global_state(0, spd, 0, 0, 0, DEFAULT_STARTING_SHARE_RATE, DEFAULT_ANNUAL_INFLATION_BP);
+        let mut gs = make_test_global_state(
+            0,
+            spd,
+            0,
+            0,
+            0,
+            DEFAULT_STARTING_SHARE_RATE,
+            DEFAULT_ANNUAL_INFLATION_BP,
+        );
         gs.set_bpd_window_active(true);
         assert!(gs.is_bpd_window_active());
         gs.set_bpd_window_active(false); // Simulating abort_bpd's set_bpd_window_active(false)
