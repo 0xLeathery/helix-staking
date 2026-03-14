@@ -111,47 +111,9 @@ pub fn seal_bpd_finalize(
     Ok(())
 }
 
-/// Calculate BPD helix-per-share-day rate given unclaimed amount and total share-days.
-/// Used in seal_bpd_finalize to produce the rate for trigger_big_pay_day.
-fn calculate_helix_per_share_day(unclaimed_amount: u64, total_share_days: u128) -> Result<u128> {
-    if total_share_days == 0 {
-        return Ok(0);
-    }
-    (unclaimed_amount as u128)
-        .checked_mul(PRECISION as u128)
-        .ok_or(error!(HelixError::Overflow))?
-        .checked_div(total_share_days)
-        .ok_or(error!(HelixError::DivisionByZero))
-}
-
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::constants::*;
-
-    #[test]
-    fn test_helix_per_share_day_basic() {
-        // 1000 tokens unclaimed, 1000 share-days → 1 helix per share-day (before PRECISION scaling)
-        // rate = 1000 * PRECISION / 1000 = PRECISION
-        let rate = calculate_helix_per_share_day(1_000, 1_000).unwrap();
-        assert_eq!(rate, PRECISION as u128);
-    }
-
-    #[test]
-    fn test_helix_per_share_day_zero_share_days() {
-        // No share-days → rate = 0 (nothing to distribute)
-        let rate = calculate_helix_per_share_day(1_000_000, 0).unwrap();
-        assert_eq!(rate, 0);
-    }
-
-    #[test]
-    fn test_helix_per_share_day_large_values() {
-        // Large unclaimed amount — should not overflow via u128 intermediate
-        let unclaimed = 1_000_000_000_000_000u64; // 1e15
-        let share_days = 1_000_000_000u128; // 1e9 share-days
-        let rate = calculate_helix_per_share_day(unclaimed, share_days).unwrap();
-        assert!(rate > 0, "Large values should produce valid rate");
-    }
 
     #[test]
     fn test_whale_cap_calculation() {

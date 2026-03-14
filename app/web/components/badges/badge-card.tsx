@@ -115,7 +115,7 @@ export function BadgeCard({
   let progressPercent = 0;
   if (isTierBadge && threshold && currentMaxStake) {
     // currentMaxStake is in base units (8 decimals), threshold is in HELIX
-    const stakeInHelix = Number(BigInt(currentMaxStake)) / 1e8;
+    const stakeInHelix = Number(currentMaxStake) / 1e8;
     progressPercent = Math.min(100, (stakeInHelix / threshold) * 100);
   }
 

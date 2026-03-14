@@ -7,7 +7,6 @@ use crate::instructions::math::{
 };
 use crate::state::{GlobalState, StakeAccount};
 use anchor_lang::prelude::*;
-use anchor_lang::system_program::{self, Transfer};
 use anchor_spl::token_2022::{self, MintTo, Token2022};
 use anchor_spl::token_interface::{Mint, TokenAccount};
 

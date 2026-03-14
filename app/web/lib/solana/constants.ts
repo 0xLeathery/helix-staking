@@ -14,6 +14,7 @@ export const PROGRAM_ID = new PublicKey(
 // ============================================================================
 
 export const TOKEN_DECIMALS = 8;
+export const DECIMALS_FACTOR = new BN(10).pow(new BN(TOKEN_DECIMALS)); // 10^8
 
 // ============================================================================
 // Protocol Constants (from programs/helix-staking/src/constants.rs)

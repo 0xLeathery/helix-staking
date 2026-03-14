@@ -15,11 +15,10 @@ import {
 import { Button } from "@/components/ui/button";
 import BN from "bn.js";
 import { staggerContainer, staggerItem, useCountUp } from "@/lib/animation";
-import { TOKEN_DECIMALS, TSHARE_DISPLAY_FACTOR } from "@/lib/solana/constants";
+import { DECIMALS_FACTOR, TSHARE_DISPLAY_FACTOR } from "@/lib/solana/constants";
 
 // Stagger offset: each stat starts 100ms after the previous
 const STAGGER_OFFSET = 0.1;
-const DECIMALS_FACTOR = new BN(10).pow(new BN(TOKEN_DECIMALS)); // 10^8
 
 /**
  * Safely convert a BN to a JS number by dividing by a given factor first,

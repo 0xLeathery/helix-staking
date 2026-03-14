@@ -75,7 +75,7 @@ export function BadgeGallery() {
   for (const tierType of TIER_BADGES) {
     const b = badgeMap.get(tierType);
     if (b?.stakeAmount) {
-      if (!currentMaxStake || BigInt(b.stakeAmount) > BigInt(currentMaxStake)) {
+      if (!currentMaxStake || Number(b.stakeAmount) > Number(currentMaxStake)) {
         currentMaxStake = b.stakeAmount;
       }
     }
