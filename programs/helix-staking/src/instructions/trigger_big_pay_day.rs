@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 
 use crate::constants::*;
 use crate::error::HelixError;
-use crate::events::{ClaimPeriodEnded, BigPayDayDistributed};
+use crate::events::{BigPayDayDistributed, ClaimPeriodEnded};
 use crate::instructions::math::mul_div;
 use crate::state::{ClaimConfig, GlobalState, StakeAccount};
 
@@ -31,7 +31,6 @@ pub struct TriggerBigPayDay<'info> {
         constraint = claim_config.bpd_calculation_complete @ HelixError::BpdCalculationNotComplete,
     )]
     pub claim_config: Account<'info, ClaimConfig>,
-
     // Remaining accounts: StakeAccounts to distribute BPD bonus to
     // Each must be verified as eligible (created during claim period, active)
 }
@@ -65,11 +64,7 @@ pub fn trigger_big_pay_day<'info>(
     // Phase 8.1: Compute per-stake BPD whale cap
     // max_bonus_per_stake = original_total_unclaimed * BPD_MAX_SHARE_PCT / 100
     // Use bpd_original_unclaimed (set at seal) for consistent cap across all batches
-    let max_bonus_per_stake = mul_div(
-        claim_config.bpd_original_unclaimed,
-        BPD_MAX_SHARE_PCT,
-        100,
-    )?;
+    let max_bonus_per_stake = mul_div(claim_config.bpd_original_unclaimed, BPD_MAX_SHARE_PCT, 100)?;
 
     // If rate is 0, nothing to distribute - mark complete and return
     if helix_per_share_day == 0 {
@@ -154,9 +149,7 @@ pub fn trigger_big_pay_day<'info>(
         // Calculate days staked during claim period using snapshot slot
         let stake_end = std::cmp::min(snapshot_slot, stake.end_slot);
         // Safe to divide: slots_per_day > 0 validated at function start
-        let days_staked = stake_end
-            .saturating_sub(stake.start_slot)
-            / global_state.slots_per_day;
+        let days_staked = stake_end.saturating_sub(stake.start_slot) / global_state.slots_per_day;
 
         if days_staked == 0 {
             continue; // Must have at least 1 day
@@ -198,23 +191,23 @@ pub fn trigger_big_pay_day<'info>(
         let bonus = raw_bonus.min(max_bonus_per_stake);
 
         if bonus == 0 {
-            claim_config.bpd_stakes_distributed = claim_config.bpd_stakes_distributed
+            claim_config.bpd_stakes_distributed = claim_config
+                .bpd_stakes_distributed
                 .checked_add(1)
                 .ok_or(HelixError::Overflow)?;
             // H-1 FIX: Mark zero-bonus stake as processed to prevent re-submission
-            let mut stake: StakeAccount = StakeAccount::try_deserialize(
-                &mut &account_info.try_borrow_data()?[..]
-            )?;
+            let mut stake: StakeAccount =
+                StakeAccount::try_deserialize(&mut &account_info.try_borrow_data()?[..])?;
             stake.bpd_claim_period_id = claim_config.claim_period_id;
             stake.try_serialize(&mut &mut account_info.try_borrow_mut_data()?[..])?;
             continue;
         }
 
         // Properly deserialize StakeAccount to update bpd_bonus_pending
-        let mut stake: StakeAccount = StakeAccount::try_deserialize(
-            &mut &account_info.try_borrow_data()?[..]
-        )?;
-        stake.bpd_bonus_pending = stake.bpd_bonus_pending
+        let mut stake: StakeAccount =
+            StakeAccount::try_deserialize(&mut &account_info.try_borrow_data()?[..])?;
+        stake.bpd_bonus_pending = stake
+            .bpd_bonus_pending
             .checked_add(bonus)
             .ok_or(HelixError::Overflow)?;
 
@@ -234,16 +227,19 @@ pub fn trigger_big_pay_day<'info>(
     }
 
     // === Update ClaimConfig pagination state ===
-    claim_config.bpd_total_distributed = claim_config.bpd_total_distributed
+    claim_config.bpd_total_distributed = claim_config
+        .bpd_total_distributed
         .checked_add(batch_distributed)
         .ok_or(HelixError::Overflow)?;
 
-    claim_config.bpd_stakes_distributed = claim_config.bpd_stakes_distributed
+    claim_config.bpd_stakes_distributed = claim_config
+        .bpd_stakes_distributed
         .checked_add(batch_stakes_distributed)
         .ok_or(HelixError::Overflow)?;
 
     // MED-3: Use checked_sub instead of saturating_sub for bpd_remaining_unclaimed
-    claim_config.bpd_remaining_unclaimed = claim_config.bpd_remaining_unclaimed
+    claim_config.bpd_remaining_unclaimed = claim_config
+        .bpd_remaining_unclaimed
         .checked_sub(batch_distributed)
         .ok_or(HelixError::BpdOverDistribution)?;
 
@@ -289,8 +285,10 @@ mod tests {
         let share_days = 1_000u128;
         let rate = PRECISION as u128; // 1 token per share-day (in PRECISION units)
         let bonus_u128 = share_days
-            .checked_mul(rate).unwrap()
-            .checked_div(PRECISION as u128).unwrap();
+            .checked_mul(rate)
+            .unwrap()
+            .checked_div(PRECISION as u128)
+            .unwrap();
         let bonus = u64::try_from(bonus_u128).unwrap();
         assert_eq!(bonus, 1_000);
     }
@@ -324,11 +322,17 @@ mod tests {
         // CRIT-NEW-1: Completion when bpd_stakes_distributed >= bpd_stakes_finalized
         let finalized: u32 = 10;
         let distributed: u32 = 10;
-        assert!(distributed >= finalized, "Completion condition met when all stakes distributed");
+        assert!(
+            distributed >= finalized,
+            "Completion condition met when all stakes distributed"
+        );
 
         // Not complete yet
         let distributed2: u32 = 9;
-        assert!(!(distributed2 >= finalized), "Not complete when stakes remaining");
+        assert!(
+            !(distributed2 >= finalized),
+            "Not complete when stakes remaining"
+        );
     }
 
     #[test]

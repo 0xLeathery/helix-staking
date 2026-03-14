@@ -87,7 +87,8 @@ pub fn withdraw_vested(ctx: Context<WithdrawVested>) -> Result<()> {
     require!(available > 0, HelixError::NoVestedTokens);
 
     // Update withdrawn amount BEFORE minting (security: prevents reentrancy)
-    let new_withdrawn = claim_status.withdrawn_amount
+    let new_withdrawn = claim_status
+        .withdrawn_amount
         .checked_add(available)
         .ok_or(HelixError::Overflow)?;
     claim_status.withdrawn_amount = new_withdrawn;
@@ -180,7 +181,8 @@ mod tests {
         let claimed_slot = 1000u64;
         let vesting_end = claimed_slot + VESTING_DAYS * DEFAULT_SLOTS_PER_DAY;
 
-        let vested = calculate_vested_amount(claimed, claimed_slot, vesting_end, claimed_slot).unwrap();
+        let vested =
+            calculate_vested_amount(claimed, claimed_slot, vesting_end, claimed_slot).unwrap();
         // immediate = 10% = 100_000_000
         assert_eq!(vested, claimed / 10);
     }
@@ -193,7 +195,8 @@ mod tests {
         let vesting_end = 1_000u64;
         let current_after = vesting_end + 1000;
 
-        let vested = calculate_vested_amount(claimed, claimed_slot, vesting_end, current_after).unwrap();
+        let vested =
+            calculate_vested_amount(claimed, claimed_slot, vesting_end, current_after).unwrap();
         assert_eq!(vested, claimed);
     }
 
@@ -204,7 +207,8 @@ mod tests {
         let claimed_slot = 0u64;
         let vesting_end = DEFAULT_SLOTS_PER_DAY * VESTING_DAYS;
 
-        let vested = calculate_vested_amount(claimed, claimed_slot, vesting_end, vesting_end).unwrap();
+        let vested =
+            calculate_vested_amount(claimed, claimed_slot, vesting_end, vesting_end).unwrap();
         assert_eq!(vested, claimed);
     }
 
@@ -233,7 +237,8 @@ mod tests {
         let vesting_end = 2000u64;
 
         // current = claimed_slot exactly (edge of <= condition)
-        let vested = calculate_vested_amount(claimed, claimed_slot, vesting_end, claimed_slot).unwrap();
+        let vested =
+            calculate_vested_amount(claimed, claimed_slot, vesting_end, claimed_slot).unwrap();
         assert_eq!(vested, claimed / 10); // immediate only
 
         // current < claimed_slot (shouldn't happen but handled)
@@ -254,7 +259,7 @@ mod tests {
         assert!(result.is_ok());
         let vested = result.unwrap();
         assert!(vested > claimed / 10); // More than immediate
-        assert!(vested < claimed);       // Less than full amount
+        assert!(vested < claimed); // Less than full amount
     }
 
     #[test]

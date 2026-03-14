@@ -1,13 +1,13 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token_interface::{Mint, TokenAccount, Token2022};
 use anchor_spl::token_2022;
+use anchor_spl::token_interface::{Mint, Token2022, TokenAccount};
 
 use crate::constants::*;
 use crate::error::HelixError;
-use crate::events::{StakeCreated, ReferralStaked};
-use crate::state::{GlobalState, StakeAccount, ClaimConfig, ReferralRecord};
-use crate::instructions::math::{calculate_t_shares, calculate_reward_debt, mul_div};
+use crate::events::{ReferralStaked, StakeCreated};
 use crate::instructions::crank_distribution::distribute_pending_inflation;
+use crate::instructions::math::{calculate_reward_debt, calculate_t_shares, mul_div};
+use crate::state::{ClaimConfig, GlobalState, ReferralRecord, StakeAccount};
 
 #[derive(Accounts)]
 #[instruction(amount: u64, days: u16, referrer: Pubkey)]
@@ -121,11 +121,12 @@ pub fn create_stake_with_referral<'info>(
         .ok_or(HelixError::Overflow)?;
 
     // Calculate end slot
-    let end_slot = clock.slot
+    let end_slot = clock
+        .slot
         .checked_add(
             (days as u64)
                 .checked_mul(global_state.slots_per_day)
-                .ok_or(HelixError::Overflow)?
+                .ok_or(HelixError::Overflow)?,
         )
         .ok_or(HelixError::Overflow)?;
 
@@ -152,10 +153,7 @@ pub fn create_stake_with_referral<'info>(
         let claim_config_info = &ctx.remaining_accounts[0];
 
         // Verify it's the correct ClaimConfig PDA
-        let (expected_pda, _) = Pubkey::find_program_address(
-            &[CLAIM_CONFIG_SEED],
-            ctx.program_id,
-        );
+        let (expected_pda, _) = Pubkey::find_program_address(&[CLAIM_CONFIG_SEED], ctx.program_id);
 
         if claim_config_info.key() == expected_pda {
             // Try to deserialize and check if active
@@ -179,15 +177,18 @@ pub fn create_stake_with_referral<'info>(
     stake_account.claim_period_start_slot = claim_period_start_slot;
 
     // Update GlobalState counters
-    global_state.total_stakes_created = global_state.total_stakes_created
+    global_state.total_stakes_created = global_state
+        .total_stakes_created
         .checked_add(1)
         .ok_or(HelixError::Overflow)?;
 
-    global_state.total_tokens_staked = global_state.total_tokens_staked
+    global_state.total_tokens_staked = global_state
+        .total_tokens_staked
         .checked_add(amount)
         .ok_or(HelixError::Overflow)?;
 
-    global_state.total_shares = global_state.total_shares
+    global_state.total_shares = global_state
+        .total_shares
         .checked_add(t_shares)
         .ok_or(HelixError::Overflow)?;
 
@@ -209,10 +210,7 @@ pub fn create_stake_with_referral<'info>(
 
     // Mint referrer bonus tokens using mint_authority PDA signer
     let mint_authority_bump = global_state.mint_authority_bump;
-    let mint_authority_seeds = &[
-        MINT_AUTHORITY_SEED,
-        &[mint_authority_bump],
-    ];
+    let mint_authority_seeds = &[MINT_AUTHORITY_SEED, &[mint_authority_bump]];
     let signer_seeds = &[&mint_authority_seeds[..]];
 
     token_2022::mint_to(
@@ -272,7 +270,10 @@ mod tests {
         let bonus = mul_div(base, REFEREE_BONUS_BPS, BPS_SCALER).unwrap();
         assert_eq!(bonus, base / 10); // 10% of base
         let total = base + bonus;
-        assert!(total > base, "with referral bonus, t_shares should be 10% higher");
+        assert!(
+            total > base,
+            "with referral bonus, t_shares should be 10% higher"
+        );
     }
 
     #[test]
@@ -295,6 +296,9 @@ mod tests {
 
         let debt_base = calculate_reward_debt(base, rate).unwrap();
         let debt_bonus = calculate_reward_debt(t_shares_with_bonus, rate).unwrap();
-        assert!(debt_bonus > debt_base, "reward debt with referral bonus should be larger");
+        assert!(
+            debt_bonus > debt_base,
+            "reward debt with referral bonus should be larger"
+        );
     }
 }

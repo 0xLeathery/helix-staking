@@ -1,8 +1,8 @@
 use anchor_lang::prelude::*;
+use anchor_lang::solana_program::ed25519_program;
 use anchor_lang::solana_program::sysvar::instructions::{
     self as ix_sysvar, load_current_index_checked, load_instruction_at_checked,
 };
-use anchor_lang::solana_program::ed25519_program;
 use anchor_spl::token_2022::{self, MintTo, Token2022};
 use anchor_spl::token_interface::{Mint, TokenAccount};
 use solana_nostd_keccak::hashv;
@@ -134,10 +134,8 @@ pub fn free_claim(
         global_state.slots_per_day,
     )?;
 
-    let (bonus_bps, base_amount, bonus_amount) = calculate_speed_bonus(
-        snapshot_balance,
-        days_elapsed,
-    )?;
+    let (bonus_bps, base_amount, bonus_amount) =
+        calculate_speed_bonus(snapshot_balance, days_elapsed)?;
 
     let total_amount = base_amount
         .checked_add(bonus_amount)
@@ -154,11 +152,12 @@ pub fn free_claim(
         .checked_sub(immediate_amount)
         .ok_or(HelixError::Underflow)?;
 
-    let vesting_end_slot = clock.slot
+    let vesting_end_slot = clock
+        .slot
         .checked_add(
             VESTING_DAYS
                 .checked_mul(global_state.slots_per_day)
-                .ok_or(HelixError::Overflow)?
+                .ok_or(HelixError::Overflow)?,
         )
         .ok_or(HelixError::Overflow)?;
 
@@ -173,10 +172,12 @@ pub fn free_claim(
     claim_status.bump = ctx.bumps.claim_status;
 
     // === Update ClaimConfig ===
-    claim_config.total_claimed = claim_config.total_claimed
+    claim_config.total_claimed = claim_config
+        .total_claimed
         .checked_add(total_amount)
         .ok_or(HelixError::Overflow)?;
-    claim_config.claim_count = claim_config.claim_count
+    claim_config.claim_count = claim_config
+        .claim_count
         .checked_add(1)
         .ok_or(HelixError::Overflow)?;
 
@@ -229,10 +230,8 @@ fn verify_ed25519_signature(
     // Ed25519 verify must be the instruction immediately before this one
     require!(current_ix_index > 0, HelixError::MissingEd25519Instruction);
 
-    let ed25519_ix = load_instruction_at_checked(
-        (current_ix_index - 1) as usize,
-        instructions_sysvar,
-    )?;
+    let ed25519_ix =
+        load_instruction_at_checked((current_ix_index - 1) as usize, instructions_sysvar)?;
 
     // Verify it's the Ed25519 program
     require!(
@@ -241,11 +240,7 @@ fn verify_ed25519_signature(
     );
 
     // Build expected message
-    let expected_message = format!(
-        "HELIX:claim:{}:{}",
-        snapshot_wallet,
-        amount
-    );
+    let expected_message = format!("HELIX:claim:{}:{}", snapshot_wallet, amount);
 
     // Ed25519 instruction data format (after signature count byte):
     // - 2 bytes: signature offset
@@ -299,7 +294,10 @@ fn verify_merkle_proof(
     merkle_root: &[u8; 32],
     proof: &[[u8; 32]],
 ) -> Result<()> {
-    require!(proof.len() <= MAX_MERKLE_PROOF_LEN, HelixError::InvalidMerkleProof);
+    require!(
+        proof.len() <= MAX_MERKLE_PROOF_LEN,
+        HelixError::InvalidMerkleProof
+    );
 
     // Compute leaf hash: keccak256(snapshot_address || amount || claim_period_id)
     let mut hash = hashv(&[
@@ -323,11 +321,7 @@ fn verify_merkle_proof(
 }
 
 /// Calculate days elapsed since claim period start
-fn calculate_days_elapsed(
-    start_slot: u64,
-    current_slot: u64,
-    slots_per_day: u64,
-) -> Result<u64> {
+fn calculate_days_elapsed(start_slot: u64, current_slot: u64, slots_per_day: u64) -> Result<u64> {
     let elapsed_slots = current_slot
         .checked_sub(start_slot)
         .ok_or(HelixError::Underflow)?;
@@ -342,10 +336,7 @@ fn calculate_days_elapsed(
 /// Week 1 (days 0-7): +20% bonus
 /// Weeks 2-4 (days 8-28): +10% bonus
 /// Days 29+: base amount (no bonus)
-fn calculate_speed_bonus(
-    snapshot_balance: u64,
-    days_elapsed: u64,
-) -> Result<(u16, u64, u64)> {
+fn calculate_speed_bonus(snapshot_balance: u64, days_elapsed: u64) -> Result<(u16, u64, u64)> {
     // Base amount: snapshot_balance * HELIX_PER_SOL
     // SOL has 9 decimals, HELIX has 8 decimals
     // snapshot_balance is in lamports (9 decimals)
@@ -358,11 +349,11 @@ fn calculate_speed_bonus(
     let base_amount = mul_div(snapshot_balance, HELIX_PER_SOL, 10)?;
 
     let bonus_bps = if days_elapsed <= SPEED_BONUS_WEEK1_END {
-        SPEED_BONUS_WEEK1_BPS  // +20%
+        SPEED_BONUS_WEEK1_BPS // +20%
     } else if days_elapsed <= SPEED_BONUS_WEEK4_END {
-        SPEED_BONUS_WEEK2_4_BPS  // +10%
+        SPEED_BONUS_WEEK2_4_BPS // +10%
     } else {
-        0  // No bonus
+        0 // No bonus
     };
 
     // ADDL-3 FIX: Use mul_div to avoid overflow for bonus calculation
@@ -436,7 +427,8 @@ mod tests {
     #[test]
     fn test_speed_bonus_week1_boundary() {
         // Day 7: last day of week 1 bonus (SPEED_BONUS_WEEK1_END = 7)
-        let (bps, base, bonus) = calculate_speed_bonus(1_000_000_000, SPEED_BONUS_WEEK1_END).unwrap();
+        let (bps, base, bonus) =
+            calculate_speed_bonus(1_000_000_000, SPEED_BONUS_WEEK1_END).unwrap();
         assert_eq!(bps, SPEED_BONUS_WEEK1_BPS as u16);
         assert_eq!(bonus, base * SPEED_BONUS_WEEK1_BPS / BPS_SCALER);
     }
@@ -480,8 +472,8 @@ mod tests {
     #[test]
     fn test_merkle_proof_empty_tree() {
         // Single leaf: proof is empty, root = leaf hash
-        use solana_nostd_keccak::hashv;
         use anchor_lang::prelude::Pubkey;
+        use solana_nostd_keccak::hashv;
 
         let wallet = Pubkey::new_unique();
         let amount = 1_000_000_000u64;
@@ -521,16 +513,24 @@ mod tests {
     #[test]
     fn test_merkle_proof_two_leaves() {
         // Two-leaf tree: root = hash(sort(leaf1, leaf2))
-        use solana_nostd_keccak::hashv;
         use anchor_lang::prelude::Pubkey;
+        use solana_nostd_keccak::hashv;
 
         let wallet1 = Pubkey::new_unique();
         let wallet2 = Pubkey::new_unique();
         let amount = 500_000_000u64;
         let period_id = 1u32;
 
-        let leaf1 = hashv(&[wallet1.as_ref(), &amount.to_le_bytes(), &period_id.to_le_bytes()]);
-        let leaf2 = hashv(&[wallet2.as_ref(), &amount.to_le_bytes(), &period_id.to_le_bytes()]);
+        let leaf1 = hashv(&[
+            wallet1.as_ref(),
+            &amount.to_le_bytes(),
+            &period_id.to_le_bytes(),
+        ]);
+        let leaf2 = hashv(&[
+            wallet2.as_ref(),
+            &amount.to_le_bytes(),
+            &period_id.to_le_bytes(),
+        ]);
 
         // Build root by sorting
         let root = if leaf1 < leaf2 {

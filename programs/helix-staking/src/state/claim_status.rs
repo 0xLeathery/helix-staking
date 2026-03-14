@@ -32,6 +32,6 @@ impl ClaimStatus {
         + 8    // withdrawn_amount
         + 8    // vesting_end_slot
         + 32   // snapshot_wallet
-        + 1;   // bump
-    // Total: 76 bytes (slightly more than anchor-expert estimate due to snapshot_wallet)
+        + 1; // bump
+             // Total: 76 bytes (slightly more than anchor-expert estimate due to snapshot_wallet)
 }

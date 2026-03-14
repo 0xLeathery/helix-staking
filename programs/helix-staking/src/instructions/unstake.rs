@@ -1,12 +1,15 @@
-use anchor_lang::prelude::*;
-use anchor_spl::token_2022::{self, MintTo, Token2022};
-use anchor_spl::token_interface::{Mint, TokenAccount};
 use crate::constants::*;
 use crate::error::HelixError;
 use crate::events::StakeEnded;
-use crate::state::{GlobalState, StakeAccount};
-use crate::instructions::math::{calculate_early_penalty, calculate_late_penalty, calculate_pending_rewards, calculate_loyalty_bonus, mul_div};
 use crate::instructions::crank_distribution::distribute_pending_inflation;
+use crate::instructions::math::{
+    calculate_early_penalty, calculate_late_penalty, calculate_loyalty_bonus,
+    calculate_pending_rewards, mul_div,
+};
+use crate::state::{GlobalState, StakeAccount};
+use anchor_lang::prelude::*;
+use anchor_spl::token_2022::{self, MintTo, Token2022};
+use anchor_spl::token_interface::{Mint, TokenAccount};
 
 /// Apply loyalty multiplier to a reward amount.
 /// reward × (1 + loyalty_bonus / PRECISION)
@@ -85,7 +88,10 @@ pub fn unstake(ctx: Context<Unstake>) -> Result<()> {
     require!(!global_state.is_paused(), HelixError::ProgramPaused);
 
     // HIGH-2: Block unstake during BPD window
-    require!(!global_state.is_bpd_window_active(), HelixError::UnstakeBlockedDuringBpd);
+    require!(
+        !global_state.is_bpd_window_active(),
+        HelixError::UnstakeBlockedDuringBpd
+    );
 
     // Save values we'll need later (before mutating stake)
     let stake_user = stake.user;
@@ -98,11 +104,8 @@ pub fn unstake(ctx: Context<Unstake>) -> Result<()> {
     let bpd_bonus = stake.bpd_bonus_pending;
 
     // Calculate pending rewards
-    let pending_rewards = calculate_pending_rewards(
-        t_shares,
-        global_state.share_rate,
-        reward_debt,
-    )?;
+    let pending_rewards =
+        calculate_pending_rewards(t_shares, global_state.share_rate, reward_debt)?;
 
     // Phase 8.1: Calculate loyalty bonus based on time served
     let loyalty_bonus = calculate_loyalty_bonus(
@@ -118,12 +121,8 @@ pub fn unstake(ctx: Context<Unstake>) -> Result<()> {
     // Determine penalty based on timing
     let (penalty, penalty_type) = if clock.slot < end_slot {
         // EARLY unstake
-        let penalty_amount = calculate_early_penalty(
-            staked_amount,
-            start_slot,
-            clock.slot,
-            end_slot,
-        )?;
+        let penalty_amount =
+            calculate_early_penalty(staked_amount, start_slot, clock.slot, end_slot)?;
         (penalty_amount, 1u8) // penalty_type = 1 (Early)
     } else {
         // ON-TIME or LATE unstake
@@ -160,19 +159,23 @@ pub fn unstake(ctx: Context<Unstake>) -> Result<()> {
     stake_mut.bpd_bonus_pending = 0;
 
     // Update GlobalState
-    global_state.total_unstakes_created = global_state.total_unstakes_created
+    global_state.total_unstakes_created = global_state
+        .total_unstakes_created
         .checked_add(1)
         .ok_or(HelixError::Overflow)?;
 
-    global_state.total_tokens_unstaked = global_state.total_tokens_unstaked
+    global_state.total_tokens_unstaked = global_state
+        .total_tokens_unstaked
         .checked_add(staked_amount)
         .ok_or(HelixError::Overflow)?;
 
-    global_state.total_shares = global_state.total_shares
+    global_state.total_shares = global_state
+        .total_shares
         .checked_sub(t_shares)
         .ok_or(HelixError::Underflow)?;
 
-    global_state.total_tokens_staked = global_state.total_tokens_staked
+    global_state.total_tokens_staked = global_state
+        .total_tokens_staked
         .checked_sub(staked_amount)
         .ok_or(HelixError::Underflow)?;
 
@@ -182,7 +185,8 @@ pub fn unstake(ctx: Context<Unstake>) -> Result<()> {
     // Frontend note: This increases rewards for all remaining stakers proportionally
     if penalty > 0 && global_state.total_shares > 0 {
         let penalty_share_increase = mul_div(penalty, PRECISION, global_state.total_shares)?;
-        global_state.share_rate = global_state.share_rate
+        global_state.share_rate = global_state
+            .share_rate
             .checked_add(penalty_share_increase)
             .ok_or(HelixError::Overflow)?;
     }
@@ -216,7 +220,8 @@ pub fn unstake(ctx: Context<Unstake>) -> Result<()> {
         return_amount,
         penalty_amount: penalty,
         penalty_type,
-        rewards_claimed: loyalty_adjusted_rewards.checked_add(bpd_bonus)
+        rewards_claimed: loyalty_adjusted_rewards
+            .checked_add(bpd_bonus)
             .ok_or(HelixError::Overflow)?,
     });
 
@@ -227,7 +232,10 @@ pub fn unstake(ctx: Context<Unstake>) -> Result<()> {
 mod tests {
     use super::*;
     use crate::constants::*;
-    use crate::instructions::math::{calculate_pending_rewards, calculate_early_penalty, calculate_late_penalty, calculate_loyalty_bonus};
+    use crate::instructions::math::{
+        calculate_early_penalty, calculate_late_penalty, calculate_loyalty_bonus,
+        calculate_pending_rewards,
+    };
 
     // ====== apply_loyalty_multiplier ======
 
@@ -309,7 +317,10 @@ mod tests {
         // After some time, rate increases by 1000
         let new_rate = rate_at_stake + 1_000;
         let pending = calculate_pending_rewards(t_shares, new_rate, debt).unwrap();
-        assert!(pending > 0, "Should have pending rewards after rate increase");
+        assert!(
+            pending > 0,
+            "Should have pending rewards after rate increase"
+        );
     }
 
     #[test]
@@ -320,6 +331,9 @@ mod tests {
         let total_shares = 10_000_000u64;
 
         let increase = mul_div(penalty, PRECISION, total_shares).unwrap();
-        assert!(increase > 0, "Penalty should increase share_rate for remaining stakers");
+        assert!(
+            increase > 0,
+            "Penalty should increase share_rate for remaining stakers"
+        );
     }
 }

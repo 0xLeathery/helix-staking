@@ -33,7 +33,6 @@ pub struct FinalizeBpdCalculation<'info> {
         constraint = !claim_config.big_pay_day_complete @ HelixError::BigPayDayAlreadyTriggered,
     )]
     pub claim_config: Account<'info, ClaimConfig>,
-
     // Remaining accounts: StakeAccounts to scan (read-only)
 }
 
@@ -70,7 +69,8 @@ pub fn finalize_bpd_calculation<'info>(
     let unclaimed_amount = if is_first_batch {
         // Phase 8.1 (C1/FR-001): Use saturating_sub — speed bonuses can cause
         // total_claimed to exceed total_claimable, which is by design. Clamp to 0.
-        let amount = claim_config.total_claimable
+        let amount = claim_config
+            .total_claimable
             .saturating_sub(claim_config.total_claimed);
 
         // Store for pagination
@@ -160,9 +160,7 @@ pub fn finalize_bpd_calculation<'info>(
         // Calculate days staked during claim period using snapshot slot
         let stake_end = std::cmp::min(snapshot_slot, stake.end_slot);
         // Safe to divide: slots_per_day > 0 validated at function start
-        let days_staked = stake_end
-            .saturating_sub(stake.start_slot)
-            / global_state.slots_per_day;
+        let days_staked = stake_end.saturating_sub(stake.start_slot) / global_state.slots_per_day;
 
         if days_staked == 0 {
             continue;
@@ -184,28 +182,30 @@ pub fn finalize_bpd_calculation<'info>(
         stake.try_serialize(&mut &mut account_info.try_borrow_mut_data()?[..])?;
 
         // Increment finalized counter
-        claim_config.bpd_stakes_finalized = claim_config.bpd_stakes_finalized
+        claim_config.bpd_stakes_finalized = claim_config
+            .bpd_stakes_finalized
             .checked_add(1)
             .ok_or(HelixError::Overflow)?;
     }
 
     // === Accumulate to global total ===
-    claim_config.bpd_total_share_days = claim_config.bpd_total_share_days
+    claim_config.bpd_total_share_days = claim_config
+        .bpd_total_share_days
         .checked_add(batch_share_days)
         .ok_or(HelixError::Overflow)?;
 
     // Phase 8.1: Emit transparency event for off-chain monitoring
     // A-2 FIX: Report per-batch delta (not cumulative) for batch_stakes_processed
     // Safe: bpd_stakes_finalized >= finalized_before (only incremented above)
-    let batch_stakes_processed = claim_config.bpd_stakes_finalized
+    let batch_stakes_processed = claim_config
+        .bpd_stakes_finalized
         .checked_sub(finalized_before)
         .ok_or(HelixError::Underflow)?;
     emit!(BpdBatchFinalized {
         claim_period_id: claim_config.claim_period_id,
         batch_stakes_processed,
         total_stakes_finalized: claim_config.bpd_stakes_finalized,
-        cumulative_share_days: claim_config.bpd_total_share_days
-            .min(u64::MAX as u128) as u64,
+        cumulative_share_days: claim_config.bpd_total_share_days.min(u64::MAX as u128) as u64,
         timestamp: clock.unix_timestamp,
     });
 
@@ -238,14 +238,17 @@ mod tests {
         let t_shares = u64::MAX;
         let days_staked = MAX_STAKE_DAYS;
         let share_days = (t_shares as u128).checked_mul(days_staked as u128);
-        assert!(share_days.is_some(), "u128 should hold max share_days without overflow");
+        assert!(
+            share_days.is_some(),
+            "u128 should hold max share_days without overflow"
+        );
     }
 
     #[test]
     fn test_batch_share_days_accumulate() {
         // Multiple stakes' share_days should add together correctly
-        let stake1_share_days: u128 = 1_000_000 * 100;  // 1e8
-        let stake2_share_days: u128 = 500_000 * 200;    // 1e8
+        let stake1_share_days: u128 = 1_000_000 * 100; // 1e8
+        let stake2_share_days: u128 = 500_000 * 200; // 1e8
         let total = stake1_share_days.checked_add(stake2_share_days).unwrap();
         assert_eq!(total, 200_000_000u128);
     }
@@ -280,9 +283,7 @@ mod tests {
         let total_share_days: u128 = 0;
         let snapshot_slot: u64 = 0;
 
-        let is_first = remaining_unclaimed == 0
-            && total_share_days == 0
-            && snapshot_slot == 0;
+        let is_first = remaining_unclaimed == 0 && total_share_days == 0 && snapshot_slot == 0;
         assert!(is_first, "all zeroes indicates first batch");
 
         // Second batch: remaining_unclaimed has a value

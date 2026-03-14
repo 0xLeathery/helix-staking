@@ -55,6 +55,6 @@ impl StakeAccount {
         + 1    // bpd_eligible (NEW)
         + 8    // claim_period_start_slot (NEW)
         + 4    // bpd_claim_period_id (NEW)
-        + 4;   // bpd_finalize_period_id (Phase 3.3)
-    // Total: 117 bytes
+        + 4; // bpd_finalize_period_id (Phase 3.3)
+             // Total: 117 bytes
 }

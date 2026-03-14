@@ -101,7 +101,7 @@ impl GlobalState {
         + 8    // current_day
         + 8    // total_admin_minted
         + 8    // max_admin_mint
-        + 48;  // reserved (6 * u64)
+        + 48; // reserved (6 * u64)
 }
 
 #[cfg(test)]
@@ -190,6 +190,9 @@ mod tests {
         assert!(gs.is_paused());
         gs.set_bpd_window_active(false);
         assert!(!gs.is_bpd_window_active());
-        assert!(gs.is_paused(), "Paused state should be unaffected by BPD window clear");
+        assert!(
+            gs.is_paused(),
+            "Paused state should be unaffected by BPD window clear"
+        );
     }
 }

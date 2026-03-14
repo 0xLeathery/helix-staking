@@ -4,8 +4,8 @@ use anchor_spl::token_interface::{Mint, Token2022};
 use crate::constants::*;
 use crate::error::HelixError;
 use crate::events::InflationDistributed;
-use crate::state::GlobalState;
 use crate::instructions::math::{get_current_day, mul_div};
+use crate::state::GlobalState;
 
 #[derive(Accounts)]
 pub struct CrankDistribution<'info> {
@@ -154,7 +154,8 @@ pub fn distribute_pending_inflation(global_state: &mut GlobalState, clock: &Cloc
     // Formula: share_rate_increase = (daily_inflation * PRECISION) / total_shares
     let share_rate_increase = mul_div(daily_inflation_total, PRECISION, global_state.total_shares)?;
 
-    global_state.share_rate = global_state.share_rate
+    global_state.share_rate = global_state
+        .share_rate
         .checked_add(share_rate_increase)
         .ok_or(HelixError::Overflow)?;
 
@@ -194,9 +195,11 @@ mod tests {
         // current_day == global_state.current_day → no distribution
         let spd = DEFAULT_SLOTS_PER_DAY;
         let mut gs = make_test_global_state(
-            0, spd, 0,               // init_slot, spd, current_day
-            1_000_000_000,           // total_shares
-            10_000_000_000,          // total_tokens_staked
+            0,
+            spd,
+            0,              // init_slot, spd, current_day
+            1_000_000_000,  // total_shares
+            10_000_000_000, // total_tokens_staked
             DEFAULT_STARTING_SHARE_RATE,
             DEFAULT_ANNUAL_INFLATION_BP,
         );
@@ -213,7 +216,11 @@ mod tests {
         // Day advances but no shares → current_day updates, share_rate unchanged
         let spd = DEFAULT_SLOTS_PER_DAY;
         let mut gs = make_test_global_state(
-            0, spd, 0, 0, 0,
+            0,
+            spd,
+            0,
+            0,
+            0,
             DEFAULT_STARTING_SHARE_RATE,
             DEFAULT_ANNUAL_INFLATION_BP,
         );
@@ -229,14 +236,18 @@ mod tests {
         // Day advances with active shares → share_rate increases
         let spd = DEFAULT_SLOTS_PER_DAY;
         let staked = 10_000_000_000_000u64; // 100,000 HELIX (8 decimals)
-        let shares = 1_000_000_000_000u64;  // 1e12 shares
+        let shares = 1_000_000_000_000u64; // 1e12 shares
         let rate = DEFAULT_STARTING_SHARE_RATE;
-        let mut gs = make_test_global_state(0, spd, 0, shares, staked, rate, DEFAULT_ANNUAL_INFLATION_BP);
+        let mut gs =
+            make_test_global_state(0, spd, 0, shares, staked, rate, DEFAULT_ANNUAL_INFLATION_BP);
         let initial_rate = gs.share_rate;
         let clock = make_clock(spd); // day 1
         distribute_pending_inflation(&mut gs, &clock).unwrap();
         assert_eq!(gs.current_day, 1);
-        assert!(gs.share_rate > initial_rate, "share_rate should increase after distribution");
+        assert!(
+            gs.share_rate > initial_rate,
+            "share_rate should increase after distribution"
+        );
     }
 
     #[test]
@@ -246,10 +257,12 @@ mod tests {
         let staked = 10_000_000_000_000u64;
         let shares = 1_000_000_000_000u64;
         let rate = DEFAULT_STARTING_SHARE_RATE;
-        let mut gs = make_test_global_state(0, spd, 0, shares, staked, rate, DEFAULT_ANNUAL_INFLATION_BP);
+        let mut gs =
+            make_test_global_state(0, spd, 0, shares, staked, rate, DEFAULT_ANNUAL_INFLATION_BP);
 
         // Single-day distribution reference
-        let mut gs_1day = make_test_global_state(0, spd, 0, shares, staked, rate, DEFAULT_ANNUAL_INFLATION_BP);
+        let mut gs_1day =
+            make_test_global_state(0, spd, 0, shares, staked, rate, DEFAULT_ANNUAL_INFLATION_BP);
         distribute_pending_inflation(&mut gs_1day, &make_clock(spd)).unwrap();
         let rate_after_1day = gs_1day.share_rate;
 
@@ -268,7 +281,8 @@ mod tests {
         let staked = 10_000_000_000_000u64;
         let shares = 1_000_000_000_000u64;
         let rate = DEFAULT_STARTING_SHARE_RATE;
-        let mut gs = make_test_global_state(0, spd, 0, shares, staked, rate, DEFAULT_ANNUAL_INFLATION_BP);
+        let mut gs =
+            make_test_global_state(0, spd, 0, shares, staked, rate, DEFAULT_ANNUAL_INFLATION_BP);
         let clock = make_clock(spd);
 
         distribute_pending_inflation(&mut gs, &clock).unwrap();
@@ -282,7 +296,15 @@ mod tests {
     #[test]
     fn test_global_state_bpd_window_flag() {
         let spd = DEFAULT_SLOTS_PER_DAY;
-        let mut gs = make_test_global_state(0, spd, 0, 0, 0, DEFAULT_STARTING_SHARE_RATE, DEFAULT_ANNUAL_INFLATION_BP);
+        let mut gs = make_test_global_state(
+            0,
+            spd,
+            0,
+            0,
+            0,
+            DEFAULT_STARTING_SHARE_RATE,
+            DEFAULT_ANNUAL_INFLATION_BP,
+        );
 
         // Initially not active
         assert!(!gs.is_bpd_window_active());
@@ -297,7 +319,15 @@ mod tests {
     #[test]
     fn test_global_state_pause_flag() {
         let spd = DEFAULT_SLOTS_PER_DAY;
-        let mut gs = make_test_global_state(0, spd, 0, 0, 0, DEFAULT_STARTING_SHARE_RATE, DEFAULT_ANNUAL_INFLATION_BP);
+        let mut gs = make_test_global_state(
+            0,
+            spd,
+            0,
+            0,
+            0,
+            DEFAULT_STARTING_SHARE_RATE,
+            DEFAULT_ANNUAL_INFLATION_BP,
+        );
 
         assert!(!gs.is_paused());
         gs.set_paused(true);

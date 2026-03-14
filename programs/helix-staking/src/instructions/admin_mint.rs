@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token_interface::{Mint, TokenAccount, Token2022};
 use anchor_spl::token_2022;
+use anchor_spl::token_interface::{Mint, Token2022, TokenAccount};
 
 use crate::constants::*;
 use crate::error::HelixError;
@@ -47,7 +47,8 @@ pub fn admin_mint(ctx: Context<AdminMint>, amount: u64) -> Result<()> {
     let global_state = &mut ctx.accounts.global_state;
 
     // Enforce mint cap
-    let new_total = global_state.total_admin_minted
+    let new_total = global_state
+        .total_admin_minted
         .checked_add(amount)
         .ok_or(error!(HelixError::Overflow))?;
     require!(
@@ -59,10 +60,7 @@ pub fn admin_mint(ctx: Context<AdminMint>, amount: u64) -> Result<()> {
     global_state.total_admin_minted = new_total;
 
     // Create PDA signer seeds
-    let mint_authority_seeds = &[
-        MINT_AUTHORITY_SEED,
-        &[global_state.mint_authority_bump],
-    ];
+    let mint_authority_seeds = &[MINT_AUTHORITY_SEED, &[global_state.mint_authority_bump]];
     let signer_seeds = &[&mint_authority_seeds[..]];
 
     // Mint tokens to recipient

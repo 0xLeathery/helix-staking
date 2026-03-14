@@ -1,13 +1,13 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token_interface::{Mint, TokenAccount, Token2022};
 use anchor_spl::token_2022;
+use anchor_spl::token_interface::{Mint, Token2022, TokenAccount};
 
 use crate::constants::*;
 use crate::error::HelixError;
 use crate::events::StakeCreated;
-use crate::state::{GlobalState, StakeAccount, ClaimConfig};
-use crate::instructions::math::{calculate_t_shares, calculate_reward_debt};
 use crate::instructions::crank_distribution::distribute_pending_inflation;
+use crate::instructions::math::{calculate_reward_debt, calculate_t_shares};
+use crate::state::{ClaimConfig, GlobalState, StakeAccount};
 
 #[derive(Accounts)]
 pub struct CreateStake<'info> {
@@ -85,11 +85,12 @@ pub fn create_stake<'info>(
     let t_shares = calculate_t_shares(amount, days as u64, global_state.share_rate)?;
 
     // Calculate end slot
-    let end_slot = clock.slot
+    let end_slot = clock
+        .slot
         .checked_add(
             (days as u64)
                 .checked_mul(global_state.slots_per_day)
-                .ok_or(HelixError::Overflow)?
+                .ok_or(HelixError::Overflow)?,
         )
         .ok_or(HelixError::Overflow)?;
 
@@ -117,10 +118,7 @@ pub fn create_stake<'info>(
         let claim_config_info = &ctx.remaining_accounts[0];
 
         // Verify it's the correct ClaimConfig PDA
-        let (expected_pda, _) = Pubkey::find_program_address(
-            &[CLAIM_CONFIG_SEED],
-            ctx.program_id,
-        );
+        let (expected_pda, _) = Pubkey::find_program_address(&[CLAIM_CONFIG_SEED], ctx.program_id);
 
         if claim_config_info.key() == expected_pda {
             // Try to deserialize and check if active
@@ -144,15 +142,18 @@ pub fn create_stake<'info>(
     stake_account.claim_period_start_slot = claim_period_start_slot;
 
     // Update GlobalState counters
-    global_state.total_stakes_created = global_state.total_stakes_created
+    global_state.total_stakes_created = global_state
+        .total_stakes_created
         .checked_add(1)
         .ok_or(HelixError::Overflow)?;
 
-    global_state.total_tokens_staked = global_state.total_tokens_staked
+    global_state.total_tokens_staked = global_state
+        .total_tokens_staked
         .checked_add(amount)
         .ok_or(HelixError::Overflow)?;
 
-    global_state.total_shares = global_state.total_shares
+    global_state.total_shares = global_state
+        .total_shares
         .checked_add(t_shares)
         .ok_or(HelixError::Overflow)?;
 
@@ -186,7 +187,7 @@ pub fn create_stake<'info>(
 #[cfg(test)]
 mod tests {
     use crate::constants::*;
-    use crate::instructions::math::{calculate_t_shares, calculate_reward_debt};
+    use crate::instructions::math::{calculate_reward_debt, calculate_t_shares};
 
     #[test]
     fn test_t_shares_calculation_basic() {
@@ -195,7 +196,10 @@ mod tests {
         let small = calculate_t_shares(1_000_000_000, 1, rate).unwrap();
         let large = calculate_t_shares(10_000_000_000, 1, rate).unwrap();
         // With BPB bonus, larger amounts get proportionally more t_shares
-        assert!(large > small * 10 - small, "larger amount yields more t_shares due to BPB");
+        assert!(
+            large > small * 10 - small,
+            "larger amount yields more t_shares due to BPB"
+        );
         assert!(large > 0 && small > 0, "t_shares should be positive");
     }
 

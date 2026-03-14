@@ -13,10 +13,10 @@
 //! - Bump is canonical (only valid bump for these seeds)
 //! - Account key matches derived PDA
 
-use anchor_lang::prelude::*;
 use crate::constants::*;
 use crate::error::HelixError;
 use crate::state::StakeAccount;
+use anchor_lang::prelude::*;
 
 /// Validates a StakeAccount PDA is correctly derived with canonical bump.
 ///
@@ -39,10 +39,7 @@ use crate::state::StakeAccount;
 /// }
 /// // Now we know account_info is the correct StakeAccount for this stake
 /// ```
-pub fn validate_stake_pda(
-    account_info: &AccountInfo,
-    stake: &StakeAccount,
-) -> Result<()> {
+pub fn validate_stake_pda(account_info: &AccountInfo, stake: &StakeAccount) -> Result<()> {
     // Derive the canonical PDA from seeds (returns the ONLY valid bump)
     let (expected_pda, expected_bump) = Pubkey::try_find_program_address(
         &[
@@ -51,21 +48,14 @@ pub fn validate_stake_pda(
             &stake.stake_id.to_le_bytes(),
         ],
         &crate::id(),
-    ).ok_or(error!(HelixError::InvalidPDA))?;
+    )
+    .ok_or(error!(HelixError::InvalidPDA))?;
 
     // Verify account key matches derived PDA
-    require_keys_eq!(
-        account_info.key(),
-        expected_pda,
-        HelixError::InvalidPDA
-    );
+    require_keys_eq!(account_info.key(), expected_pda, HelixError::InvalidPDA);
 
     // Verify bump is canonical (critical for preventing seed canonicalization attacks)
-    require_eq!(
-        stake.bump,
-        expected_bump,
-        HelixError::InvalidBumpSeed
-    );
+    require_eq!(stake.bump, expected_bump, HelixError::InvalidBumpSeed);
 
     Ok(())
 }
@@ -84,12 +74,14 @@ mod tests {
         let (pda1, bump1) = Pubkey::try_find_program_address(
             &[STAKE_SEED, user.as_ref(), &stake_id.to_le_bytes()],
             &crate::id(),
-        ).unwrap();
+        )
+        .unwrap();
 
         let (pda2, bump2) = Pubkey::try_find_program_address(
             &[STAKE_SEED, user.as_ref(), &stake_id.to_le_bytes()],
             &crate::id(),
-        ).unwrap();
+        )
+        .unwrap();
 
         assert_eq!(pda1, pda2, "PDA derivation is deterministic");
         assert_eq!(bump1, bump2, "Canonical bump is deterministic");
@@ -104,12 +96,14 @@ mod tests {
         let (pda1, _) = Pubkey::try_find_program_address(
             &[STAKE_SEED, user1.as_ref(), &stake_id.to_le_bytes()],
             &crate::id(),
-        ).unwrap();
+        )
+        .unwrap();
 
         let (pda2, _) = Pubkey::try_find_program_address(
             &[STAKE_SEED, user2.as_ref(), &stake_id.to_le_bytes()],
             &crate::id(),
-        ).unwrap();
+        )
+        .unwrap();
 
         assert_ne!(pda1, pda2, "Different users yield different PDAs");
     }
@@ -121,12 +115,14 @@ mod tests {
         let (pda1, _) = Pubkey::try_find_program_address(
             &[STAKE_SEED, user.as_ref(), &0u64.to_le_bytes()],
             &crate::id(),
-        ).unwrap();
+        )
+        .unwrap();
 
         let (pda2, _) = Pubkey::try_find_program_address(
             &[STAKE_SEED, user.as_ref(), &1u64.to_le_bytes()],
             &crate::id(),
-        ).unwrap();
+        )
+        .unwrap();
 
         assert_ne!(pda1, pda2, "Different stake_ids yield different PDAs");
     }
@@ -140,13 +136,15 @@ mod tests {
         let (pda, bump) = Pubkey::try_find_program_address(
             &[STAKE_SEED, user.as_ref(), &stake_id.to_le_bytes()],
             &crate::id(),
-        ).unwrap();
+        )
+        .unwrap();
 
         // Verify by recreating with create_program_address
         let recreated = Pubkey::create_program_address(
             &[STAKE_SEED, user.as_ref(), &stake_id.to_le_bytes(), &[bump]],
             &crate::id(),
-        ).unwrap();
+        )
+        .unwrap();
 
         assert_eq!(pda, recreated, "Canonical bump recreates the same PDA");
     }

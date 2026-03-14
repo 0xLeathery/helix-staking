@@ -1,6 +1,6 @@
-use anchor_lang::prelude::*;
 use crate::constants::*;
 use crate::error::HelixError;
+use anchor_lang::prelude::*;
 
 /// Multiply then divide using u128 intermediates to avoid overflow.
 /// Formula: (a * b) / c with u128 precision.
@@ -19,7 +19,7 @@ pub fn mul_div(a: u64, b: u64, c: u64) -> Result<u64> {
 /// Multiply then divide with round-up for protocol-favorable calculations.
 /// Formula: ((a * b) + (c - 1)) / c
 /// Used for: penalty amounts (should round UP to favor protocol).
-/// 
+///
 /// Implements ceiling division with explicit overflow checks:
 /// - Multiply a * b with overflow check
 /// - Add (c - 1) for rounding with overflow check
@@ -27,17 +27,17 @@ pub fn mul_div(a: u64, b: u64, c: u64) -> Result<u64> {
 /// - Convert back to u64 with overflow check
 pub fn mul_div_up(a: u64, b: u64, c: u64) -> Result<u64> {
     require!(c > 0, HelixError::DivisionByZero);
-    
+
     // Convert to u128 for overflow-safe multiplication
     let a_u128 = a as u128;
     let b_u128 = b as u128;
     let c_u128 = c as u128;
-    
+
     // Multiply with explicit overflow check
     let product = a_u128
         .checked_mul(b_u128)
         .ok_or(error!(HelixError::Overflow))?;
-    
+
     // Add rounding factor (c - 1) with explicit overflow check
     // This implements ceiling division: ceil(a*b/c)
     let rounding = c_u128
@@ -46,13 +46,12 @@ pub fn mul_div_up(a: u64, b: u64, c: u64) -> Result<u64> {
     let numerator = product
         .checked_add(rounding)
         .ok_or(error!(HelixError::Overflow))?;
-    
+
     // Divide and convert back to u64
     let result = numerator
         .checked_div(c_u128)
         .ok_or(error!(HelixError::Overflow))?;
-    u64::try_from(result)
-        .map_err(|_| error!(HelixError::Overflow))
+    u64::try_from(result).map_err(|_| error!(HelixError::Overflow))
 }
 
 /// Calculate Longer Pays Better (LPB) bonus multiplier
@@ -71,9 +70,7 @@ pub fn calculate_lpb_bonus(stake_days: u64) -> Result<u64> {
     // Formula: (days - 1) * 2 * PRECISION / LPB_MAX_DAYS
     // For 1 day: (1-1) * 2 * PRECISION / LPB_MAX_DAYS = 0
     // For 3641 days: exactly 2 * PRECISION (handled above)
-    let days_minus_one = stake_days
-        .checked_sub(1)
-        .ok_or(HelixError::Underflow)?;
+    let days_minus_one = stake_days.checked_sub(1).ok_or(HelixError::Underflow)?;
 
     let numerator = days_minus_one
         .checked_mul(2)
@@ -121,23 +118,35 @@ pub fn calculate_bpb_bonus(staked_amount: u64) -> Result<u64> {
         let excess = (staked_amount - BPB_THRESHOLD * 10) as u128;
         let tier_range = (BPB_TIER_2 - BPB_THRESHOLD * 10) as u128;
         let tier_bonus = 250_000_000u128; // 0.25x in PRECISION
-        bonus = bonus.checked_add(
-            excess.checked_mul(tier_bonus).ok_or(error!(HelixError::Overflow))?
-                .checked_div(tier_range).ok_or(error!(HelixError::Overflow))?
-        ).ok_or(error!(HelixError::Overflow))?;
+        bonus = bonus
+            .checked_add(
+                excess
+                    .checked_mul(tier_bonus)
+                    .ok_or(error!(HelixError::Overflow))?
+                    .checked_div(tier_range)
+                    .ok_or(error!(HelixError::Overflow))?,
+            )
+            .ok_or(error!(HelixError::Overflow))?;
     } else {
         // Full tier 2 bonus
-        bonus = bonus.checked_add(250_000_000u128).ok_or(error!(HelixError::Overflow))?;
+        bonus = bonus
+            .checked_add(250_000_000u128)
+            .ok_or(error!(HelixError::Overflow))?;
 
         // Tier 3: 15% additional from tier 2 to tier 3
         if staked_amount <= BPB_TIER_3 {
             let excess = (staked_amount - BPB_TIER_2) as u128;
             let tier_range = (BPB_TIER_3 - BPB_TIER_2) as u128;
             let tier_bonus = 150_000_000u128; // 0.15x in PRECISION
-            bonus = bonus.checked_add(
-                excess.checked_mul(tier_bonus).ok_or(error!(HelixError::Overflow))?
-                    .checked_div(tier_range).ok_or(error!(HelixError::Overflow))?
-            ).ok_or(error!(HelixError::Overflow))?;
+            bonus = bonus
+                .checked_add(
+                    excess
+                        .checked_mul(tier_bonus)
+                        .ok_or(error!(HelixError::Overflow))?
+                        .checked_div(tier_range)
+                        .ok_or(error!(HelixError::Overflow))?,
+                )
+                .ok_or(error!(HelixError::Overflow))?;
         } else {
             // Above tier 3: hard cap
             bonus = BPB_MAX_BONUS as u128;
@@ -151,11 +160,7 @@ pub fn calculate_bpb_bonus(staked_amount: u64) -> Result<u64> {
 
 /// Calculate T-shares from staked amount, applying LPB + BPB bonuses and share rate
 /// Returns t_shares scaled by PRECISION
-pub fn calculate_t_shares(
-    staked_amount: u64,
-    stake_days: u64,
-    share_rate: u64,
-) -> Result<u64> {
+pub fn calculate_t_shares(staked_amount: u64, stake_days: u64, share_rate: u64) -> Result<u64> {
     require!(share_rate > 0, HelixError::InvalidParameter);
 
     let lpb_bonus = calculate_lpb_bonus(stake_days)?;
@@ -181,8 +186,7 @@ pub fn calculate_t_shares(
         .ok_or(HelixError::Overflow)?;
 
     // Convert back to u64, checking for overflow
-    let t_shares = u64::try_from(t_shares_u128)
-        .map_err(|_| HelixError::Overflow)?;
+    let t_shares = u64::try_from(t_shares_u128).map_err(|_| HelixError::Overflow)?;
 
     Ok(t_shares)
 }
@@ -325,11 +329,7 @@ pub fn calculate_reward_debt(t_shares: u64, share_rate: u64) -> Result<u64> {
 
 /// Get current day from init_slot
 /// Returns day number (0-indexed)
-pub fn get_current_day(
-    init_slot: u64,
-    current_slot: u64,
-    slots_per_day: u64,
-) -> Result<u64> {
+pub fn get_current_day(init_slot: u64, current_slot: u64, slots_per_day: u64) -> Result<u64> {
     let elapsed = current_slot
         .checked_sub(init_slot)
         .ok_or(HelixError::Underflow)?;
@@ -429,17 +429,21 @@ mod tests {
 
         // Monotonically increasing
         let vals = [
-            BPB_THRESHOLD * 10,                 // 1.5B (threshold)
-            300_000_000_000_000_000,             // 3B (mid tier 2)
-            BPB_TIER_2,                          // 5B (tier 2/3 boundary)
-            750_000_000_000_000_000,             // 7.5B (mid tier 3)
-            BPB_TIER_3,                          // 10B (tier 3/4 boundary)
-            2_000_000_000_000_000_000,           // 20B (above tier 3, capped)
+            BPB_THRESHOLD * 10,        // 1.5B (threshold)
+            300_000_000_000_000_000,   // 3B (mid tier 2)
+            BPB_TIER_2,                // 5B (tier 2/3 boundary)
+            750_000_000_000_000_000,   // 7.5B (mid tier 3)
+            BPB_TIER_3,                // 10B (tier 3/4 boundary)
+            2_000_000_000_000_000_000, // 20B (above tier 3, capped)
         ];
         for i in 1..vals.len() {
             let prev = calculate_bpb_bonus(vals[i - 1]).unwrap();
             let curr = calculate_bpb_bonus(vals[i]).unwrap();
-            assert!(curr >= prev, "BPB not monotonically increasing at index {}", i);
+            assert!(
+                curr >= prev,
+                "BPB not monotonically increasing at index {}",
+                i
+            );
         }
     }
 
@@ -452,7 +456,11 @@ mod tests {
 
         // Half-term: half of max bonus (~250_000_000 = ~25%)
         let half = calculate_loyalty_bonus(0, 182 * spd, 365, spd).unwrap();
-        assert!(half > 240_000_000 && half < 260_000_000, "half-term loyalty = {}", half);
+        assert!(
+            half > 240_000_000 && half < 260_000_000,
+            "half-term loyalty = {}",
+            half
+        );
 
         // Full term: max bonus (500_000_000 = 50%)
         let full = calculate_loyalty_bonus(0, 365 * spd, 365, spd).unwrap();
@@ -573,15 +581,24 @@ mod tests {
         let rate_end = 110_000u64;
         let debt = calculate_reward_debt(t_shares, rate_start).unwrap();
         let pending_large = calculate_pending_rewards(t_shares, rate_end, debt).unwrap();
-        assert_eq!(pending_large, 100_000_000, "Should handle large numbers correctly");
+        assert_eq!(
+            pending_large, 100_000_000,
+            "Should handle large numbers correctly"
+        );
 
         // Case 4: reward_debt > current_value (saturating sub returns 0)
         let pending_zero = calculate_pending_rewards(1, 0, 100).unwrap();
-        assert_eq!(pending_zero, 0, "Saturating sub should return 0 when debt > current");
+        assert_eq!(
+            pending_zero, 0,
+            "Saturating sub should return 0 when debt > current"
+        );
 
         // Case 5: zero t_shares → zero pending regardless of rate
         let pending_no_shares = calculate_pending_rewards(0, prec * 1000, 0).unwrap();
-        assert_eq!(pending_no_shares, 0, "Zero t_shares should yield zero pending");
+        assert_eq!(
+            pending_no_shares, 0,
+            "Zero t_shares should yield zero pending"
+        );
     }
 
     #[test]
@@ -632,7 +649,10 @@ mod tests {
         assert_eq!(calculate_lpb_bonus(LPB_MAX_DAYS).unwrap(), 2 * PRECISION);
 
         // LPB_MAX_DAYS + 1 caps at 2 * PRECISION
-        assert_eq!(calculate_lpb_bonus(LPB_MAX_DAYS + 1).unwrap(), 2 * PRECISION);
+        assert_eq!(
+            calculate_lpb_bonus(LPB_MAX_DAYS + 1).unwrap(),
+            2 * PRECISION
+        );
 
         // Very large value still capped
         assert_eq!(calculate_lpb_bonus(u64::MAX).unwrap(), 2 * PRECISION);
@@ -698,11 +718,17 @@ mod tests {
 
         // Exactly GRACE_PERIOD_DAYS late — still in grace, 0 penalty
         let grace_end = end + GRACE_PERIOD_DAYS * spd;
-        assert_eq!(calculate_late_penalty(staked, end, grace_end, spd).unwrap(), 0);
+        assert_eq!(
+            calculate_late_penalty(staked, end, grace_end, spd).unwrap(),
+            0
+        );
 
         // 1 slot past grace — penalty_days = 0 (integer division), still 0
         let just_past = end + GRACE_PERIOD_DAYS * spd + 1;
-        assert_eq!(calculate_late_penalty(staked, end, just_past, spd).unwrap(), 0);
+        assert_eq!(
+            calculate_late_penalty(staked, end, just_past, spd).unwrap(),
+            0
+        );
 
         // LATE_PENALTY_WINDOW_DAYS past grace — 100% penalty
         let full_late = end + (GRACE_PERIOD_DAYS + LATE_PENALTY_WINDOW_DAYS) * spd;
@@ -711,7 +737,10 @@ mod tests {
 
         // Way past — capped at 100%
         let way_late = end + 1000 * spd;
-        assert_eq!(calculate_late_penalty(staked, end, way_late, spd).unwrap(), staked);
+        assert_eq!(
+            calculate_late_penalty(staked, end, way_late, spd).unwrap(),
+            staked
+        );
     }
 
     #[test]
@@ -778,8 +807,14 @@ mod tests {
         // Ensure tier 2 branch (staked_amount <= BPB_TIER_2) is covered
         let mid_tier2 = 300_000_000_000_000_000u64; // 3B tokens
         let bonus = calculate_bpb_bonus(mid_tier2).unwrap();
-        assert!(bonus > PRECISION, "mid-tier2 bonus should exceed base (1.0x)");
-        assert!(bonus < PRECISION + 250_000_000, "mid-tier2 bonus should be below 1.25x");
+        assert!(
+            bonus > PRECISION,
+            "mid-tier2 bonus should exceed base (1.0x)"
+        );
+        assert!(
+            bonus < PRECISION + 250_000_000,
+            "mid-tier2 bonus should be below 1.25x"
+        );
     }
 
     #[test]
@@ -787,8 +822,14 @@ mod tests {
         // Mid-tier-3 amount (7.5B tokens): between BPB_TIER_2 and BPB_TIER_3
         let mid_tier3 = 750_000_000_000_000_000u64; // 7.5B tokens
         let bonus = calculate_bpb_bonus(mid_tier3).unwrap();
-        assert!(bonus > PRECISION + 250_000_000, "mid-tier3 bonus should exceed 1.25x");
-        assert!(bonus < PRECISION + 400_000_000, "mid-tier3 bonus should be below 1.4x");
+        assert!(
+            bonus > PRECISION + 250_000_000,
+            "mid-tier3 bonus should exceed 1.25x"
+        );
+        assert!(
+            bonus < PRECISION + 400_000_000,
+            "mid-tier3 bonus should be below 1.4x"
+        );
     }
 
     #[test]
@@ -796,7 +837,10 @@ mod tests {
         // t_shares * rate would be less than reward_debt — defensive case
         // saturating_sub ensures no underflow panic
         let result = calculate_pending_rewards(1, 100, 1_000_000_000_000).unwrap();
-        assert_eq!(result, 0, "Should saturate to 0 when debt exceeds current value");
+        assert_eq!(
+            result, 0,
+            "Should saturate to 0 when debt exceeds current value"
+        );
     }
 
     #[test]

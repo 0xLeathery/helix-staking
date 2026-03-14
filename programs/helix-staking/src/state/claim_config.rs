@@ -82,6 +82,6 @@ impl ClaimConfig {
         + 4    // bpd_stakes_finalized (Phase 3.3)
         + 4    // bpd_stakes_distributed (Phase 3.3)
         + 8    // bpd_finalize_start_timestamp (Phase 8.1)
-        + 8;   // bpd_original_unclaimed (Phase 8.1)
-    // Total: 200 bytes
+        + 8; // bpd_original_unclaimed (Phase 8.1)
+             // Total: 200 bytes
 }

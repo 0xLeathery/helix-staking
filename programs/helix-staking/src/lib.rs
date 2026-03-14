@@ -5,14 +5,14 @@ pub mod constants;
 pub mod error;
 pub mod events;
 pub mod instructions;
-pub mod state;
 pub mod security;
+pub mod state;
 
 use constants::*;
 use error::HelixError;
 use events::*;
-use state::GlobalState;
 use instructions::*;
+use state::GlobalState;
 
 declare_id!("E9B7BsxdPS89M66CRGGbsCzQ9LkiGv6aNsra3cNBJha7");
 
@@ -136,7 +136,10 @@ pub mod helix_staking {
         instructions::free_claim::free_claim(ctx, snapshot_balance, proof)
     }
 
-    pub fn seal_bpd_finalize(ctx: Context<SealBpdFinalize>, expected_finalized_count: u32) -> Result<()> {
+    pub fn seal_bpd_finalize(
+        ctx: Context<SealBpdFinalize>,
+        expected_finalized_count: u32,
+    ) -> Result<()> {
         instructions::seal_bpd_finalize::seal_bpd_finalize(ctx, expected_finalized_count)
     }
 
@@ -166,10 +169,16 @@ pub mod helix_staking {
         ctx: Context<AdminSetBpdFinalizeTimestamp>,
         new_timestamp: i64,
     ) -> Result<()> {
-        instructions::admin_set_bpd_finalize_timestamp::admin_set_bpd_finalize_timestamp(ctx, new_timestamp)
+        instructions::admin_set_bpd_finalize_timestamp::admin_set_bpd_finalize_timestamp(
+            ctx,
+            new_timestamp,
+        )
     }
 
-    pub fn transfer_authority(ctx: Context<TransferAuthority>, new_authority: Pubkey) -> Result<()> {
+    pub fn transfer_authority(
+        ctx: Context<TransferAuthority>,
+        new_authority: Pubkey,
+    ) -> Result<()> {
         instructions::transfer_authority::transfer_authority(ctx, new_authority)
     }
 
@@ -191,7 +200,9 @@ pub mod helix_staking {
         days: u16,
         referrer: Pubkey,
     ) -> Result<()> {
-        instructions::create_stake_with_referral::create_stake_with_referral(ctx, amount, days, referrer)
+        instructions::create_stake_with_referral::create_stake_with_referral(
+            ctx, amount, days, referrer,
+        )
     }
 }
 
