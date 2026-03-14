@@ -33,9 +33,6 @@ app/web/e2e/.test-wallet.json
 # Static analysis
 .xray/
 
-# Claude mem context files
-**/CLAUDE.md
-
 # Deployment scripts & ops tooling
 scripts/
 docker/test-wallet.json
@@ -56,6 +53,3 @@ test-results/
 
 # Debug screenshots
 check*.png
-
-# Claude Code
-.claude/

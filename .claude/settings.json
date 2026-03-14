@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(anchor build)",
+      "Bash(npx vitest run tests/bankrun*)",
+      "Bash(npx vitest run tests/bankrun -t *)",
+      "Bash(cd app/web && npm run dev)",
+      "Bash(cd app/web && npm run build)",
+      "Bash(cd app/web && npx playwright test*)",
+      "Bash(cd services/indexer && npm run*)",
+      "Bash(npm run*)",
+      "Bash(cargo clippy*)",
+      "Bash(cargo fmt*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git branch*)",
+      "Bash(git add*)",
+      "Bash(git commit*)",
+      "Bash(git push*)",
+      "Bash(git fetch*)",
+      "Bash(git pull*)",
+      "Bash(git checkout*)",
+      "Bash(git stash*)",
+      "Bash(ls *)"
+    ],
+    "deny": []
+  }
+}
