@@ -110,6 +110,52 @@ After these fixes, the program provides:
 
 ---
 
+## Fresh Review Findings (2026-03-14)
+
+### A-1: Math Parity Bug — CRITICAL
+
+**Problem**: `calculatePendingRewards` in TypeScript (`app/web/lib/solana/math.ts`) was missing a `.div(PRECISION)` that exists in the Rust equivalent, returning values ~1 billion times too large.
+
+**Status**: ✅ FIXED — Added `.div(PRECISION)` to TS function, fixed stale comment in Rust.
+
+### A-2: Missing Event Emissions — HIGH
+
+**Problem**: 7 instructions had no event emissions; 4 existing events lacked `slot: u64`.
+
+**Status**: ✅ FIXED — Added 7 new event structs, added `slot` to all events, all instructions now emit.
+
+### A-3: Inconsistent Simulation — HIGH
+
+**Problem**: 5 hooks used raw `connection.simulateTransaction()` instead of shared `simulateTransactionOrThrow` utility, missing Anchor error name parsing.
+
+**Status**: ✅ FIXED — All hooks now use `simulateTransactionOrThrow`.
+
+### A-4: Dependency Version Mismatches — HIGH
+
+**Problem**: Anchor, vitest, and @coral-xyz/anchor versions diverged across packages and CI.
+
+**Status**: ✅ FIXED — Aligned all to Anchor 0.32.1 (Anchor.toml) / 0.31.1 (SDK), vitest ^4.0.18.
+
+### A-5: Dead Code — MEDIUM
+
+**Problem**: Unused `calculate_helix_per_share_day` function, unused `Transfer` import, duplicated `DECIMALS_FACTOR`, native `BigInt` usage.
+
+**Status**: ✅ FIXED — Removed dead code, consolidated constants, replaced BigInt with Number.
+
+### A-6: Config & Build Issues — MEDIUM
+
+**Problem**: Root tsconfig targeted ES6/CommonJS, stale .bak file, misleading Dockerfile comment, disabled CI pipelines, test exclusion bug.
+
+**Status**: ✅ FIXED — Updated tsconfig, deleted stale files, enabled CI, fixed test command.
+
+### A-7: Documentation Gaps — LOW
+
+**Problem**: SECURITY_AUDIT.md didn't cover fresh findings, indexer .env.example had placeholder program ID.
+
+**Status**: ✅ FIXED — This section added, devnet program ID set in .env.example.
+
+---
+
 ## Post-Audit Recommendations
 
 ### Phase 2 Professional Audit
