@@ -5,7 +5,7 @@ import { db } from '../../db/client.js';
 
 const querySchema = z.object({
   limit: z.coerce.number().int().positive().max(100).default(50),
-  minAmount: z.string().default('100000000000'), // 100 HELIX with 9 decimals
+  minAmount: z.string().default('10000000000'), // 100 HELIX (8 decimals: 100 * 10^8)
 });
 
 export const whaleActivityRoutes: FastifyPluginCallback = (

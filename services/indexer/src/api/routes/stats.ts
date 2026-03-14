@@ -60,6 +60,7 @@ export const statsRoutes: FastifyPluginCallback = (
 
   fastify.get('/api/stats/history', async (request, reply) => {
     // Phase 8.1 (M5/FR-010): Enforce strict bounds per contracts/indexer-api.yaml
+    // Note: 100 max (not 200) — history endpoint returns daily snapshots, 100 days is sufficient
     const raw = (request.query as { limit?: string }).limit;
     const parsed = raw ? parseInt(raw, 10) : 20;
     const limit = Math.min(100, Math.max(1, Number.isNaN(parsed) ? 20 : parsed));

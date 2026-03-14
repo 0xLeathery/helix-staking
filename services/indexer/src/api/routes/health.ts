@@ -141,7 +141,7 @@ export const healthRoutes: FastifyPluginCallback = (
 
     // Determine stall: finalize batch > 1 hour ago with no distribution completion
     const ONE_HOUR_MS = 60 * 60 * 1000;
-    const batchAge = Date.now() - (batchSlot * 400); // approximate: 400ms/slot
+    const batchAge = Date.now() - new Date(batch.createdAt).getTime();
     const distributionComplete = stakesDistributed >= stakesFinalized;
 
     let health: 'ok' | 'in_progress' | 'stalled';
