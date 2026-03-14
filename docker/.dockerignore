@@ -1,6 +1,8 @@
 # Runtime artifacts — not needed during image build
 logs/
 node_modules/
+.git/
+target/
 .env.local
 .env
 *.md

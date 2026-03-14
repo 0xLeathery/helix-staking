@@ -14,6 +14,9 @@ function getPool(): Pool {
       throw new Error('DATABASE_URL environment variable is required');
     }
     _pool = new Pool({ connectionString, max: 10 });
+    _pool.on('error', (err) => {
+      console.error('Unexpected database pool error:', err);
+    });
   }
   return _pool;
 }

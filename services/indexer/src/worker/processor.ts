@@ -390,6 +390,7 @@ export async function processEvent(
         signature,
         slot,
         error: error instanceof Error ? error.message : String(error),
+        data,
       },
       'Failed to process event',
     );

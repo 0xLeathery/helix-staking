@@ -90,7 +90,7 @@ async function checkMaturityNotifications(rpc: RpcClient): Promise<void> {
         AND (sce.slot + sce.days::bigint * ${slotsPerDay}) > ${currentSlot}
     `);
 
-    const rows = stakes.rows ?? (stakes as unknown as any[]);
+    const rows = (stakes.rows ?? []) as Array<Record<string, unknown>>;
 
     let notified = 0;
     for (const stake of rows) {
@@ -178,7 +178,7 @@ async function checkLatePenaltyNotifications(rpc: RpcClient): Promise<void> {
         AND ${currentSlot} <= (sce.slot + sce.days::bigint * ${slotsPerDay} + ${lateWindowSlots})
     `);
 
-    const rows = stakes.rows ?? (stakes as unknown as any[]);
+    const rows = (stakes.rows ?? []) as Array<Record<string, unknown>>;
 
     let notified = 0;
     for (const stake of rows) {
