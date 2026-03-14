@@ -11,6 +11,14 @@ const querySchema = z.object({
     .default('t_shares'),
 });
 
+// Whitelist map: Zod enum value → safe SQL ORDER BY fragment.
+// Never use sql.raw() with dynamic input — always map through a fixed whitelist.
+const SORT_COLUMNS = {
+  t_shares: sql`total_t_shares`,
+  total_staked: sql`total_staked`,
+  stake_count: sql`active_stake_count`,
+} as const;
+
 export const leaderboardRoutes: FastifyPluginCallback = (
   fastify: FastifyInstance,
   _opts,
@@ -20,13 +28,12 @@ export const leaderboardRoutes: FastifyPluginCallback = (
   fastify.get('/api/leaderboard', async (request, reply) => {
     const { user, limit, sort } = querySchema.parse(request.query);
 
-    // Determine sort column
-    const sortColumn =
-      sort === 't_shares'
-        ? 'total_t_shares'
-        : sort === 'total_staked'
-          ? 'total_staked'
-          : 'active_stake_count';
+    const sortFragment = SORT_COLUMNS[sort];
+
+    // Build WHERE clause: always filter by rank, optionally include specific user
+    const whereClause = user
+      ? sql`rank <= ${limit} OR "user" = ${user}`
+      : sql`rank <= ${limit}`;
 
     const result = await db.execute(sql`
       WITH active_stakes AS (
@@ -49,7 +56,7 @@ export const leaderboardRoutes: FastifyPluginCallback = (
           active_stake_count,
           total_staked,
           max_duration,
-          RANK() OVER (ORDER BY ${sql.raw(sortColumn)} DESC) as rank
+          RANK() OVER (ORDER BY ${sortFragment} DESC) as rank
         FROM active_stakes
       )
       SELECT
@@ -60,7 +67,7 @@ export const leaderboardRoutes: FastifyPluginCallback = (
         total_staked::text,
         max_duration
       FROM ranked
-      WHERE rank <= ${limit} OR user = ${user || ''}
+      WHERE ${whereClause}
       ORDER BY rank
     `);
 
