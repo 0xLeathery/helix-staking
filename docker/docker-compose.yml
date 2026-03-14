@@ -42,9 +42,14 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-helix_indexer}
       POSTGRES_USER: ${POSTGRES_USER:-helix}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-helix}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-helix}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-helix} -h localhost"]
       interval: 2s
       timeout: 5s
       retries: 10
     restart: "no"
+
+volumes:
+  postgres_data:
