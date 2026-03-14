@@ -1,53 +1,67 @@
 # HELIX Staking Protocol
 
-## Architecture
+Time-locked staking protocol on Solana. Burn-and-mint model — no token vaults.
 
-Three-component system: **Solana program** (Anchor/Rust) → **Indexer** (TypeScript) → **Frontend** (Next.js).
+## Development Workflow
 
-- **On-chain program** (`programs/helix-staking/`): Anchor 0.31.1 on Token-2022 with a burn-and-mint model — tokens are burned on stake, minted back on unstake/claim. No token vault or escrow. PDAs use 7 seed types in `src/constants.rs`.
-- **Indexer** (`services/indexer/`): Polls `getSignaturesForAddress`, decodes Anchor events, stores in PostgreSQL via Drizzle ORM. Worker and Fastify API run as separate processes.
-- **Frontend** (`app/web/`): Next.js 14 + wallet-adapter + React Query + Zustand. RPC calls proxy through `/api/rpc` in production.
+**Always verify your work. This is the most important thing.**
+
+```sh
+# 1. Make changes
+
+# 2. Build the program
+anchor build
+
+# 3. Run tests
+npx vitest run tests/bankrun              # All tests
+npx vitest run tests/bankrun -t "name"    # Specific test
+
+# 4. Check for warnings
+cargo clippy --package helix-staking -- -D warnings
+
+# 5. Format before committing
+cargo fmt --package helix-staking         # Rust
+cd app/web && npx prettier --write .      # TypeScript
+
+# 6. Before creating PR: run full suite
+anchor build && npx vitest run tests/bankrun
+```
 
 ## Math Parity (Critical)
 
-Rust math (`programs/helix-staking/src/instructions/math.rs`) and TypeScript math (`app/web/lib/solana/math.ts`) must produce **identical results** for all inputs. When changing any calculation:
-1. Update both files simultaneously
-2. Constants: `src/constants.rs` (Rust) ↔ `lib/solana/constants.ts` (TS) — keep in sync
-3. Both use `mul_div(a, b, c) = (a * b) / c` with u128/BN intermediates
-4. `PRECISION = 1_000_000_000` (1e9) fixed-point scaling factor everywhere
-5. Token decimals: 8 (`TOKEN_DECIMALS = 8`)
+**When you touch math, you must update both files simultaneously.**
 
-## Commands
+- Rust: `programs/helix-staking/src/instructions/math.rs`
+- TypeScript: `app/web/lib/solana/math.ts`
+- Constants: `src/constants.rs` ↔ `lib/solana/constants.ts`
 
-```bash
-# Program
-anchor build                           # Build program
-npx vitest run tests/bankrun           # Run all bankrun tests
-npx vitest run tests/bankrun -t "name" # Run specific test
+Both use `mul_div(a, b, c) = (a * b) / c` with u128/BN intermediates. `PRECISION = 1e9`. Token decimals: 8.
 
-# Frontend
-cd app/web && npm run dev              # Dev server
-cd app/web && npx playwright test      # E2E tests
+## Architecture
 
-# Indexer
-cd services/indexer && npm run dev:worker  # Start worker
-cd services/indexer && npm run dev:api     # Start API
-cd services/indexer && npm run db:generate # Drizzle migrations
-```
+Three components: **Program** (Anchor/Rust) → **Indexer** (TypeScript/Fastify) → **Frontend** (Next.js 14).
+
+- Program: `programs/helix-staking/` — Anchor 0.31.1, Token-2022, burn-and-mint
+- Indexer: `services/indexer/` — Polls events, stores in PostgreSQL via Drizzle ORM
+- Frontend: `app/web/` — wallet-adapter + React Query + Zustand
 
 ## Key Patterns
 
-- **PDA seeds**: `[b"stake", user_pubkey, stake_id_le_bytes]` — stake_id is monotonic from `GlobalState.total_stakes_created`
-- **Check-Effects-Interactions**: State mutations before CPI calls. Do not break this ordering.
-- **Events**: Every instruction emits an event with `slot: u64` (required by indexer)
-- **Error codes**: Use specific `HelixError` variants from `src/error.rs`, never generic errors
-- **BPD lifecycle**: `initialize_claim_period` → `create_stake` → `finalize_bpd_calculation` → `seal_bpd_finalize` (24h delay) → `trigger_big_pay_day`
+- **Check-Effects-Interactions**: State mutations before CPI calls. Never break this.
+- **PDA seeds**: `[b"stake", user_pubkey, stake_id_le_bytes]` — see `src/constants.rs`
+- **Events**: Every instruction emits an event with `slot: u64` (indexer depends on it)
+- **Errors**: Use specific `HelixError` variants from `src/error.rs`
+- **BPD lifecycle**: `initialize_claim_period` → `create_stake` → `finalize_bpd_calculation` → `seal_bpd_finalize` (24h) → `trigger_big_pay_day`
 
 ## Do NOT
 
-- Add token vaults or escrow — protocol uses burn-and-mint intentionally
+- Add token vaults or escrow — burn-and-mint is intentional
 - Change `StakeAccount::LEN` without migration support
-- Use `unwrap()` in program code — use `ok_or(HelixError::...)` or `?`
-- Skip the `slot` field in new events
+- Use `unwrap()` — use `ok_or(HelixError::...)` or `?`
+- Skip `slot: u64` in new events
 - Use `@solana/web3.js` v2 — project is on v1 (1.95.x)
-- Use Next.js 15 APIs — project is on Next.js 14
+- Use Next.js 15 APIs — project is on 14
+
+## Self-Improvement
+
+When Claude makes a mistake, add a rule to this file so it doesn't happen again. End corrections with: "Now update CLAUDE.md so you don't make that mistake again."

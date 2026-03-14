@@ -4,13 +4,14 @@
       "Bash(anchor build)",
       "Bash(npx vitest run tests/bankrun*)",
       "Bash(npx vitest run tests/bankrun -t *)",
-      "Bash(cd app/web && npm run dev)",
-      "Bash(cd app/web && npm run build)",
+      "Bash(cd app/web && npm run*)",
+      "Bash(cd app/web && npx prettier*)",
       "Bash(cd app/web && npx playwright test*)",
       "Bash(cd services/indexer && npm run*)",
       "Bash(npm run*)",
       "Bash(cargo clippy*)",
       "Bash(cargo fmt*)",
+      "Bash(gh pr*)",
       "Bash(git status*)",
       "Bash(git diff*)",
       "Bash(git log*)",
@@ -25,5 +26,18 @@
       "Bash(ls *)"
     ],
     "deny": []
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "filepath=\"$CLAUDE_FILE_PATH\"; if [ -n \"$filepath\" ]; then case \"$filepath\" in *.rs) cargo fmt --package helix-staking 2>/dev/null || true;; *.ts|*.tsx|*.js|*.jsx) cd app/web && npx prettier --write \"$filepath\" 2>/dev/null || true;; esac; fi"
+          }
+        ]
+      }
+    ]
   }
 }
