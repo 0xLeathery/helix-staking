@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="800" height="200">
+  <defs>
+    <linearGradient id="wmGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#6ee7b7"/>
+      <stop offset="50%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="200" fill="#18181b" rx="16"/>
+
+  <!-- Mini helix mark -->
+  <g transform="translate(100, 100)">
+    <path d="M -24,-50 C 24,-35 24,-15 -24,0 C -72,15 -72,35 -24,50"
+          fill="none" stroke="#10b981" stroke-width="10" stroke-linecap="round"/>
+    <path d="M 24,-50 C -24,-35 -24,-15 24,0 C 72,15 72,35 24,50"
+          fill="none" stroke="#6ee7b7" stroke-width="10" stroke-linecap="round" opacity="0.6"/>
+    <circle cx="0" cy="0" r="4" fill="#6ee7b7"/>
+  </g>
+
+  <!-- HELIX wordmark -->
+  <text x="180" y="118" font-family="system-ui, -apple-system, sans-serif"
+        font-size="72" font-weight="800" letter-spacing="16" fill="url(#wmGrad)">
+    HELIX
+  </text>
+
+  <!-- Tagline -->
+  <text x="185" y="152" font-family="system-ui, -apple-system, sans-serif"
+        font-size="16" font-weight="400" letter-spacing="4" fill="#6ee7b7" opacity="0.6">
+    TIME-LOCKED STAKING ON SOLANA
+  </text>
+</svg>

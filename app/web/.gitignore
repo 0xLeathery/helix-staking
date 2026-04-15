@@ -24,3 +24,4 @@ test-results/
 # E2E test wallet (devnet keypair)
 e2e/.test-wallet.json
 e2e/.referrer-pubkey.txt
+.vercel

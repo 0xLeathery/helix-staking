@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="geoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6ee7b7"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <linearGradient id="geoGradLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a7f3d0"/>
+      <stop offset="100%" stop-color="#34d399"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Dark background -->
+  <rect width="512" height="512" rx="64" fill="#18181b"/>
+
+  <!-- Geometric H built from helix-twisted ribbons -->
+  <g transform="translate(256, 256)">
+    <!-- Left vertical of H — slight twist -->
+    <path d="
+      M -80,-150
+      C -90,-75 -70,0 -80,0
+      C -90,0  -70,75 -80,150
+    " fill="none" stroke="url(#geoGrad)" stroke-width="36" stroke-linecap="round"/>
+
+    <!-- Right vertical of H — opposite twist -->
+    <path d="
+      M  80,-150
+      C  90,-75  70,0  80,0
+      C  70,0   90,75  80,150
+    " fill="none" stroke="url(#geoGrad)" stroke-width="36" stroke-linecap="round"/>
+
+    <!-- Cross bar — the helix bridge, with a twist -->
+    <path d="
+      M -80,0
+      C -40,-30  40,30  80,0
+    " fill="none" stroke="url(#geoGradLight)" stroke-width="24" stroke-linecap="round"/>
+
+    <!-- Subtle second cross-bar echo for depth -->
+    <path d="
+      M -80,0
+      C -40,30  40,-30  80,0
+    " fill="none" stroke="url(#geoGradLight)" stroke-width="12" stroke-linecap="round" opacity="0.3"/>
+
+    <!-- Corner accent dots -->
+    <circle cx="-80" cy="-150" r="8" fill="#6ee7b7"/>
+    <circle cx="80"  cy="-150" r="8" fill="#6ee7b7"/>
+    <circle cx="-80" cy="150"  r="8" fill="#34d399"/>
+    <circle cx="80"  cy="150"  r="8" fill="#34d399"/>
+  </g>
+</svg>

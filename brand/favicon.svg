@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="fGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6ee7b7"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="64" height="64" rx="14" fill="#18181b"/>
+
+  <!-- Simplified double helix that reads at 16px -->
+  <g transform="translate(32, 32)">
+    <!-- Strand A -->
+    <path d="M -8,-20 C 8,-12 8,-4 -8,4 C -24,12 -24,20 -8,28"
+          fill="none" stroke="url(#fGrad)" stroke-width="5" stroke-linecap="round"/>
+    <!-- Strand B -->
+    <path d="M 8,-20 C -8,-12 -8,-4 8,4 C 24,12 24,20 8,28"
+          fill="none" stroke="#10b981" stroke-width="5" stroke-linecap="round" opacity="0.55"/>
+    <!-- Center dot -->
+    <circle cx="0" cy="4" r="2.5" fill="#6ee7b7"/>
+  </g>
+</svg>

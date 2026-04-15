@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="helixGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="50%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <linearGradient id="helixGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#6ee7b7"/>
+      <stop offset="50%" stop-color="#34d399"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="256" fill="#18181b"/>
+
+  <!-- Double helix - two intertwining sine ribbons -->
+  <!-- Strand 1: front portions appear bold, back portions thin (3D effect) -->
+  <g transform="translate(256, 256)">
+    <!-- Strand A - sweeps from top-left to bottom-right -->
+    <path d="
+      M -60,-140
+      C  60,-100  60,-60 -60,-20
+      C -180,20  -180,60  -60,100
+      C  60,140   60,180  -60,220
+    " fill="none" stroke="url(#helixGrad1)" stroke-width="28" stroke-linecap="round" opacity="1"/>
+
+    <!-- Strand B - sweeps opposite phase -->
+    <path d="
+      M  60,-140
+      C -60,-100 -60,-60  60,-20
+      C  180,20   180,60  60,100
+      C -60,140  -60,180  60,220
+    " fill="none" stroke="url(#helixGrad2)" stroke-width="28" stroke-linecap="round" opacity="0.7"/>
+
+    <!-- Cross rungs connecting the strands (like DNA base pairs) -->
+    <line x1="-20" y1="-70" x2="20" y2="-70" stroke="#6ee7b7" stroke-width="6" stroke-linecap="round" opacity="0.5"/>
+    <line x1="-40" y1="-20" x2="40" y2="-20" stroke="#6ee7b7" stroke-width="6" stroke-linecap="round" opacity="0.4"/>
+    <line x1="-20" y1="40"  x2="20" y2="40"  stroke="#6ee7b7" stroke-width="6" stroke-linecap="round" opacity="0.5"/>
+    <line x1="-40" y1="100" x2="40" y2="100" stroke="#6ee7b7" stroke-width="6" stroke-linecap="round" opacity="0.4"/>
+
+    <!-- Glow dots at strand intersections -->
+    <circle cx="0" cy="-70" r="5" fill="#6ee7b7" opacity="0.8"/>
+    <circle cx="0" cy="40"  r="5" fill="#6ee7b7" opacity="0.8"/>
+  </g>
+</svg>

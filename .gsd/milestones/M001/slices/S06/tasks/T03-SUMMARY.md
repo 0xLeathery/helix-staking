@@ -1,55 +1,30 @@
 ---
-phase: 24-anchor-program-boost-system
-plan: "03"
-subsystem: blockchain
-tags: [anchor, solana, rust, token-2022, litesvm, boost, claim_rewards, tdd]
-
-requires:
-  - phase: 24-anchor-program-boost-system-01
-    provides: apply_boost_multiplier in math.rs, BoostRevoked/BoostedRewardsClaimed events, seed_balance_at_stake/boost_revoked fields in StakeAccount
-  - phase: 24-anchor-program-boost-system-02
-    provides: register_seed_boost, update_boost_status, create_stake boost auto-link, findBoostRecordPDA/createSeedMintAndFund utils
-
+id: T03
+parent: S06
+milestone: M001
 provides:
   - Modified claim_rewards: applies 10% boost multiplier with live seed ATA balance check
   - Permanent revocation on balance drop: boost_revoked = true set before CPI mint (CEI pattern)
   - BoostedRewardsClaimed event emitted on successful boost application
   - BoostRevoked event emitted on revocation during claim
   - Complete LiteSVM integration tests for BOOST-04, BOOST-05, BOOST-06, BOOST-07
-
-affects: [25-boost-crank, frontend-claim-rewards, analytics]
-
-tech-stack:
-  added: []
-  patterns:
-    - "Boost check inserts between loyalty multiplier and BPD bonus: (loyalty_adjusted * 1.10) + bpd"
-    - "Live seed balance read via remaining_accounts[0] data bytes at offset 64"
-    - "Check-Effects-Interactions: boost_revoked = true before CPI mint"
-    - "Local variable copies (seed_balance_at_stake, boost_revoked, bpd_bonus) before mutable borrow to satisfy Rust borrow checker"
-    - "Client opt-in boost: omit seed ATA from remaining_accounts = base rewards, include = boost attempt"
-
-key-files:
-  created: []
-  modified:
-    - programs/helix-staking/src/instructions/claim_rewards.rs
-    - tests/litesvm/boost.test.ts
-
-key-decisions:
-  - "drop(stake) -> let _ = stake: reference drops are no-ops in Rust; local copies are the correct borrow checker solution"
-  - "BPD bonus not amplified by boost: boost_adjusted + bpd (not (loyalty_adjusted + bpd) * 1.10)"
-  - "Client omitting seed ATA gives base rewards with no error and no revocation -- graceful degradation"
-  - "Revocation writes boost_revoked before CPI mint (CEI) -- prevents any double-revocation edge cases"
-
-patterns-established:
-  - "Live ATA balance read: seed_ata_info.try_borrow_data()? with data[64..72] LE u64 parse"
-  - "Boost event pair: RewardsClaimed always emitted; BoostedRewardsClaimed only if boost_applied == true"
-  - "TDD: program modified in Task 1 -> tests written in Task 2 -> straight to GREEN (no RED needed since implementation precedes tests)"
-
-requirements-completed: [BOOST-04, BOOST-05, BOOST-06, BOOST-07]
-
+requires: []
+affects: []
+key_files: []
+key_decisions: []
+patterns_established: []
+observability_surfaces: []
+drill_down_paths: []
 duration: 22min
-completed: 2026-03-04
+verification_result: passed
+completed_at: 2026-03-04
+blocker_discovered: false
 ---
+# T03: 24-anchor-program-boost-system 03
+
+**# Phase 24 Plan 03: claim_rewards Boost Check and Integration Tests Summary**
+
+## What Happened
 
 # Phase 24 Plan 03: claim_rewards Boost Check and Integration Tests Summary
 
